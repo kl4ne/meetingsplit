@@ -9,6 +9,7 @@ on:
       - 'tests/test_release_evidence.py'
       - 'tests/test_optional_dialog_qa.py'
       - 'tests/test_vendor_retry_qa.py'
+      - 'tests/test_component_integrity_receipts.py'
       - 'desktop/component_setup.py'
       - 'desktop/components.py'
       - 'engine/ollama.py'
@@ -43,7 +44,7 @@ jobs:
           QT_QPA_PLATFORM: offscreen
           QTWEBENGINE_CHROMIUM_FLAGS: --disable-gpu
         run: |
-          python -m pytest -q tests/test_optional_dialog_qa.py tests/test_vendor_retry_qa.py tests/test_release_evidence.py tests/test_preinstaller_failures.py tests/test_ollama_setup_receipt.py
+          python -m pytest -q tests/test_optional_dialog_qa.py tests/test_vendor_retry_qa.py tests/test_component_integrity_receipts.py tests/test_release_evidence.py tests/test_preinstaller_failures.py tests/test_ollama_setup_receipt.py
       - name: Prove release remains blocked
         shell: pwsh
         run: |

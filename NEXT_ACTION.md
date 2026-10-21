@@ -1,3 +1,14 @@
+## ACTIVE NEXT ACTIONS — 2026-10-21, QA release-evidence branch
+
+1. **Do not repeat resolved work:** #39598629560 hash failed because the source URL was `latest/n9.0` while expecting a dated 8.1.3 digest; the dated build and pinned PyAV succeeded in #39599798144. #39598790616 authentic upgrade PASSED. Main tests-only #39602465892 PASSED. Do not rerun these without material changes.
+2. Finish exact Qt 6.12/WebEngine 6.12.0.140 Chromium third-party notices and source/BOM obligations, FFmpeg/PyAV LGPLv3 corresponding source/relinking evidence, and native CTranslate2 bundled `cudnn64_9.dll` NVIDIA licensing/provenance. See `docs/QA_NATIVE_EVIDENCE_AUDIT_2026-10-21.json`. External legal review still needed.
+3. Run real Windows isolated interactive-cancel tests and optional CUDA/Ollama interrupted download, retry, full-disk and occupied-port matrix; simulation-only unit tests do not count as installer UI acceptance. Protect ASUS installation and its data.
+4. On the ASUS, verify the exact consolidated pinned installer with GPU/Whisper + Ollama and natural EN/ES/mixed speech, sustained duration/resource behavior; one-hour synthetic predecessor is not three-hour realistic acceptance.
+5. Keep `qa/release_gate.json` false and 0.8.6. No Release, no definitive installer, no unreviewed source/license substitutions, no Integrity changes. QA evidence checker was tested locally (6 focused cases); no additional Windows run was ordered.
+
+Checkpoint branch: `qa/release-evidence-20261021`, based on main `c292ad5d`. Previous `qa/consolidated-20261021` was not rewritten.
+
+---
 ## Next action after successful pinned main tests-only CI
 
 1. Assemble exact Qt WebEngine/Chromium and bundled cuDNN third-party

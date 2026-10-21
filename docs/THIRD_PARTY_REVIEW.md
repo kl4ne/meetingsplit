@@ -1,3 +1,23 @@
+## Latest actual frozen media/installer package evidence (2026-10-21)
+
+The post-component-integrity Windows QA **#39695270843 succeeded**:
+102 tests passed, 2 skipped; exact pinned LGPL FFmpeg/PyAV; frozen
+EXE; audio media tests; silent installer clean/reinstall/uninstall with
+external data preservation. SHA-256 checked report ZIP
+`0a2af630e25772402c332f38b771ab151b1aafd5eaba98b199913cf67db52376`
+contains **685 files / 211 native** inventory and 118 matched
+legal-file SHA receipts. It does not contain native executable bytes
+or legal sign-off. Exact sources/notices and compiled Chromium, bundled
+CTranslate2 cuDNN rights, and other native licensing/security still open.
+
+Tokenizers 0.23.3, Cython 3.3.0 and Pyrex original notices and SHA
+source receipts were added *after* frozen candidate commit `90238d6`,
+so they are NOT proven to be in this package. Follow
+`docs/REDISTRIBUTION_EVIDENCE_MATRIX_2026-10-21.md`.
+A Windows runner without an interactive desktop cannot satisfy actual
+cancellation QA. Maintain `release_allowed=false`.
+
+---
 ## Final QA/source status (2026-10-21, no legal sign-off)
 
 The pinned LGPL Windows build/upgrade have PASSED their recorded tests.

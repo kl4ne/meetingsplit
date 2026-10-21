@@ -94,6 +94,23 @@ def test_existing_service_without_model_is_never_pulled_into(tmp_path,monkeypatc
     with pytest.raises(RuntimeError,match='missing'): service.ensure_model(allow_download=True)
 
 
+def test_existing_ollama_on_unverified_storage_is_not_reused(tmp_path,monkeypatch):
+    weights=tmp_path/'model.gguf';weights.write_bytes(b'fake model')
+    monkeypatch.setattr(ollama,'existing_status',lambda *args:{'model':{'name':ollama.MODEL}})
+    monkeypatch.setattr(ollama,'request_json',lambda *args,**kwargs:{'modelfile':'FROM '+str(weights)})
+    def reject(folder): raise ValueError('USB storage')
+    monkeypatch.setattr(ollama,'validate_local_folder',reject)
+    assert not ollama.reusable_existing()
+
+
+def test_remote_ollama_alias_is_not_considered_a_local_model(monkeypatch):
+    def request(endpoint,route,*args):
+        if route=='/api/version': return {'version':'0.40.6'}
+        return {'models':[{'name':ollama.MODEL,'remote_host':'https://remote.example','remote_model':'qwen3'}]}
+    monkeypatch.setattr(ollama,'request_json',request)
+    assert ollama.existing_status()['model'] is None
+
+
 def test_optional_installer_does_not_bundle_large_runtime_or_opt_in_silently():
     root=Path(__file__).resolve().parents[1]
     setup=(root/'scripts/MeetingSplit.iss').read_text(encoding='utf-8')

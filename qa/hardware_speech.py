@@ -22,9 +22,16 @@ def main():
     parser.add_argument('--root',type=Path,required=True)
     parser.add_argument('--model',choices=('small','medium'),default='small')
     parser.add_argument('--cpu',action='store_true')
+    parser.add_argument('--missing-gpu',action='store_true',help='Separate process with no application GPU component folder')
     args=parser.parse_args()
     root=validate_local_folder(args.root)
-    if args.cpu:
+    if args.missing_gpu:
+        snapshots=list((root/'Modelos'/'models--Systran--faster-whisper-small'/'snapshots').glob('*'))
+        if not snapshots: raise RuntimeError('Prepare the small model in the isolated test cache first')
+        fallback=root/'without-gpu-components';fallback.mkdir(exist_ok=True)
+        model,device=load_whisper(str(snapshots[0]),model_cache=fallback/'Modelos',on_status=lambda m:print(m,flush=True))
+        if device!='CPU': raise RuntimeError('Missing-GPU test did not enter CPU fallback')
+    elif args.cpu:
         model=load_cpu_whisper(args.model,model_cache=root/'Modelos');device='CPU'
     else:
         model,device=load_whisper(args.model,model_cache=root/'Modelos',on_status=lambda m:print(m,flush=True))
@@ -38,7 +45,7 @@ def main():
         row={'language':language,'audio_seconds':duration,
              'inference_seconds':round(time.monotonic()-start,2),'segments':rows}
         results['tests'].append(row);print(json.dumps(row,ensure_ascii=False),flush=True)
-    filename=('cpu' if args.cpu else 'gpu')+'-speech-'+args.model+'.json'
+    filename=('missing-gpu-cpu' if args.missing_gpu else 'cpu' if args.cpu else 'gpu')+'-speech-'+args.model+'.json'
     (root/filename).write_text(json.dumps(results,indent=2,ensure_ascii=False),encoding='utf-8')
     model=None;gc.collect()
 

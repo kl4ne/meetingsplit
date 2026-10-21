@@ -20,6 +20,11 @@ Ollama is MIT licensed: https://github.com/ollama/ollama/blob/v0.40.6/LICENSE
 Its included native dependencies carry separate licenses/notices in the archive.
 qwen3:4b is Apache-2.0: https://ollama.com/library/qwen3:4b
 The exact model license returned by /api/show is saved as QWEN3_LICENSE.txt.
+The pinned qwen3:4b currently declares thinking-only operation: reasoning is received
+in its separate API field and discarded. Only the final answer is saved. Truncated
+generation is rejected. A failed optional minute keeps audio/transcript/subtitles
+and adds a visible MINUTA_NO_GENERADA.txt diagnostic to Results. Existing Ollama
+weights are reused only if their reported source path is verified internal/unsynced.
 Generation tests save a synthetic minutes example and model digest. They do not certify factual accuracy; review all names, dates and agreements.
 
 Free disk space / Espacio: at least 12 GiB for setup, preferably more for Whisper and meeting outputs. C: and D: must be verified internal drives. USB (including fixed USB SSDs), network and cloud folders are rejected. Incomplete downloads can be retried; completed verified components are kept. No component or model is removed when uninstalling the base app, because they are user data in the chosen folder. Delete that folder explicitly only when its contents are no longer needed.

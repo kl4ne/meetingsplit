@@ -4,10 +4,9 @@ Keep 0.8.6; continue main/checkpoints. Do not publish Release, deliver a new bui
 ask user to install anything, or touch kl4ne/integrity-business-filings. Historical
 delivery steps below are superseded by this section and the user's release hold.
 
-1. Finish Spanish synthetic minutes review. Corrected English output now preserves
-   both tasks/dates and uses English headings. qwen3:4b declares thinking.values=[true],
-   so client enables the separate thinking channel, discards reasoning and rejects
-   truncation. Never treat a stale validation JSON as evidence for a failed retry.
+1. EN/ES synthetic minutes have now generated and been reviewed. Keep separate
+   thinking-channel handling and truncation rejection. Check frozen-app generation,
+   not only source generation. Do not reuse stale validation JSON as evidence.
 2. Run final engine/security/browser tests; refresh existing preview with
    qa/build_preview.py. Preserve enlarged five-screen EN/ES UI, PayPal and credit.
 3. Explicit Windows development installer CI ([qa-installer] commit marker or manual
@@ -18,8 +17,9 @@ delivery steps below are superseded by this section and the user's release hold.
 5. Finish docs/THIRD_PARTY_REVIEW.md requirements, exact Qt/FFmpeg/PyAV inventory,
    original notices and corresponding-source obligations. Python-only audit is clean;
    native security/license review is still open.
-6. Evaluate longer synthetic recordings/resource behavior. Short actual ASUS CUDA
-   small/medium EN/ES and CPU tests passed; 1–3h/frozen installer acceptance pending.
+6. One-hour synthetic CUDA/medium pipeline passed in 339.3 s (7 clips, 622 segments,
+   SRT/ZIP). Short actual missing-library CPU fallback also passed EN/ES. Remaining:
+   frozen-app tests, natural-meeting accuracy, three-hour/resource/thermal evaluation.
 7. Update checkpoints/gate only with observed evidence. release_allowed stays false
    until every required item is prepared and evaluated.
 

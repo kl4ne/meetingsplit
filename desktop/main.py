@@ -206,6 +206,7 @@ class DesktopBridge(QObject):
         if not root.is_dir():
             return '[]'
         exact={'TRANSCRIPCION_COMPLETA.txt':'Transcripción completa',
+               'MINUTA_NO_GENERADA.txt':self._tr('Local minutes failed — diagnostic','Minuta no generada — diagnóstico'),
                'TRANSCRIPCION_SUBTITULOS.srt':'Subtítulos SRT',
                'RESUMEN_Y_MINUTA_LOCAL.md':'Resumen y minuta local',
                'RESULTADOS_COMPLETOS.zip':'Paquete ZIP',
@@ -223,6 +224,7 @@ class DesktopBridge(QObject):
         if not self._last_folder or not isinstance(name,str):
             return
         names={'TRANSCRIPCION_COMPLETA.txt','TRANSCRIPCION_SUBTITULOS.srt',
+               'MINUTA_NO_GENERADA.txt',
                'RESUMEN_Y_MINUTA_LOCAL.md','RESULTADOS_COMPLETOS.zip',
                'INSTRUCCIONES_CHATGPT_GEMINI.txt'}
         if name not in names:

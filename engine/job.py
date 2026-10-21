@@ -174,14 +174,25 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                 task.check()
                 progress('Preparando minuta local con Ollama',91)
                 from .ollama import LocalService
-                with LocalService(base,task,lambda msg:progress(msg,92)) as service:
-                    service.ensure_model()
-                    report=summarize_local(transcript,x['report'],x['language'],
-                                            config.get('ollama_model','qwen3:4b'),
-                                            progress=lambda message:progress(message,92),
-                                            endpoint=service.endpoint,cancel=task)
-                task.check()
-                (folder/'RESUMEN_Y_MINUTA_LOCAL.md').write_text(report,encoding='utf-8')
+                try:
+                    with LocalService(base,task,lambda msg:progress(msg,92)) as service:
+                        service.ensure_model()
+                        report=summarize_local(transcript,x['report'],x['language'],
+                                                config.get('ollama_model','qwen3:4b'),
+                                                progress=lambda message:progress(message,92),
+                                                endpoint=service.endpoint,cancel=task)
+                    task.check()
+                    (folder/'RESUMEN_Y_MINUTA_LOCAL.md').write_text(report,encoding='utf-8')
+                    manifest['summary_status']='complete'
+                except JobCancelled:
+                    raise
+                except Exception as exc:
+                    # Optional AI must not hide the successfully completed audio,
+                    # transcript and subtitles from the Results page.
+                    manifest['summary_status']='failed'
+                    warning='La minuta local no se generó; audio y transcripción conservados. / Local minutes failed; audio and transcript preserved.\n'+str(exc)[:500]
+                    manifest['warnings'].append(warning)
+                    (folder/'MINUTA_NO_GENERADA.txt').write_text(warning,encoding='utf-8')
             else:
                 manifest['warnings'].append(
                     'La minuta automática requiere un modelo local adicional. '

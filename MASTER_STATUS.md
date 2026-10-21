@@ -1,5 +1,30 @@
 # CURRENT checkpoint — 2026-10-21 — RELEASE HOLD
 
+Latest observed updates:
+- One-hour synthetic repeated EN/ES workload completed on ASUS CUDA/medium in
+  339.3 seconds: 7 exported clips, 622 transcript segments, subtitles and ZIP.
+  This is workload evidence, not natural-meeting accuracy or a three-hour test.
+- Actual missing-library CPU recovery passed in a fresh process without application
+  CUDA folders: cublasLt64_12.dll absent, CPU transcribed both EN/ES test samples.
+- Finished English and Spanish synthetic minutes reviewed: Ana/send/Friday and
+  Luis/review/Monday preserved; unknown meeting date not invented, attendance not
+  assumed, headings/statuses localized. Spanish succeeded alone in ~96 s after a
+  concurrent GPU stress run had caused a bounded timeout. Production unloads Whisper
+  before starting Ollama; generated text always still requires human review.
+- Optional minutes failure now preserves completed transcript/audio/SRT/ZIP and
+  exposes MINUTA_NO_GENERADA.txt in Results; integration regression passed.
+- Existing Ollama weights must also have an API-reported source path validated as
+  internal and unsynced before reuse. Unknown/USB/cloud paths and remote aliases
+  are not reused; a separate managed installation remains available.
+- Original NVIDIA license texts and Ollama MIT notice included for review before
+  optional download. Exact Qt/FFmpeg source and native licensing/security obligations
+  remain open.
+- First development build 01343bb: Windows compilation, frozen self-check, Setup
+  and portable archive passed (run 39541919344). c415e18 adds disposable installer
+  smoke QA; its result must be checked separately. No new version or Release.
+  Artifact downloads have a 512 MiB connector limit; future portable/setup/reports
+  are uploaded separately for internal inspection.
+
 Continue `kl4ne/meetingsplit` main from `434651f`. Keep app version **0.8.6**.
 NO Release, new version number, user delivery or installation request until CUDA,
 optional Ollama, installer QA, regressions, security and licenses are evaluated.
@@ -51,7 +76,8 @@ Observed here on the actual ASUS (source environment; no private meeting audio):
   and rejects truncation. A finished English synthetic minute was generated and
   reviewed; explicit locale/task rules corrected mixed-language headings and an
   omitted task. Corrected English output includes both Ana/Friday and Luis/Monday,
-  no invented date and no claim of confirmed attendance. Spanish QA is running.
+  no invented date and no claim of confirmed attendance. Spanish QA also passed;
+  see latest updates above.
 - Full local regression with final pinned dependencies: 68 passed (no skips),
   including browser EN/ES navigation. Subsequent small fixes require targeted checks.
 

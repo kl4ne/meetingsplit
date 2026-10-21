@@ -68,7 +68,10 @@ class ComponentDialog(QDialog):
         self.terms.setChecked(False)
         notices=QTextEdit();notices.setReadOnly(True)
         notice_path=Path(getattr(sys,'_MEIPASS',Path(__file__).resolve().parents[1]))/'docs'/'OPTIONAL_COMPONENTS.md'
-        notices.setPlainText(notice_path.read_text(encoding='utf-8') if notice_path.is_file() else 'Vendor license notices missing. Setup cannot continue.')
+        notice_text=notice_path.read_text(encoding='utf-8') if notice_path.is_file() else 'Vendor license notices missing. Setup cannot continue.'
+        for license_path in sorted((notice_path.parent/'licenses').glob('*.txt')):
+            notice_text+='\n\n--- '+license_path.name+' ---\n'+license_path.read_text(encoding='utf-8')
+        notices.setPlainText(notice_text)
         self.notices_present=notice_path.is_file()
         layout.addWidget(notices);layout.addWidget(self.terms)
         self.status=QLabel(self.tr('Nothing will download until you click Prepare. Allow at least 12 GiB free.','No se descargará nada hasta pulsar Preparar. Necesitas al menos 12 GiB libres.'))

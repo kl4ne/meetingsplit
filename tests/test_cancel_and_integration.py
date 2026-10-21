@@ -39,7 +39,8 @@ def test_can_cancel_long_subprocess(tmp_path):
 
 
 @pytest.mark.skipif(not shutil.which('ffmpeg') or not shutil.which('ffprobe'),reason='requires FFmpeg')
-def test_export_transcript_srt_zip_integration(monkeypatch,tmp_path):
+@pytest.mark.parametrize('fail_optional_summary',[False,True])
+def test_export_transcript_srt_zip_integration(monkeypatch,tmp_path,fail_optional_summary):
     import engine.job as job
     source=tmp_path/'bilingue.wav'
     # 6 seconds of tone, 1.5 seconds of silence, then tone. No network.
@@ -55,12 +56,22 @@ def test_export_transcript_srt_zip_integration(monkeypatch,tmp_path):
     monkeypatch.setattr(job,'transcribe_clip',fake_transcribe)
     conf={'file':str(source),'output':str(tmp_path),'action':'both','format':'mp3',
           'minutes':5,'overlap':20,'model':'small','input_language':'auto',
-          'report':'both','report_language':'both','zip_output':True,'local_summary':False}
+          'report':'both','report_language':'both','zip_output':True,'local_summary':fail_optional_summary}
+    if fail_optional_summary:
+        class UnavailableLocalService:
+            def __init__(self,*args,**kwargs): pass
+            def __enter__(self): raise TimeoutError('Simulated local model timeout')
+            def __exit__(self,*args): pass
+        monkeypatch.setattr('engine.ollama.LocalService',UnavailableLocalService)
     progress=[]
     folder=run_job(conf,lambda message,pct:progress.append((message,pct)))
     manifest=json.loads((folder/'manifest.json').read_text())
     assert manifest['status']=='complete'
     assert manifest['transcription_segments']==1
+    if fail_optional_summary:
+        assert manifest['summary_status']=='failed'
+        assert (folder/'MINUTA_NO_GENERADA.txt').is_file()
+        assert not (folder/'RESUMEN_Y_MINUTA_LOCAL.md').exists()
     assert manifest['exports'][0]['duration']>13.0
     assert probe(folder/'parte_01.mp3')>13.0
     assert 'Hola, welcome.' in (folder/'TRANSCRIPCION_COMPLETA.txt').read_text()

@@ -71,14 +71,29 @@ jobs:
         if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || contains(github.event.head_commit.message, '[qa-installer]')
         shell: pwsh
         run: ./qa/windows_installer_smoke.ps1
-      - name: Upload Windows build artifacts
+      - name: Upload development portable QA artifact
         if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || contains(github.event.head_commit.message, '[qa-installer]')
         uses: actions/upload-artifact@v4
         with:
-          name: MeetingSplit-development-QA-${{ github.sha }}
+          name: MeetingSplit-development-QA-portable-${{ github.sha }}
+          path: dist/MeetingSplit-v0.8.6-Windows-portable.zip
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload development installer QA artifact
+        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || contains(github.event.head_commit.message, '[qa-installer]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-development-QA-installer-${{ github.sha }}
+          path: dist/MeetingSplit_Setup_v0.8.6.exe
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload development QA and license reports
+        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || contains(github.event.head_commit.message, '[qa-installer]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-development-QA-reports-${{ github.sha }}
           path: |
-            dist/MeetingSplit-v0.8.6-Windows-portable.zip
-            dist/MeetingSplit_Setup_v0.8.6.exe
             work/installer-smoke/installer-qa.json
+            build/legal
           if-no-files-found: error
           retention-days: 14

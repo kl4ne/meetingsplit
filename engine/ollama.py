@@ -4,9 +4,11 @@ import json
 from contextlib import contextmanager
 import http.client
 import os
+import re
 from pathlib import Path
 import subprocess
 import select
+import sys
 import time
 from urllib.request import build_opener, ProxyHandler, HTTPRedirectHandler, Request
 from desktop.storage import validate_local_folder
@@ -51,6 +53,21 @@ def existing_status(endpoint=DEFAULT_ENDPOINT) -> dict:
         return {'available':bool(version),'version':version,'model':installed}
     except (OSError,ValueError,RuntimeError):
         return {'available':False,'version':None,'model':None}
+
+
+def reusable_existing(endpoint=DEFAULT_ENDPOINT) -> bool:
+    """Existing weights must also be on a verified internal, unsynced disk."""
+    if not existing_status(endpoint).get('model'): return False
+    try:
+        details=request_json(endpoint,'/api/show',{'model':MODEL})
+        if details.get('remote_host') or details.get('remote_model'): return False
+        match=re.search(r'^FROM\s+(.+?)\s*$',details.get('modelfile',''),re.MULTILINE)
+        if not match: return False
+        source=Path(match.group(1).strip().strip('"'))
+        if not source.is_absolute() or not source.is_file(): return False
+        validate_local_folder(source.parent)
+        return True
+    except (OSError,ValueError,RuntimeError): return False
 
 
 @contextmanager
@@ -137,7 +154,7 @@ class LocalService:
         self.endpoint=DEFAULT_ENDPOINT
 
     def __enter__(self):
-        if self.reuse and existing_status().get('model'):
+        if self.reuse and reusable_existing():
             return self
         from desktop.components import OLLAMA_PACKAGE
         folder=self.root/'Componentes'/OLLAMA_PACKAGE.name
@@ -213,11 +230,13 @@ def setup_ollama(root, progress, cancel):
     from desktop.components import install_package, OLLAMA_PACKAGE
     component_root=validate_local_folder(root)/'Componentes'
     component_root.mkdir(exist_ok=True)
+    license_path=Path(getattr(sys,'_MEIPASS',Path(__file__).resolve().parents[1]))/'docs'/'licenses'/'Ollama-0.40.6-LICENSE.txt'
+    (component_root/'OLLAMA_LICENSE.txt').write_text(license_path.read_text(encoding='utf-8'),encoding='utf-8')
     receipt=component_root/'ollama-validation.json'
     receipt.write_text(json.dumps({'ok':False,'status':'testing'}),encoding='utf-8')
     (component_root/'ollama-smoke-minutes.md').unlink(missing_ok=True)
     # An existing service with the exact local model requires no installation.
-    if not existing_status().get('model'):
+    if not reusable_existing():
         install_package(OLLAMA_PACKAGE,root,progress,cancel)
     with LocalService(root,cancel,progress) as service:
         model=service.ensure_model(allow_download=True)

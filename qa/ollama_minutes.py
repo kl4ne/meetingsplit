@@ -10,9 +10,11 @@ from engine.summarize import summarize_local
 root=Path(sys.argv[1]).resolve()
 transcript='[00:00:01] Ana will send the draft on Friday.\n[00:00:06] Luis agreed to review it on Monday.'
 results=[]
+languages=sys.argv[2:] or ('en','es')
+if any(language not in ('en','es') for language in languages): raise ValueError('Use en and/or es')
 with LocalService(root) as service:
     service.ensure_model()
-    for language in ('en','es'):
+    for language in languages:
         start=time.monotonic()
         report=summarize_local(transcript,'minutes',language,MODEL,endpoint=service.endpoint)
         (root/f'qa-minutes-{language}.md').write_text(report,encoding='utf-8')

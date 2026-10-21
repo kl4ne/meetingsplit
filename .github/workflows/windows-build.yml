@@ -1,0 +1,53 @@
+name: Windows build - manual and gated
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: 'x64'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+      - name: Install build dependencies
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+          choco install ffmpeg --yes --no-progress
+          choco install innosetup --yes --no-progress
+          $ffmpeg = (Get-Command ffmpeg.exe -ErrorAction Stop).Source
+          $ffprobe = (Get-Command ffprobe.exe -ErrorAction Stop).Source
+          New-Item -Type Directory -Force bin | Out-Null
+          Copy-Item $ffmpeg bin\ffmpeg.exe
+          Copy-Item $ffprobe bin\ffprobe.exe
+          .\bin\ffmpeg.exe -version | Select-Object -First 1
+      - name: Python engine and integration tests
+        shell: pwsh
+        run: .\.venv\Scripts\python.exe -m pytest -q --ignore=tests/test_ui_language.py --ignore=tests/test_ui_navigation.py
+      - name: Compile native Windows EXE and optional Setup
+        shell: cmd
+        run: scripts\compilar_windows.bat
+      - name: Verify installer and portable archive were generated
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'dist/MeetingSplit-v0.8.3-Windows-portable.zip')) { throw 'Portable package missing' }
+          if (-not (Test-Path 'dist/MeetingSplit_Setup_v0.8.3.exe')) { throw 'Windows installer missing' }
+      - name: Upload Windows build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-v0.8.3-Windows-build-unvalidated-on-user-hardware
+          path: |
+            dist/MeetingSplit-v0.8.3-Windows-portable.zip
+            dist/MeetingSplit_Setup_v0.8.3.exe
+          if-no-files-found: error
+          retention-days: 14

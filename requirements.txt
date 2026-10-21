@@ -1,0 +1,7 @@
+# Tested imports must be verified on actual Windows 11 hardware.
+PySide6>=6.8,<7
+faster-whisper>=1.1,<2
+pyinstaller>=6.11,<7
+
+# Build-time regression gate; not imported by the shipped application.
+pytest>=8,<10

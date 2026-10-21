@@ -1,4 +1,4 @@
-# Python caches and virtual environments
+# Python runtime and tests
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -8,7 +8,7 @@ venv/
 .env.*
 *.log
 
-# Private local meeting data
+# Local processing: NEVER commit meeting recordings or generated data
 *.wav
 *.mp3
 *.m4a
@@ -25,7 +25,7 @@ Modelos/
 Temporales/
 Resultados/
 
-# Generated installers and local build tools
+# Windows packaging, bundled tools, local user state
 build/
 dist/
 bin/

@@ -1,0 +1,102 @@
+MeetingSplit Freeware License
+Version 1.0 — October 2026
+Copyright © 2026 Roberto S. Macfie. All rights reserved.
+
+IMPORTANT: This is a custom freeware license, not an open-source license.
+Please read these terms before using or distributing MeetingSplit.
+
+1. DEFINITIONS
+“MeetingSplit” or “Software” means the MeetingSplit desktop application, its
+original source code, interface, associated original documentation, designs,
+and official releases authored by Roberto S. Macfie, excluding third-party
+components governed by separate licenses.
+“Licensor” means Roberto S. Macfie.
+“You” means an individual or organization using the Software.
+
+2. FREE PERMITTED USE
+Subject to compliance with this license, the Licensor grants You a limited,
+non-exclusive, worldwide, royalty-free, revocable license to download, install,
+and use authorized MeetingSplit releases, without charge, on computers You own
+or control. Personal, educational, church, nonprofit, and internal business
+use are permitted, including using MeetingSplit to transcribe or prepare notes
+for meetings within a business. You may create a reasonable number of backup
+copies solely for Your own use.
+
+3. SOURCE CODE AVAILABILITY
+If the Licensor publishes source code in a public repository, You may view and
+download it and make copies reasonably necessary for personal evaluation,
+compilation, and testing, subject to the restrictions below. Making source code
+publicly visible does not grant permission to publish modified versions,
+redistribute Software copies, or use its original code in other projects.
+This license does not restrict rights necessarily granted under the hosting
+platform's terms (for example, permitted GitHub viewing or forking), or by law.
+
+4. RESTRICTIONS
+Except with the Licensor's prior written permission or to the extent otherwise
+permitted by applicable law, You may not:
+(a) sell, rent, sublicense, charge for access to, or commercially exploit the
+    Software itself or copies of it;
+(b) distribute, mirror, republish, or redistribute the Software, installer,
+    original source code, or modified versions to third parties, including
+    through third-party download sites;
+(c) publish adaptations, derivative works, or modified builds of the Software;
+(d) remove, conceal, or alter copyright, attribution, or license notices;
+(e) imply endorsement by, affiliation with, or authorship by the Licensor.
+These restrictions do not prohibit internal business use under Section 2.
+
+5. OFFICIAL DISTRIBUTION AND CONTRIBUTIONS
+MeetingSplit may be downloaded from release locations authorized by the
+Licensor. No donation, subscription, purchase, or payment is required to use
+the features made available in the free application. Optional support payments
+are voluntary and confer no additional rights or benefits under this license.
+Such payments are not represented as charitable tax-deductible donations.
+
+6. OWNERSHIP AND BRANDING
+The Licensor retains ownership of all rights in the original MeetingSplit
+materials, name, branding, and code, except rights held by third parties.
+No trademark or branding license is granted.
+
+7. THIRD-PARTY COMPONENTS
+The Software may use or interoperate with components such as Qt/PySide6,
+FFmpeg, Faster-Whisper, CTranslate2, and separately downloaded AI models.
+These are NOT relicensed by this document; each retains its own copyright and
+license terms. Where those licenses or applicable law confer rights, they
+prevail over any conflicting restriction in this license for the affected
+third-party component. Required notices and source-code offers, if any, must
+be supplied with relevant distributed builds.
+
+8. PRIVACY AND USER RESPONSIBILITY
+MeetingSplit is intended to process recordings locally. You remain responsible
+for lawful recording, consent where required, management of your data, and
+any uploads you independently make to external services. No promise of perfect
+transcription accuracy, data retention, or fitness for legal recordkeeping is
+made.
+
+9. NO WARRANTY; LIMITATION OF LIABILITY
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SOFTWARE IS PROVIDED
+“AS IS” AND “AS AVAILABLE,” WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+NONINFRINGEMENT. TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE LICENSOR SHALL NOT
+BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES
+ARISING FROM THE USE OR INABILITY TO USE THE SOFTWARE. NOTHING IN THIS SECTION
+EXCLUDES LIABILITY THAT CANNOT LAWFULLY BE EXCLUDED.
+
+10. TERMINATION
+Your rights under this license terminate if You materially breach its terms
+and fail to cease the breach. Upon termination, stop using and distributing
+any copies not otherwise lawfully authorized and delete them, except where
+retention is required by law. Sections concerning ownership, restrictions,
+warranty, liability, and third-party rights survive where applicable.
+
+11. EXCEPTIONS AND PERMISSION REQUESTS
+For redistribution, republication, commercialization of the Software itself,
+or publication of modified versions, obtain separate prior written permission
+from the Licensor. No payment is required for the permitted uses in Section 2.
+
+12. SEVERABILITY AND LEGAL RIGHTS
+If part of this license is unenforceable, the remaining parts continue to
+apply to the extent permitted by law. This license does not override statutory
+rights that cannot be waived, mandatory consumer protections, or third-party
+open-source license obligations.
+
+Copyright © 2026 Roberto S. Macfie. All rights reserved.

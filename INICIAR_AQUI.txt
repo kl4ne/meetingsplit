@@ -1,0 +1,9 @@
+MeetingSplit v0.7 — CODIGO DE DESARROLLO (NO ES UN INSTALADOR)
+
+Este ZIP contiene los archivos de programacion, la interfaz y las pruebas.
+Para ver el aspecto actual sin instalar: abre MEETINGSPLIT_PREVIEW_v0.8.3.html.
+Para compilar Windows: lee COMPILACION_WINDOWS.md.
+Todavia NO se ha producido un ejecutable .exe de Windows verificado.
+No descargues modelos ni proceses grabaciones confidenciales para pruebas hasta validar la instalacion.
+
+Continuar desde MASTER_STATUS.md.

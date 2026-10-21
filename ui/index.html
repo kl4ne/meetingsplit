@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light"><title>MeetingSplit · Estudio privado de reuniones</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Navegación principal">
+    <div class="brand" aria-label="MeetingSplit">
+      <div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M4 26h8l4-11 5 22 6-32 6 34 4-13h7" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg></div>
+      <div class="brand-word"><strong>MEETING<span>SPLIT</span></strong><small>PRIVATE AUDIO STUDIO</small></div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <p class="nav-heading">ESTUDIO</p>
+    <nav id="primary-navigation" aria-label="Pantallas">
+      <button class="nav-item active" type="button" data-go="home" aria-current="page"><span class="nav-icon">◈</span><span>Inicio</span><span class="nav-arrow">›</span></button>
+      <button class="nav-item" type="button" data-go="import"><span class="nav-icon">⇧</span><span>Importar audio</span><span class="nav-arrow">›</span></button>
+      <button class="nav-item" type="button" data-go="settings"><span class="nav-icon">⚙</span><span>Configuración</span><span class="nav-arrow">›</span></button>
+      <button class="nav-item" type="button" data-go="process"><span class="nav-icon">◉</span><span>Procesamiento</span><span class="nav-arrow">›</span></button>
+      <button class="nav-item" type="button" data-go="results"><span class="nav-icon">▤</span><span>Resultados</span><span class="nav-arrow">›</span></button>
+    </nav>
+    <div class="sidebar-bottom">
+      <a class="sidebar-support" id="support-development" href="https://www.paypal.com/ncp/payment/XPUK3HVHJW8KE" target="_blank" rel="noopener noreferrer" aria-label="Support MeetingSplit Development" title="Open secure PayPal contribution page">
+        <span class="support-heart" aria-hidden="true">♡</span><span>Apoyar el desarrollo</span><span class="support-arrow" aria-hidden="true">↗</span>
+      </a>
+      <div class="security-mark"><span class="green-dot"></span><span>ARCHIVOS EN TU EQUIPO</span></div>
+      <p>Privacidad por diseño. Tus grabaciones no se envían a servidores.</p>
+      <div class="sidebar-identity"><span>MS / DESKTOP</span><span>v0.8.3</span></div>
+    </div>
+  </aside>
+  <div class="main-shell">
+    <header class="topbar">
+      <div class="page-position"><span class="location-kicker">MEETINGSPLIT</span><span class="crumb">/</span><span id="page-crumb">Inicio</span></div>
+      <div class="top-right"><div class="ui-language-control" role="group" aria-label="Interface language" id="ui-language-control">
+        <span class="language-label" id="language-label">LANGUAGE</span><button type="button" class="ui-lang-btn selected" id="lang-en" data-locale="en" aria-pressed="true" lang="en">EN</button><span class="lang-rule" aria-hidden="true">/</span><button type="button" class="ui-lang-btn" id="lang-es" data-locale="es" aria-pressed="false" lang="es">ES</button>
+      </div><span class="gold-separator"></span><span class="privacy-badge"><span class="green-dot"></span> PROCESAMIENTO LOCAL</span><span class="version-chip">EDICIÓN PRIVADA · v0.8.3</span></div>
+    </header>
+    <main id="screen-container" tabindex="-1">
+      <!-- One individual view is present at a time; navigation never stacks pages vertically. -->
+      <section class="screen home-screen active-screen" id="view-home" data-view="home" aria-labelledby="home-title">
+        <div class="cinematic">
+          <div class="scenery" aria-hidden="true"><div class="light-beam"></div><div class="glow-one"></div><div class="glow-two"></div><div class="orbits"></div><div class="wave-ribbon"><svg viewBox="0 0 460 220" preserveAspectRatio="none"><path d="M0 108C35 108 45 54 82 54s46 108 81 108 34-135 75-135 44 158 90 158 53-77 132-77" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".7"/></svg></div></div>
+          <div class="cinematic-copy"><p class="eyebrow gold"><span class="eyebrow-line"></span> TU VOZ. TU INFORMACIÓN. TU CONTROL.</p>
+            <h1 id="home-title">Cada palabra cuenta.<br><em>Cada decisión permanece.</em></h1>
+            <p>Reúne la claridad de tus reuniones en un solo lugar. Divide y transcribe hasta tres horas de audio, sin abandonar tu computadora.</p>
+            <button type="button" class="gold-button lead-cta" data-go="import">PREPARAR UNA REUNIÓN <span>↗</span></button>
+          </div><span class="cinematic-mark">ESTUDIO PRIVADO / 01</span>
+        </div>
+        <div class="home-section-heading"><div><p class="eyebrow ink">UN FLUJO, TRES PASOS</p><h2>De la conversación a la claridad.</h2></div><span>Sin servidor · Español e inglés · Control total</span></div>
+        <div class="steps-grid">
+          <button type="button" class="step-card" data-go="import"><span class="step-number">01 / IMPORTAR</span><span class="step-icon">⇧</span><strong>Selecciona el audio</strong><small>Reuniones almacenadas en tu equipo o descargadas de iCloud y Drive.</small><span class="step-link">ABRIR IMPORTADOR ↗</span></button>
+          <button type="button" class="step-card" data-go="settings"><span class="step-number">02 / CONFIGURAR</span><span class="step-icon">⚙</span><strong>Define el análisis</strong><small>Idioma, modelo Whisper, tamaño de fragmentos y formato de minuta.</small><span class="step-link">VER CONFIGURACIÓN ↗</span></button>
+          <button type="button" class="step-card" data-go="process"><span class="step-number">03 / PROCESAR</span><span class="step-icon">◉</span><strong>Obtén resultados</strong><small>Audios divididos, transcripción con tiempos y exportaciones organizadas.</small><span class="step-link">IR AL ESTUDIO ↗</span></button>
+        </div>
+      </section>
+      <section class="screen" id="view-import" data-view="import" aria-labelledby="import-title" hidden>
+        <div class="screen-intro"><div><p class="eyebrow ink">01 / ORIGEN DE LA REUNIÓN</p><h1 id="import-title">Importar <em>grabación.</em></h1><p>Tu audio original permanece intacto. Selecciona un archivo local para comenzar.</p></div><span class="step-count">PASO 01 — 03</span></div>
+        <div class="two-cols import-layout">
+          <div class="surface-card import-box"><div class="card-caption">GRABACIÓN DE ORIGEN <span>01</span></div>
+            <button type="button" class="drop-zone" id="choose-file"><span class="upload-symbol">⇧</span><strong id="file-title">Seleccionar grabación</strong><small id="file-sub">MP3 · M4A · WAV · AAC · FLAC · OGG</small><span class="outline-cta">EXPLORAR ARCHIVOS ↗</span></button>
+            <div class="folder-row"><div><p class="field-label">CARPETA DE DATOS Y RESULTADOS</p><p id="folder-display" class="folder-text">Pendiente: elegir carpeta local</p></div><button type="button" id="choose-output" class="text-button">CAMBIAR ↗</button></div>
+          </div>
+          <div class="import-info"><div class="dark-card"><span class="card-caption light">PRIVACIDAD ESENCIAL <span>✦</span></span><h2>El audio sigue<br><em>siendo tuyo.</em></h2><p>Los cortes y la transcripción funcionan en tu equipo, sin entregar la grabación a terceros. Los archivos importados desde la nube deben estar descargados.</p><div class="info-rule">ARCHIVO ORIGINAL SIN MODIFICAR</div><div class="info-rule">DESTINO LOCAL ELEGIDO POR TI</div><div class="info-rule">HASTA 3 HORAS POR REUNIÓN</div></div>
+            <button type="button" class="gold-button next-button" data-go="settings">CONTINUAR A CONFIGURACIÓN <span>↗</span></button></div>
+        </div>
+      </section>
+      <section class="screen" id="view-settings" data-view="settings" aria-labelledby="settings-title" hidden>
+        <div class="screen-intro compact-intro"><div><p class="eyebrow ink">02 / AJUSTES DEL ANÁLISIS</p><h1 id="settings-title">Configura <em>tu reunión.</em></h1><p>Cada ajuste se aplica únicamente en tu computadora.</p></div><span class="step-count">PASO 02 — 03</span></div>
+        <div class="settings-grid">
+          <div class="surface-card settings-card"><div class="card-caption">AUDIO Y TRANSCRIPCIÓN <span>01</span></div><div class="fields">
+            <label><span class="field-label">ACCIÓN PRINCIPAL</span><select id="action"><option value="both">Dividir + Transcribir</option><option value="transcribe">Solo transcribir</option><option value="split">Solo dividir</option></select></label>
+            <label><span class="field-label">IDIOMA DE AUDIO</span><select id="input-language"><option value="auto">Automático · Español + Inglés</option><option value="es">Español</option><option value="en">Inglés</option></select></label>
+            <label><span class="field-label">FRAGMENTOS MÁXIMOS</span><select id="minutes"><option value="5">5 minutos</option><option value="10">10 minutos</option><option value="15">15 minutos</option><option value="20">20 minutos</option></select></label>
+            <label><span class="field-label">SOLAPAMIENTO</span><select id="overlap"><option value="20">20 segundos</option><option value="10">10 segundos</option><option value="30">30 segundos</option></select></label>
+            <label><span class="field-label">FORMATO DE SALIDA</span><select id="format"><option value="mp3">MP3 · Compacto</option><option value="m4a">M4A · AAC</option><option value="wav">WAV · Sin comprimir</option></select></label>
+            <label><span class="field-label">MODELO DE VOZ</span><select id="model"><option value="small">Small · Económico</option><option value="medium" selected>Medium · Equilibrado</option><option value="large-v3">Large-v3 · Alta precisión</option></select></label>
+          </div></div>
+          <div class="surface-card settings-card"><div class="card-caption">MINUTAS E INTELIGENCIA ARTIFICIAL <span>02</span></div><div class="fields">
+            <label><span class="field-label">PLATAFORMA DE PREFERENCIA</span><select id="provider"><option value="chatgpt">ChatGPT</option><option value="gemini">Gemini</option></select></label>
+            <label><span class="field-label">SUSCRIPCIÓN</span><select id="plan"><option value="paid">De pago</option><option value="free">Gratuita</option></select></label>
+            <label><span class="field-label">TIPO DE DOCUMENTO</span><select id="report"><option value="both">Resumen + minuta</option><option value="summary">Solo resumen</option><option value="minutes">Solo minuta</option></select></label>
+            <label><span class="field-label">IDIOMA DEL DOCUMENTO</span><select id="report-language"><option value="es">Español</option><option value="en">Inglés</option><option value="both">Español e inglés</option></select></label>
+          </div><div class="ai-notice" id="provider-hint"><span class="info-symbol">i</span><span>Los resultados se preparan para utilizarlos en tu plataforma preferida.</span></div>
+            <label class="checkbox-row"><input type="checkbox" id="local-summary"><span><b>Minuta automática local con Ollama</b><small>Opcional. Necesita Ollama y qwen3:4b instalados.</small></span></label>
+            <label class="checkbox-row"><input type="checkbox" id="zip-output" checked><span><b>Exportar un ZIP con resultados</b><small>Incluye los archivos generados.</small></span></label>
+          </div>
+        </div><div class="settings-footer"><span>Las suscripciones de ChatGPT/Gemini no equivalen a acceso API automático.</span><button type="button" class="gold-button" data-go="process">CONTINUAR AL ESTUDIO <span>↗</span></button></div>
+      </section>
+      <section class="screen" id="view-process" data-view="process" aria-labelledby="process-title" hidden>
+        <div class="screen-intro"><div><p class="eyebrow ink">03 / MOTOR DE PROCESAMIENTO</p><h1 id="process-title">Estudio <em>de audio.</em></h1><p>Tu reunión se procesa localmente con cortes seguros y transcripción temporal.</p></div><span class="step-count">PASO 03 — 03</span></div>
+        <div class="two-cols process-layout">
+          <div class="dark-card processing-stage"><span class="card-caption light">PROCESAMIENTO INTELIGENTE <span>03</span></span><div class="waveform" aria-hidden="true"><svg id="wave-svg" viewBox="0 0 310 105" preserveAspectRatio="none"></svg></div><h2>La precisión <em>es prioridad.</em></h2><p>Detectamos pausas naturales, conservamos segundos de contexto y registramos la procedencia de cada fragmento.</p><div class="stage-features"><span>ANÁLISIS LOCAL</span><span>CORTES CON SOLAPAMIENTO</span><span>IDIOMAS MIXTOS</span></div></div>
+          <div class="surface-card run-card"><div class="card-caption">ESTADO DEL TRABAJO <span>LIVE</span></div><div class="state-label" id="state-label">ESPERANDO GRABACIÓN</div><div class="progress-track"><span id="progress-fill"></span></div><p id="job-status" role="status" aria-live="polite">Importa una grabación para comenzar.</p><button id="start-job" class="gold-button full" type="button">INICIAR PROCESAMIENTO <span>↗</span></button><button id="cancel-job" class="cancel-button full" type="button" hidden>CANCELAR PROCESAMIENTO ✕</button><button id="open-result" class="outline-cta full" type="button" hidden>ABRIR RESULTADOS ↗</button><div class="run-note">El modelo de voz puede requerir Internet únicamente la primera vez para su descarga. Los análisis posteriores son locales.</div></div>
+        </div>
+      </section>
+      <section class="screen" id="view-results" data-view="results" aria-labelledby="results-title" hidden>
+        <div class="screen-intro"><div><p class="eyebrow ink">04 / ENTREGA Y EXPORTACIÓN</p><h1 id="results-title">Tus <em>resultados.</em></h1><p>Transcripciones con tiempos, fragmentos numerados y documentos de seguimiento.</p></div><span class="step-count">ARCHIVO LOCAL</span></div>
+        <div class="results-layout surface-card"><div class="result-emblem">▤</div><div class="result-eyebrow" id="result-eyebrow">TODAVÍA NO HAY UNA REUNIÓN PROCESADA</div><h2 id="result-heading">Tu información,<br><em>organizada con claridad.</em></h2><p id="result-description">Cuando termine una reunión, podrás abrir la carpeta elegida y consultar los archivos generados sin salir de MeetingSplit.</p><div class="results-path" id="result-path" hidden></div><div class="result-files" id="result-files" hidden></div><button type="button" id="results-open-folder" class="gold-button" hidden>ABRIR CARPETA DE RESULTADOS ↗</button><button type="button" id="results-new" data-go="import" class="text-button">PREPARAR UNA REUNIÓN ↗</button></div>
+      </section>
+    </main>
+    <div class="bottomline"><span>MEETINGSPLIT <b>·</b> PRIVATE AUDIO STUDIO</span><div class="credit-stack"><span class="developer-signature" id="developer-signature">Designed &amp; Developed by <span id="developer-name">Roberto S. Macfie</span></span><span class="copyright-line" id="copyright-line">© 2026 Roberto S. Macfie. All rights reserved.</span></div></div>
+  </div>
+</div>
+<script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+<script src="locales.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

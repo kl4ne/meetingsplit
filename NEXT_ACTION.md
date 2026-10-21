@@ -1,3 +1,17 @@
+## Remaining technical gates after successful LGPL media package QA
+
+1. Finish isolated authentic v0.8.5->0.8.6 Windows upgrade run
+   #39596746344; audit any failure against real logs.
+2. Repeat a **single** consolidated QA build using the pinned dated BtbN
+   archive SHA-256 `453a30a501...` and verify its frozen PyAV and audio
+   exports. Only then consider moving the reviewed LGPL build code into main.
+3. Complete Qt/Chromium/FFmpeg LGPLv3 third-party source and notice
+   obligations, and any remaining native-vulnerability review.
+4. Verify live optional CUDA/Ollama wizard cancellation/retry/disk-full
+   on Windows, and real ASUS natural-meeting GPU/minutes acceptance.
+5. No public Release, new version or user installation request until all
+   release requirements are confirmed.
+
 ## Next required engineering actions after LGPL experiment
 
 1. Inspect QA Windows run #39595255314:

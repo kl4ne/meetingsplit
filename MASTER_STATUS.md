@@ -1,3 +1,16 @@
+## Verified LGPL-native QA checkpoint — 2026-10-21
+
+- The GPL-enabled old media stack was replaced **on QA branch only** by
+  source-built PyAV and LGPL-shared FFmpeg 8.1, Windows QA **PASSED**.
+- Frozen Windows native inventory: 679 total files / 211 native files;
+  no x264/x265 or FFmpeg GPL/nonfree flags. See
+  `docs/QA_LGPL_2026-10-21.md`, run #39595255314 and artifact #12343733718.
+- Vendor digest now pinned to immutable dated release for a *future QA run*;
+  that exact archive is not yet tested in a consolidated installer.
+- Authentic previous-version upgrade run #39596746344 still executing.
+- **Main executable dependencies are not switched yet**; no user Release,
+  no version bump and `release_allowed=false`.
+
 ## LGPL-native rebuild checkpoint — 2026-10-21 — RELEASE STILL BLOCKED
 
 - Isolated branch: `qa/consolidated-20261021`. Do not merge untested

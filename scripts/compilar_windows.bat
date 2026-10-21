@@ -37,6 +37,7 @@ if errorlevel 1 exit /b 1
  --add-data "build\legal;legal" ^
  --hidden-import desktop.component_setup --hidden-import desktop.cuda_probe ^
  --add-binary "bin\ffmpeg.exe;bin" --add-binary "bin\ffprobe.exe;bin" ^
+ --add-binary "bin\*.dll;bin" ^
  --collect-all faster_whisper --collect-all ctranslate2 --collect-all PySide6.QtWebEngineWidgets ^
  --hidden-import PySide6.QtWebEngineCore --hidden-import PySide6.QtWebChannel ^
  run.py

@@ -44,20 +44,9 @@ jobs:
           python -m venv .venv
           .\.venv\Scripts\python.exe -m pip install -r requirements.txt
           .\.venv\Scripts\python.exe -m pip install --upgrade 'pip>=26.1.2'
-          choco install ffmpeg --yes --no-progress
-          # Installer tooling is needed only for an explicit packaging run.
-          # Chocolatey .exe shims cannot be copied into the binary package.
-          $packageDir = Join-Path $env:ChocolateyInstall 'lib\ffmpeg'
-          $ffmpeg = Get-ChildItem -Path $packageDir -Recurse -File -Filter 'ffmpeg.exe' |
-            Select-Object -First 1 -ExpandProperty FullName
-          $ffprobe = Get-ChildItem -Path $packageDir -Recurse -File -Filter 'ffprobe.exe' |
-            Select-Object -First 1 -ExpandProperty FullName
-          if (-not $ffmpeg -or -not $ffprobe) { throw 'Chocolatey FFmpeg binaries not found' }
-          New-Item -ItemType Directory -Force 'bin' | Out-Null
-          Copy-Item -LiteralPath $ffmpeg -Destination 'bin\ffmpeg.exe' -Force
-          Copy-Item -LiteralPath $ffprobe -Destination 'bin\ffprobe.exe' -Force
-          .\bin\ffmpeg.exe -version | Select-Object -First 1
-          .\bin\ffprobe.exe -version | Select-Object -First 1
+      - name: Prepare media without GPL-licensed codecs (experimental QA only)
+        shell: pwsh
+        run: ./scripts/prepare_lgpl_media.ps1
       - name: Python engine and integration tests
         # The packaging script runs this same suite itself; avoid running it twice.
         if: github.ref != 'refs/heads/qa/consolidated-20261021' && (github.event_name != 'workflow_dispatch' || !inputs.package_for_qa)
@@ -106,5 +95,6 @@ jobs:
             work/installer-smoke/installer-qa.json
             build/legal
             build/native-inventory.json
+            build/lgpl-wheel/lgpl-media-receipt.json
           if-no-files-found: error
           retention-days: 14

@@ -1,3 +1,28 @@
+## Additional package audit findings and source references (2026-10-21)
+
+The 680-file inventory also contains 17 native Cython 3.3.0 compiler modules
+and `_internal/tokenizers/tokenizers.pyd` from tokenizers 0.23.3. These
+are not represented by original license files in the previous collector
+output. Exact upstream Apache-2.0 and Cython historical Pyrex COPYING
+texts have now been added to `docs/third-party-licenses/` with SHA-256
+receipts, but **not** to the already running QA package #39695270843.
+Review and include them in a subsequent final distribution package.
+`flatbuffers` appeared as a metadata-only dependency with no corresponding
+shipped package file, and does not require treatment as a bundled binary
+on the current evidence; reassess if it is later included.
+
+Qt's own SBOM documents can be generated in SPDX 2.3 and are installed in
+a Qt Online Installer `sbom/` folder, but those SDK build records MUST NOT
+be misrepresented as exact PySide6 wheel binary provenance unless matched:
+https://doc.qt.io/qt-6.12/sbom.html
+
+For WebEngine's separate release/versioning (Chromium baseline vs Qt 6.12),
+match upstream's `CHROMIUM_VERSION` to the shipped module instead of
+assuming the PySide6 Python package version identifies the exact Chromium
+security patch level:
+https://wiki.qt.io/QtWebEngine/ChromiumVersions
+
+---
 # MeetingSplit 0.8.6 — exact native redistribution evidence matrix (2026-10-21)
 
 **Scope:** Internal QA source/binary provenance review, NOT legal approval. No

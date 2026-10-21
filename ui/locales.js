@@ -1,6 +1,7 @@
 // MeetingSplit v0.8.6 — UI translations. Spanish originals are the keys; English is the initial UI locale.
 // This UI language preference does NOT change meeting audio language or report language.
 window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
+  "Preparar CUDA / Ollama opcionales": "Set up optional CUDA / Ollama",
   "MeetingSplit · Estudio privado de reuniones": "MeetingSplit · Private Meeting Studio",
   "ESTUDIO": "STUDIO",
   "Inicio": "Home",

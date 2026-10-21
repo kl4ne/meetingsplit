@@ -1,7 +1,13 @@
 # Tested imports must be verified on actual Windows 11 hardware.
-PySide6>=6.8,<7
-faster-whisper>=1.1,<2
-pyinstaller>=6.11,<7
+PySide6==6.12.0
+faster-whisper==1.2.1
+# CUDA 12 / cuDNN 9 ABI; do not silently change the native inference runtime.
+ctranslate2==4.6.2
+# CT2 4.6.2 removes the obsolete pkg_resources import; keep build tools patched.
+setuptools==84.2.1
+# PyAV 19 removed metadata_errors, still required by Faster-Whisper 1.2.1.
+av==16.0.1
+pyinstaller==6.22.3
 
 # Build-time regression gate; not imported by the shipped application.
 pytest>=8,<10

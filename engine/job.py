@@ -168,11 +168,18 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             (folder/'TRANSCRIPCION_SUBTITULOS.srt').write_text(format_srt(lines),encoding='utf-8')
             _write_json(folder/'TRANSCRIPCION_MARCAS_TIEMPO.json',{'segments':lines})
             if config.get('local_summary',False):
+                # Release Whisper VRAM before asking Qwen to load on an 8 GB GPU.
+                model=None
+                gc.collect()
                 task.check()
                 progress('Preparando minuta local con Ollama',91)
-                report=summarize_local(transcript,x['report'],x['language'],
-                                        config.get('ollama_model','qwen3:4b'),
-                                        progress=lambda message:progress(message,92))
+                from .ollama import LocalService
+                with LocalService(base,task,lambda msg:progress(msg,92)) as service:
+                    service.ensure_model()
+                    report=summarize_local(transcript,x['report'],x['language'],
+                                            config.get('ollama_model','qwen3:4b'),
+                                            progress=lambda message:progress(message,92),
+                                            endpoint=service.endpoint,cancel=task)
                 task.check()
                 (folder/'RESUMEN_Y_MINUTA_LOCAL.md').write_text(report,encoding='utf-8')
             else:

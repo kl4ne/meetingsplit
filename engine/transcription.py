@@ -18,9 +18,14 @@ def _gpu_runtime_ready() -> tuple[bool, str]:
     """
     if sys.platform != 'win32':
         return True, ''
-    for dll in ('cublas64_12.dll', 'cublasLt64_12.dll', 'cudnn64_9.dll'):
+    for dll in ('nvcuda.dll', 'cublasLt64_12.dll', 'cublas64_12.dll',
+                'cudnn64_9.dll', 'cudnn_ops64_9.dll', 'cudnn_cnn64_9.dll',
+                'cudnn_adv64_9.dll', 'cudnn_graph64_9.dll',
+                'cudnn_heuristic64_9.dll', 'cudnn_engines_precompiled64_9.dll',
+                'cudnn_engines_runtime_compiled64_9.dll'):
         try:
-            ctypes.WinDLL(dll)
+            # System32 and explicitly registered vendor folders; exclude CWD.
+            ctypes.WinDLL(dll, winmode=0x1000)
         except (OSError, AttributeError) as exc:
             return False, f'{dll}: {str(exc)[:100]}'
     return True, ''
@@ -52,11 +57,22 @@ def load_cpu_whisper(model_name: str='medium', *, model_cache:Path|None=None):
 
 
 def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_status:Callable[[str],None]=lambda _:None):
+    if model_cache is not None:
+        from desktop.components import activate_gpu
+        activate_gpu(Path(model_cache).parent)
     try:
         from faster_whisper import WhisperModel
     except ImportError as err:
         raise RuntimeError('Falta faster-whisper. Ejecuta instalar.bat para instalar las dependencias.') from err
     ready, reason = _gpu_runtime_ready()
+    if ready and sys.platform == 'win32' and model_cache is not None:
+        # cuDNN lazily initializes on inference and may abort the native process.
+        # Probe in a disposable child so a missing dependency cannot kill the UI.
+        from desktop.cuda_probe import probe_cuda
+        on_status('Comprobando inferencia CUDA en proceso aislado...')
+        report=probe_cuda(model_name,Path(model_cache))
+        ready=report.get('ok',False)
+        reason=report.get('error','CUDA probe failed')
     if ready:
         try:
             on_status('Preparando aceleración NVIDIA (CUDA)...')

@@ -13,6 +13,11 @@ on:
       - 'requirements.txt'
       - 'run.py'
   workflow_dispatch:
+    inputs:
+      package_for_qa:
+        description: 'Build development installer for QA only (no release)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -34,6 +39,7 @@ jobs:
         run: |
           python -m venv .venv
           .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+          .\.venv\Scripts\python.exe -m pip install --upgrade 'pip>=26.1.2'
           choco install ffmpeg --yes --no-progress
           choco install innosetup --yes --no-progress
           # Chocolatey .exe shims cannot be copied into the binary package.
@@ -52,17 +58,20 @@ jobs:
         shell: pwsh
         run: .\.venv\Scripts\python.exe -m pytest -q --ignore=tests/test_ui_language.py --ignore=tests/test_ui_navigation.py
       - name: Compile native Windows EXE and optional Setup
+        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || contains(github.event.head_commit.message, '[qa-installer]')
         shell: cmd
         run: scripts\compilar_windows.bat
       - name: Verify installer and portable archive were generated
+        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || contains(github.event.head_commit.message, '[qa-installer]')
         shell: pwsh
         run: |
           if (-not (Test-Path 'dist/MeetingSplit-v0.8.6-Windows-portable.zip')) { throw 'Portable package missing' }
           if (-not (Test-Path 'dist/MeetingSplit_Setup_v0.8.6.exe')) { throw 'Windows installer missing' }
       - name: Upload Windows build artifacts
+        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || contains(github.event.head_commit.message, '[qa-installer]')
         uses: actions/upload-artifact@v4
         with:
-          name: MeetingSplit-v0.8.6-Windows-build-unvalidated-on-user-hardware
+          name: MeetingSplit-development-QA-${{ github.sha }}
           path: |
             dist/MeetingSplit-v0.8.6-Windows-portable.zip
             dist/MeetingSplit_Setup_v0.8.6.exe

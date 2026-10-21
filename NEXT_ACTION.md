@@ -1,3 +1,34 @@
+# CURRENT next actions — 2026-10-21 — no new version/delivery
+
+Keep 0.8.6; continue main/checkpoints. Do not publish Release, deliver a new build,
+ask user to install anything, or touch kl4ne/integrity-business-filings. Historical
+delivery steps below are superseded by this section and the user's release hold.
+
+1. Confirm corrected Ollama minutes generation on synthetic text, including EN/ES
+   factual review. Old qwen3 template opens thinking even with think=false; client
+   now supplies empty thinking assistant prefill and /no_think and rejects truncation.
+   Never treat a stale validation JSON as evidence for a failed/retried test.
+2. Run final engine/security/browser tests; refresh existing preview with
+   qa/build_preview.py. Preserve enlarged five-screen EN/ES UI, PayPal and credit.
+3. Explicit Windows development installer CI ([qa-installer] commit marker or manual
+   QA input), inspect results and fix failures. Compilation is not installer acceptance.
+4. Evaluate frozen app/wizard with internal test data: CUDA lazy inference, CPU
+   recovery, Ollama setup/generation, existing instance, occupied port, cancel/retry,
+   disk full, clean/upgrade/cancel/uninstall. Preserve the user's working installation.
+5. Finish docs/THIRD_PARTY_REVIEW.md requirements, exact Qt/FFmpeg/PyAV inventory,
+   original notices and corresponding-source obligations. Python-only audit is clean;
+   native security/license review is still open.
+6. Evaluate longer synthetic recordings/resource behavior. Short actual ASUS CUDA
+   small/medium EN/ES and CPU tests passed; 1–3h/frozen installer acceptance pending.
+7. Update checkpoints/gate only with observed evidence. release_allowed stays false
+   until every required item is prepared and evaluated.
+
+Anti-timeout: long operations asynchronous; bounded tool calls/progress; inspect
+errors before retry; persist checkpoints. Do not upload recordings/tokens/credentials.
+
+---
+## Historical next actions (superseded)
+
 ## MeetingSplit v0.8.6 — Ready for ASUS visual acceptance
 1. Successful Windows workflow: https://github.com/kl4ne/meetingsplit/actions/runs/39537216562
 2. Download artifact `MeetingSplit-v0.8.6-Windows-build-unvalidated-on-user-hardware` (artifact ID 12317478170). Contains `MeetingSplit_Setup_v0.8.6.exe` and portable `MeetingSplit-v0.8.6-Windows-portable.zip`.

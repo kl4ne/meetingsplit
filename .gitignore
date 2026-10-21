@@ -38,3 +38,5 @@ bin/
 .idea/
 .vscode/
 .DS_Store
+# Local development hardware tests, models and vendor archives (never commit).
+work/

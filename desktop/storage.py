@@ -142,7 +142,9 @@ def validate_local_folder(folder: Path) -> Path:
     target = Path(folder).expanduser().resolve(strict=True)
     if not target.is_dir():
         raise UnsafeStorage("La ubicación seleccionada no es una carpeta.")
-    if any(part.casefold() in _CLOUD_NAMES for part in target.parts):
+    cloud_roots=[os.environ.get(key,'') for key in ('OneDrive','OneDriveConsumer','OneDriveCommercial')]
+    configured_cloud=any(value and target.is_relative_to(Path(value).expanduser().resolve()) for value in cloud_roots)
+    if configured_cloud or any(part.casefold() in _CLOUD_NAMES or part.casefold().startswith('onedrive - ') for part in target.parts):
         raise UnsafeStorage(
             "Esa carpeta está dentro de OneDrive, Google Drive u otra nube. "
             "Selecciona C:\\MeetingSplit o una carpeta en un disco interno, "

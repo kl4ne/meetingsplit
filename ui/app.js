@@ -1,6 +1,9 @@
 (function(){
 'use strict';
 const el = (id) => document.getElementById(id);
+el('setup-components').addEventListener('click',()=>{
+  if(bridge && typeof bridge.configureComponents==='function')bridge.configureComponents();
+});
 const screens = ['home','import','settings','process','results'];
 const names = {home:'Inicio',import:'Importar audio',settings:'Configuración',process:'Procesamiento',results:'Resultados'};
 const enDictionary=window.MeetingSplitLocales.englishBySpanish;

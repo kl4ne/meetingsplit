@@ -337,6 +337,7 @@
             <label><span class="field-label">IDIOMA DEL DOCUMENTO</span><select id="report-language"><option value="es">Español</option><option value="en">Inglés</option><option value="both">Español e inglés</option></select></label>
           </div><div class="ai-notice" id="provider-hint"><span class="info-symbol">i</span><span>Los resultados se preparan para utilizarlos en tu plataforma preferida.</span></div>
             <label class="checkbox-row"><input type="checkbox" id="local-summary"><span><b>Minuta automática local con Ollama</b><small>Opcional. Necesita Ollama y qwen3:4b instalados.</small></span></label>
+            <button type="button" class="text-button" id="setup-components">Preparar CUDA / Ollama opcionales</button>
             <label class="checkbox-row"><input type="checkbox" id="zip-output" checked><span><b>Exportar un ZIP con resultados</b><small>Incluye los archivos generados.</small></span></label>
           </div>
         </div><div class="settings-footer"><span>Las suscripciones de ChatGPT/Gemini no equivalen a acceso API automático.</span><button type="button" class="gold-button" data-go="process">CONTINUAR AL ESTUDIO <span>↗</span></button></div>
@@ -356,11 +357,11 @@
     <div class="bottomline"><span>MEETINGSPLIT <b>·</b> PRIVATE AUDIO STUDIO</span><div class="credit-stack"><span class="developer-signature" id="developer-signature">Designed &amp; Developed by <span id="developer-name">Roberto S. Macfie</span></span><span class="copyright-line" id="copyright-line">© 2026 Roberto S. Macfie. All rights reserved.</span></div></div>
   </div>
 </div>
-<script src="qrc:///qtwebchannel/qwebchannel.js"></script>
-<script>
-// MeetingSplit v0.8.6 — UI translations. Spanish originals are the keys; English is the initial UI locale.
+
+<script>// MeetingSplit v0.8.6 — UI translations. Spanish originals are the keys; English is the initial UI locale.
 // This UI language preference does NOT change meeting audio language or report language.
 window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
+  "Preparar CUDA / Ollama opcionales": "Set up optional CUDA / Ollama",
   "MeetingSplit · Estudio privado de reuniones": "MeetingSplit · Private Meeting Studio",
   "ESTUDIO": "STUDIO",
   "Inicio": "Home",
@@ -528,12 +529,13 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "Cancelando; se conservarán las partes completadas...": "Cancelling; completed parts will be kept...",
   "Error: ": "Error: "
 })});
-
 </script>
-<script>
-(function(){
+<script>(function(){
 'use strict';
 const el = (id) => document.getElementById(id);
+el('setup-components').addEventListener('click',()=>{
+  if(bridge && typeof bridge.configureComponents==='function')bridge.configureComponents();
+});
 const screens = ['home','import','settings','process','results'];
 const names = {home:'Inicio',import:'Importar audio',settings:'Configuración',process:'Procesamiento',results:'Resultados'};
 const enDictionary=window.MeetingSplitLocales.englishBySpanish;
@@ -819,7 +821,6 @@ if(typeof QWebChannel!=='undefined' && typeof qt!=='undefined' && qt.webChannelT
 }
 recommendation();applyUILocale(savedUILocale(),false);navigate('home');
 })();
-
 </script>
 </body>
 </html>

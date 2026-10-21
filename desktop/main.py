@@ -140,6 +140,17 @@ class DesktopBridge(QObject):
     def getDefaultOutput(self):
         return self._output
 
+    @Slot()
+    def configureComponents(self):
+        if self._thread and self._thread.isRunning(): return
+        from desktop.component_setup import ComponentDialog
+        dialog=ComponentDialog(self._output,self.getUILanguage())
+        dialog.exec()
+        if dialog.root:
+            self._output=dialog.root
+            self._settings.setValue('storage/data_root',self._output)
+            self._settings.sync();self.folderSelected.emit(self._output)
+
     @Slot(str)
     def startJob(self, payload):
         if self._thread and self._thread.isRunning():

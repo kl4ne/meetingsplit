@@ -2,6 +2,10 @@
 setlocal EnableExtensions
 cd /d "%~dp0\.."
 set "RELEASE=0.8.6"
+if /I "%~1"=="--release" (
+ .venv\Scripts\python.exe qa\check_release_gate.py
+ if errorlevel 1 exit /b 3
+)
 echo.
 echo ========= MeetingSplit %RELEASE% - Windows Build =========
 if not exist .venv\Scripts\python.exe (
@@ -21,9 +25,14 @@ if errorlevel 1 (
  echo ERROR: las pruebas de motor no pasaron. Se suspende la compilacion.
  exit /b 1
 )
+.venv\Scripts\python.exe qa\collect_licenses.py
+if errorlevel 1 exit /b 1
 .venv\Scripts\python.exe -m PyInstaller --noconfirm --clean --onedir --windowed ^
  --name MeetingSplit --icon "assets\meetingsplit.ico" ^
  --add-data "ui;ui" ^
+ --add-data "docs;docs" --add-data "LICENSE;." ^
+ --add-data "build\legal;legal" ^
+ --hidden-import desktop.component_setup --hidden-import desktop.cuda_probe ^
  --add-binary "bin\ffmpeg.exe;bin" --add-binary "bin\ffprobe.exe;bin" ^
  --collect-all faster_whisper --collect-all ctranslate2 --collect-all PySide6.QtWebEngineWidgets ^
  --hidden-import PySide6.QtWebEngineCore --hidden-import PySide6.QtWebChannel ^

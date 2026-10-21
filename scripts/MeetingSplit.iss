@@ -24,5 +24,7 @@ Name: "{autoprograms}\MeetingSplit"; Filename: "{app}\MeetingSplit.exe"
 Name: "{autodesktop}\MeetingSplit"; Filename: "{app}\MeetingSplit.exe"; Tasks: desktopicon
 [Tasks]
 Name: "desktopicon"; Description: "Crear acceso directo en el escritorio"; GroupDescription: "Accesos directos:"; Flags: unchecked
+Name: "optionalcomponents"; Description: "Preparar CUDA / Ollama opcionales al terminar (descargas separadas)"; GroupDescription: "Componentes opcionales:"; Flags: unchecked
 [Run]
-Filename: "{app}\MeetingSplit.exe"; Description: "Abrir MeetingSplit"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\MeetingSplit.exe"; Parameters: "--configure-components"; Tasks: optionalcomponents; Description: "Configurar componentes opcionales"; Flags: postinstall skipifsilent
+Filename: "{app}\MeetingSplit.exe"; Tasks: not optionalcomponents; Description: "Abrir MeetingSplit"; Flags: nowait postinstall skipifsilent

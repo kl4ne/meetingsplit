@@ -1,0 +1,12 @@
+{
+  "release_allowed": false,
+  "version_policy": "Keep 0.8.6; development checkpoints only; no Release or user installation request",
+  "required": {
+    "asus_gpu_real_speech": false,
+    "cpu_split_transcription_regression": false,
+    "ollama_real_generation_and_failure_paths": false,
+    "installer_clean_upgrade_cancel_uninstall": false,
+    "five_screens_en_es_large_typography": false,
+    "third_party_license_and_security_review": false
+  }
+}

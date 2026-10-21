@@ -1,3 +1,17 @@
+## 2026-10-21 — LGPL-native remediation tested and integrated (NOT legal clearance)
+
+The original GPL-enabled FFmpeg 9 / PyAV wheel bundle is replaced in the
+development packaging procedure by pinned BtbN LGPL shared FFmpeg 8.1.3
+and a PyAV 16.0.1 wheel compiled from verified upstream source against
+those binaries. The isolated package QA (Actions #39599798144) found
+680 files, 211 native binaries, no x264/x265 and no enable-gpl/nonfree flags.
+Actual MP3/M4A/WAV export/decode and Windows installer tests passed.
+
+This does **not** establish full licensing compliance. The build enables
+`--enable-version3`; LGPLv3/Qt/Chromium obligations, exact corresponding
+sources, model/vendor notices and security review remain open. Do not
+redistribute or lift the release gate until those are addressed.
+
 ## 2026-10-21: confirmed package-level GPL indicators
 
 Windows QA evidence: `docs/QA_CONSOLIDATED_2026-10-21.md`.

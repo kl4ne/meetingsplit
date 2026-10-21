@@ -58,6 +58,10 @@ jobs:
           Copy-Item -LiteralPath $ffprobe -Destination 'bin\ffprobe.exe' -Force
           .\bin\ffmpeg.exe -version | Select-Object -First 1
           .\bin\ffprobe.exe -version | Select-Object -First 1
+      - name: Prepare verified LGPL FFmpeg and source-built PyAV (QA packaging only)
+        if: github.event_name == 'workflow_dispatch' && inputs.package_for_qa
+        shell: pwsh
+        run: ./scripts/prepare_lgpl_media.ps1
       - name: Python engine and integration tests
         # The packaging script runs this same suite itself; avoid running it twice.
         if: github.event_name != 'workflow_dispatch' || !inputs.package_for_qa
@@ -106,5 +110,6 @@ jobs:
             work/installer-smoke/installer-qa.json
             build/legal
             build/native-inventory.json
+            build/lgpl-wheel/lgpl-media-receipt.json
           if-no-files-found: error
           retention-days: 14

@@ -1,3 +1,26 @@
+## 2026-10-21 — pinned LGPL media integrated into main (DEVELOPMENT, NO RELEASE)
+
+- Verified packaged code from isolated branch `qa/consolidated-20261021`
+  Windows Actions #39599798144: **82 passed, 2 skipped**; PyInstaller,
+  installer/portable, frozen self-check, Qt WebEngine, MP3/M4A/WAV
+  export-and-PyAV decode, silent install/reinstall/uninstall all passed.
+- Pinned FFmpeg 8.1.3 LGPL shared asset SHA-256:
+  `453a30a5019676e805a85d4845e3aad31234dfed4ae0ea2b1d4e97254dc44b0a`.
+  PyAV 16.0.1 is built from pinned official source and repaired against
+  that exact FFmpeg runtime. Native QA inventory: **680 files / 211 native**,
+  no libx264/libx265 detected and no --enable-gpl or --enable-nonfree.
+- Authentic **0.8.5 -> 0.8.6 upgrade** passed on throwaway Windows
+  Actions #39598790616 (install old 22 s, upgrade new 22 s,
+  uninstall 2 s, external data preserved).
+- Main workflow retains **manual-only** installer packaging; new
+  LGPL media preparation is conditional on manual QA packaging.
+  Temporary QA branch workflows have NOT been merged into main.
+- Work remaining before distribution: native LGPL/Qt/Chromium legal
+  compliance evidence, interactive cancel/retry and optional component
+  acceptance, ASUS check of exact consolidated build, signing decisions.
+- **release_allowed=false**, version remains 0.8.6. No new user
+  installer or GitHub Release produced by this code integration.
+
 ## Verified LGPL-native QA checkpoint — 2026-10-21
 
 - The GPL-enabled old media stack was replaced **on QA branch only** by

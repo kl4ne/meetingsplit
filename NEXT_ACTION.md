@@ -1,3 +1,17 @@
+## Remaining acceptance work after pinned media consolidation
+
+1. Finalize LGPL/Qt WebEngine/Chromium source notices and corresponding
+   source/build instructions for exact frozen binaries; record third-party
+   legal review, not merely SHA-256 checks.
+2. Run isolated interactive cancellation and real CUDA/Ollama optional
+   setup failure/retry test matrix; preserve external user data.
+3. Verify the final combined GPU + Ollama setup and real EN/ES meeting
+   accuracy on ASUS (the CI runner has no NVIDIA driver).
+4. Consider Authenticode signing, publisher identity privacy and
+   Microsoft SmartScreen separately.
+5. The user forbids partial versions: keep `qa/release_gate.json`
+   blocked and do not release a new public installer before all gates pass.
+
 ## Remaining technical gates after successful LGPL media package QA
 
 1. Finish isolated authentic v0.8.5->0.8.6 Windows upgrade run

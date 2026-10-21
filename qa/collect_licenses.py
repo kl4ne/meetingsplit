@@ -36,6 +36,12 @@ def main():
             (target/(app+'-build.txt')).write_text(result.stdout+result.stderr,encoding='utf-8')
     (target/'DEPENDENCY_INVENTORY.json').write_text(json.dumps(inventory,indent=2),encoding='utf-8')
     shutil.copyfile(ROOT/'docs'/'THIRD_PARTY_REVIEW.md',target/'THIRD_PARTY_REVIEW.md')
+    # Preserve exact media provenance and verified archive hashes alongside
+    # the distributed binaries. A receipt is evidence, not license approval.
+    media_receipt=ROOT/'build'/'lgpl-wheel'/'lgpl-media-receipt.json'
+    if media_receipt.is_file():
+        shutil.copyfile(media_receipt,target/'LGPL_MEDIA_BUILD_RECEIPT.json')
+
 
 
 if __name__=='__main__': main()

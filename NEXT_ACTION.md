@@ -1,3 +1,10 @@
+
+## Build completed — v0.8.5
+- Run **SUCCESS**: https://github.com/kl4ne/meetingsplit/actions/runs/39531211344
+- Artifact `MeetingSplit-v0.8.5-Windows-build-unvalidated-on-user-hardware`, ID `12315582489`, includes `MeetingSplit_Setup_v0.8.5.exe` and portable archive.
+- Next: on ASUS, close v0.8.4, try portable v0.8.5; verify D: local folder acceptance and maximum wait, Start Processing immediate busy indicator/timer, short CPU small transcription. No confidential samples; never use removable J:.
+- If D: is rejected, gather only Windows physical-disk bus metadata with user consent; do not allow USB merely because GetDriveType says fixed. If transcription remains excessively slow, investigate real timing/output manifest and CUDA runtime compatibility without claiming GPU is fixed.
+
 # MeetingSplit v0.8.5 — Next action
 
 1. Publish and validate v0.8.5 on GitHub Actions. Stop on CI errors; do not claim completed installer before artifact upload.

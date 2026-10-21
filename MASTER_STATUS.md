@@ -1,3 +1,9 @@
+
+## Windows CI acceptance checkpoint — v0.8.5
+- **SUCCESS**: GitHub Actions run #39531211344 (commit `929f5dd`), 35 tests passed and 1 skipped in Windows CI, PyInstaller EXE self-check passed, Windows portable ZIP and installer existence verified, upload completed.
+- Artifact: `MeetingSplit-v0.8.5-Windows-build-unvalidated-on-user-hardware` (ID `12315582489`, roughly 654 MB), 14-day retention.
+- Real ASUS validation for D: disk and CPU transcription remains PENDING. The missing CUDA DLLs were not installed; CPU `small` fallback is used instead.
+
 # MeetingSplit v0.8.5 — Checkpoint
 
 User-reported v0.8.4 behavior: D: rejected after slow check; GPU DLL failure recovered to CPU but stayed on transcription 1/6 for a long period; Start Processing gave inadequate immediate feedback. Split-only mode succeeds.

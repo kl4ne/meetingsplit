@@ -1,0 +1,2 @@
+# Keep verbatim upstream notices byte-identical to their SHA-256 receipts on Windows.
+docs/third-party-licenses/*.txt -text

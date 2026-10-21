@@ -1,3 +1,16 @@
+## CURRENT VERIFIED CHECKPOINT — 2026-10-21 — post-timeout recovery / evidence-only QA
+
+- Starting point: latest `main` was `c292ad5d375ed63b581823b1754ab1064ef67cd8`; original QA `qa/consolidated-20261021` was `e545348d2ad0d0e689876637d77f83072f3a73bc`. They diverged (QA +13 / behind main 6), so this isolated `qa/release-evidence-20261021` branch was created from latest main; neither old branch nor main was force-updated.
+- Previously pending GPL-free SHA run #39598629560 **FAILED SAFELY** because commit `7183257` fetched FFmpeg `releases/download/latest/ffmpeg-n9.0-latest...` while comparing its bytes to the pinned **8.1.3** SHA. The later dated 8.1.3 asset URL fixed this mismatch without disabling SHA-256 checking. Subsequently run #39599256740 failed a NumPy peak-value test; commit `e545348` fixed it. Both historical failures have passing successors.
+- Exact pinned LGPL Windows QA run **#39599798144 SUCCESS** (82 passed, 2 skipped), including actual MP3/M4A/WAV encode+PyAV decode, frozen WebEngine/self-check, disposable clean/reinstall/uninstall. Authentic isolated **0.8.5 -> 0.8.6 upgrade #39598790616 SUCCESS** with external test data retained. Main tests-only run **#39602465892 SUCCESS** (84 passed, 2 skipped).
+- Independent review of the existing QA reports archive (SHA-256 `428a5540b90ef049ccd0eb24b51cd082bc4507a457a94feb43fbb53288df1db3`) verified the internal inventory totals **680 files / 211 native**; embedded legal-file SHA-256 entries; FFmpeg -version log; FFmpeg dated archive SHA `453a30a5019676e805a85d4845e3aad31234dfed4ae0ea2b1d4e97254dc44b0a`; PyAV upstream source SHA `dd2ce779fa0b5f5889a6d9e00fbbbc39f58e247e52d31044272648fe16ff1dbf`. Six isolated evidence-manipulation tests passed locally. No duplicate public QA builds were triggered.
+- This reports ZIP does **not** contain frozen EXE/DLL bytes, so those per-file hashes are inventoried claims from the Windows builder, not independently rehashed here. It does NOT certify malware-free binaries or redistribution compliance.
+- Confirmed release blockers from the actual inventory: `Qt6WebEngineCore.dll` present but no Chromium-named third-party notice file; bundled `_internal/ctranslate2/cudnn64_9.dll` SHA `c07cc47f2fa4a566593c7af4aa7e57edf09a985a0fddd14cb8d6f456e252af05` needs specific NVIDIA provenance/license examination. Corresponding-source/LGPL replacement instructions and full native audit also remain open.
+- Added `qa/verify_release_evidence.py`, `tests/test_release_evidence.py`, and `docs/QA_NATIVE_EVIDENCE_AUDIT_2026-10-21.json` to this QA branch. Report validation passing is **not** app acceptance. The new files have local focused tests; they have not undergone a new Windows CI run.
+- Remaining: interactive Windows installer cancellation, optional CUDA/Ollama interruption/retry/full-disk acceptance, exact consolidated ASUS GPU/Ollama/natural speech end-to-end, and legal/security sign-off.
+- **Version remains 0.8.6, `qa/release_gate.json` release_allowed=false, no public Release/user delivery, no modifications to Integrity Business Filings.**
+
+---
 ## Continuity checkpoint — timeout recovery / main integration 2026-10-21
 
 - **Main HEAD:** `c3af16d` before this documentation-only checkpoint.

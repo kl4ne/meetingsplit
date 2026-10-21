@@ -1,3 +1,11 @@
+## Live operations handoff — 2026-10-21
+
+1. Check isolated internal package workflow **#39695270843** on commit `90238d6`. Before chat handoff it was still running at PyInstaller/frozen tests, with pinned FFmpeg/PyAV build already successful. Inspect its final job steps, tests, smoke artifacts; do not declare success until actual completion. No Release is authorized.
+2. The source-only native notice SHA-256 workflow **#39696118269 PASSED (1 test)**. Added original 0.23.3 tokenizers and 3.3.0 Cython license/COPYING notices; their docs post-date the QA binary snapshot.
+3. Keep draft PR #1 open, no merge, and release gate false. No repeat of already completed 26 Windows source tests or old successful builds without material changes.
+4. Interactive installer cancel remains unverified on headless GitHub runner; complete on isolated GUI-capable disposable Windows. Real optional-vendor failure/retry and final ASUS exact binary natural-meeting/GPU/Ollama and third-party native legal approval remain pending.
+
+---
 ## ACTIVE NEXT ACTIONS — 2026-10-21 — after Windows QA run #39694809814
 
 Already passed; do not repeat without material changes:

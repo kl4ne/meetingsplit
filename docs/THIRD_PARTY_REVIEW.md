@@ -1,3 +1,39 @@
+## Native evidence cross-check — 2026-10-21 (release STILL blocked)
+
+An independent read of the existing pinned LGPL QA report archive from run
+#39599798144, digest `428a5540b90ef049ccd0eb24b51cd082bc4507a457a94feb43fbb53288df1db3`,
+matched all 680 inventoried file records, 211 native flags, aggregate sizes,
+embedded legal-file hashes and FFmpeg source receipts. It does not contain
+full frozen EXE/DLL bytes and therefore cannot independently authenticate
+each native hash; do not call this an executable-level attestation.
+
+Exact frozen Qt WebEngine binary `_internal/PySide6/Qt6WebEngineCore.dll`
+(SHA-256 `54488cfc8fea4057377302cec5a1fb1100fb4bc4231cd7e60f43e4fcff28e89e`)
+is present, but inventory contains no named Chromium third-party notice file.
+Qt's official 6.12 materials state that Qt WebEngine includes Chromium and
+license compliance/acknowledgments for its third-party parts are necessary:
+https://doc.qt.io/qt-6/licenses-used-in-qt.html
+https://doc.qt.io/qtforpython-6.11/overviews/qtwebengine-licensing.html
+Vendor SPDX SBOM and exact component-specific notices still need collection
+and checking against the *included* binary, not merely a link.
+
+Exact frozen `_internal/ctranslate2/cudnn64_9.dll`
+(SHA-256 `c07cc47f2fa4a566593c7af4aa7e57edf09a985a0fddd14cb8d6f456e252af05`)
+is present. The CTranslate2 project's MIT statement alone does not resolve
+NVIDIA cuDNN DLL redistribution permissions. Determine its binary version,
+origin and vendor terms before public distribution. Avoid modifying the
+working optional CUDA installer until these facts have been verified.
+
+The pinned FFmpeg build is LGPL/shared but uses `--enable-version3`,
+so the actual LGPLv3 / third-party codec obligations, corresponding source,
+modified-library replacement instructions and notices require verification.
+Source/build receipt hashes are evidence, not completion of these duties.
+
+The new isolated audit (`qa/verify_release_evidence.py`) rejects altered
+receipt hashes or GPL-native names; its report and six local regression checks
+do not close the legal or vulnerability gates. NO release authorization.
+
+---
 ## 2026-10-21 — exact pinned QA package: remaining legal evidence
 
 The latest pinned LGPL FFmpeg + source-built PyAV Windows QA succeeded

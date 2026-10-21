@@ -1,3 +1,20 @@
+# Next acceptance gate — before definitive MeetingSplit installer
+
+1. Preserve `release_allowed=false` and version 0.8.6. No more ordinary CI builds
+   for this checkpoint; tests-only CI #39590849581 already passed (75 / 2 skipped).
+2. When the consolidated **development QA package** is explicitly arranged, inspect
+   `build/native-inventory.json` and exact `ffmpeg-build.txt` flags. Collect
+   corresponding native sources/build receipts and copyright notices for Qt/
+   Chromium, FFmpeg CLI, PyAV FFmpeg libs, CTranslate2 and remaining bundled DLLs.
+3. On disposable Windows installations test clean install, real upgrade from
+   0.8.5, interactive cancellation, uninstall/data preservation, and optional
+   CUDA/Ollama network interruption, reattempt, occupied port and full disk.
+   Current isolated unit tests do not prove a Windows wizard passed these.
+4. Evaluate natural Spanish/English/code-switch meetings, 1-3 hour memory/thermal
+   stability and the final combined GPU/Ollama installer on the ASUS.
+5. Only after release gate evidence is reviewed may a definitive installer/
+   public Release be considered. Keep Integrity Business Filings untouched.
+
 ## Optional Ollama setup failure-state regression
 
 - Source now records `status=complete`, `cancelled`, or `failed`

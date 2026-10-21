@@ -26,9 +26,9 @@ $prior = Get-ChildItem -Path $priorExtract -Filter 'MeetingSplit_Setup_v0.8.5.ex
 if (-not $prior) { throw 'Official v0.8.5 installer not found inside GitHub artifact' }
 $new = Join-Path $repoRoot 'dist\MeetingSplit_Setup_v0.8.6.exe'
 if (-not (Test-Path -LiteralPath $new)) { throw 'Current QA installer missing' }
-function Run-Installer([string]$exe,[string[]]$args,[string]$label,[string]$logFile) {
+function Run-Installer([string]$exe,[string[]]$installerArguments,[string]$label,[string]$logFile) {
   Write-Host "QA installer stage: $label"
-  $extraArgs = @($args) + @('/SP-',('/LOG="'+$logFile+'"'))
+  $extraArgs = @($installerArguments) + @('/SP-',('/LOG="'+$logFile+'"'))
   $process = Start-Process -FilePath $exe -ArgumentList $extraArgs -PassThru -WindowStyle Hidden
   $clock = [Diagnostics.Stopwatch]::StartNew()
   $last = -1

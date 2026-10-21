@@ -1,3 +1,20 @@
+# Pre-installer QA checkpoint — 2026-10-21 — RELEASE HOLD
+
+- Latest code checkpoint: `fba16d8`; the application remains **0.8.6**.
+- Tests-only Windows CI #39590281003: **72 passed, 2 skipped**, no installer.
+- Tests-only Windows CI #39590849581: **75 passed, 2 skipped**, no installer.
+- Added `qa/native_inventory.py` (SHA-256 manifest of actual frozen native files and
+  conservative FFmpeg GPL/nonfree flag detection), included in future manual QA package reports.
+- Added failure-injection tests for vendor downloads, cancellation, disk exhaustion,
+  occupied Ollama port and reuse of an existing service.
+- Ollama setup receipts now distinguish `complete`, `cancelled`, `failed`;
+  the interrupted state is no longer misleadingly reported as `testing`.
+- Native manifest **cannot be populated or legally approved until a consolidated
+  Windows QA package exists**. Full Qt/Chromium, FFmpeg/PyAV, CTranslate2, NVIDIA
+  and Ollama notices/source compliance, installer matrix and natural-meeting
+  accuracy still require validation.
+- `qa/release_gate.json` remains false. No production Release or new installer delivered.
+
 ## Pre-installer development checkpoint — 2026-10-21
 
 - Added a frozen-package SHA-256 inventory and conservative FFmpeg build-flag review.

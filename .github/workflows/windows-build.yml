@@ -36,12 +36,20 @@ jobs:
           .\.venv\Scripts\python.exe -m pip install -r requirements.txt
           choco install ffmpeg --yes --no-progress
           choco install innosetup --yes --no-progress
-          $ffmpeg = (Get-Command ffmpeg.exe -ErrorAction Stop).Source
-          $ffprobe = (Get-Command ffprobe.exe -ErrorAction Stop).Source
-          New-Item -Type Directory -Force bin | Out-Null
-          Copy-Item $ffmpeg bin\ffmpeg.exe
-          Copy-Item $ffprobe bin\ffprobe.exe
+          # The Chocolatey shims in PATH cannot be copied: they refer to
+          # files through relative paths under Chocolatey's lib directory.
+          # Copy the actual executable bytes instead.
+          $packageDir = Join-Path $env:ChocolateyInstall 'lib\ffmpeg'
+          $ffmpeg = Get-ChildItem -Path $packageDir -Recurse -File -Filter 'ffmpeg.exe' |
+            Select-Object -First 1 -ExpandProperty FullName
+          $ffprobe = Get-ChildItem -Path $packageDir -Recurse -File -Filter 'ffprobe.exe' |
+            Select-Object -First 1 -ExpandProperty FullName
+          if (-not $ffmpeg -or -not $ffprobe) { throw 'Chocolatey FFmpeg binaries not found' }
+          New-Item -ItemType Directory -Force 'bin' | Out-Null
+          Copy-Item -LiteralPath $ffmpeg -Destination 'bin\ffmpeg.exe' -Force
+          Copy-Item -LiteralPath $ffprobe -Destination 'bin\ffprobe.exe' -Force
           .\bin\ffmpeg.exe -version | Select-Object -First 1
+          .\bin\ffprobe.exe -version | Select-Object -First 1
       - name: Python engine and integration tests
         shell: pwsh
         run: .\.venv\Scripts\python.exe -m pytest -q --ignore=tests/test_ui_language.py --ignore=tests/test_ui_navigation.py

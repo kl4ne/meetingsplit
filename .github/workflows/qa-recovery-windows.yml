@@ -47,8 +47,7 @@ jobs:
       - name: Prove release remains blocked
         shell: pwsh
         run: |
-          python qa/check_release_gate.py
-          if ($LASTEXITCODE -ne 2) { throw 'Release gate no longer fails closed' }
+          python -c "from qa.check_release_gate import main; assert main() == 2, 'Release gate must fail closed'"
           if ((Get-Content qa/release_gate.json -Raw | ConvertFrom-Json).release_allowed -ne $false) { throw 'Release unexpectedly allowed' }
       - name: Record QA non-release policy
         shell: pwsh

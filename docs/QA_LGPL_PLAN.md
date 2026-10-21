@@ -23,3 +23,11 @@ build receipts and SHA-256 files.
 
 Only the development QA branch should invoke this script until validated. Do
 not change the release gate or ship a new version based on a successful build.
+## QA attempt 1 (failed safely)
+
+Windows run #39594879663 downloaded and rejected/attempted GPL-free FFmpeg
+successfully but PyAV 16.0.1 did not compile with n9.0 latest headers:
+`AVCodec.supported_framerates`, `supported_samplerates`,
+`pix_fmts` and `sample_fmts` are absent. No binary was packaged.
+Attempt 2 uses the upstream-documented BtbN n8.1 LGPL shared headers.
+Acceptance still requires a full wheel + native package verification.

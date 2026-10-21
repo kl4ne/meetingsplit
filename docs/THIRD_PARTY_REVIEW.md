@@ -1,3 +1,21 @@
+## Final QA/source status (2026-10-21, no legal sign-off)
+
+The pinned LGPL Windows build/upgrade have PASSED their recorded tests.
+Further QA on the isolated branch #39694809814 PASSED 26 mock-vendor Windows
+Qt cancellation/retry and extracted-component hash validations. No final
+base installer rebuild has been made after these QA-only component security
+changes. A hosted Actions attempt at authentic interactive Inno Setup
+cancellation #39694379638 could not access a visible desktop and is
+**INCONCLUSIVE**. It MUST NOT count as the cancel/retry release gate.
+
+For exact components, binary SHA receipts, source and notice work items
+see `docs/REDISTRIBUTION_EVIDENCE_MATRIX_2026-10-21.md`. The original
+proprietary/freeware license already includes an LGPL library-rights carve-out,
+but license review, native vulnerabilities, Chromium notices and NVIDIA bundled
+cuDNN distribution rights remain unresolved. A QA pass cannot flip
+`release_allowed=false` to true.
+
+---
 ## Native evidence cross-check — 2026-10-21 (release STILL blocked)
 
 An independent read of the existing pinned LGPL QA report archive from run

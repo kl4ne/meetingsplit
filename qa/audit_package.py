@@ -16,7 +16,7 @@ print('Package contains no blocked unused Qt modules. Full native license review
 # Refuse publishing an accidentally GPL-enabled media stack. This is an
 # evidence gate, not a declaration of complete third-party compliance.
 import re
-from qa.native_inventory import classify_ffmpeg
+from native_inventory import classify_ffmpeg
 forbidden=re.compile(r'(?:^|[-_])(?:lib)?(?:x264|x265|xvid)(?:[-_.]|$)',re.I)
 problem=[str(p.relative_to(root)) for p in root.rglob('*') if p.is_file() and p.suffix.lower() in ('.dll','.pyd','.exe') and forbidden.search(p.name)]
 if problem:

@@ -1,3 +1,22 @@
+## ACTIVE NEXT ACTIONS — 2026-10-21 — after Windows QA run #39694809814
+
+Already passed; do not repeat without material changes:
+- Pinned LGPL source-built FFmpeg/PyAV & MP3/M4A/WAV frozen installer QA #39599798144 (82 pass/2 skip).
+- Real isolated 0.8.5 -> 0.8.6 upgrade #39598790616.
+- Main source Windows tests-only #39602465892 (84 pass/2 skip).
+- New isolated source Qt-dialog cancel/disk-full/retry and extracted-file hash QA #39694809814 (**26 passed**; no hardware/vendor download).
+- Existing final frozen package includes Qt WebEngine/Chromium and bundled CTranslate2 cudnn64_9.dll; read exact legal evidence matrix.
+
+Remaining true blockers in priority order:
+1. Independent legal/native-security audit of frozen package, including Qt WebEngine's Chromium 140-era third-party notices, exact source/build receipts/replacement rights, FFmpeg LGPLv3 dependencies, and provenance/redistribution rights for bundled CTranslate2 cudnn64_9.dll; see `docs/REDISTRIBUTION_EVIDENCE_MATRIX_2026-10-21.md`. Obtain full corresponding sources and notices, not just links; do not mark compliance approved without qualified review.
+2. **Interactive** Windows installer cancel and interrupted real CUDA/Ollama component download/retry/full-disk using a GUI-capable throwaway Windows desktop, not GitHub's headless host. Exact pinned installer #12346625631 was downloaded/hash verified in #39694379638 but interactive window was unavailable, so this was inconclusive. Do not ask for screenshots or operate on the owner's working installation.
+3. Validate this QA branch's new extracted-file receipt behavior in a final *packaged* test app and then on actual ASUS without losing prior optional components. CPU, D:, UI EN/ES, GPU and Ollama behaviors already approved elsewhere must not regress.
+4. Actual ASUS (RTX 4070) exact full combined 0.8.6 build: GPU Whisper, Ollama Qwen EN/ES/mixed natural speech minutes, 1–3h resource/memory/thermal assessment, large typography views. Earlier synthetic tests are not this acceptance.
+5. Separate signing/SmartScreen and identity disclosure consent decision, if needed for public shipping.
+
+No new version, no definitive user installer, no GitHub Release. Keep `qa/release_gate.json` `release_allowed=false`. Do not change Integrity. Handoff is `qa/release-evidence-20261021`.
+
+---
 ## ACTIVE NEXT ACTIONS — 2026-10-21, QA release-evidence branch
 
 1. **Do not repeat resolved work:** #39598629560 hash failed because the source URL was `latest/n9.0` while expecting a dated 8.1.3 digest; the dated build and pinned PyAV succeeded in #39599798144. #39598790616 authentic upgrade PASSED. Main tests-only #39602465892 PASSED. Do not rerun these without material changes.

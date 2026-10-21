@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0\.."
-set "RELEASE=0.8.5"
+set "RELEASE=0.8.6"
 echo.
 echo ========= MeetingSplit %RELEASE% - Windows Build =========
 if not exist .venv\Scripts\python.exe (

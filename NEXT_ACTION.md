@@ -1,9 +1,12 @@
+## NEXT: v0.8.6 accessibility/layout validation
+- Keep D: storage support and CPU fallback stable (user verified six completed transcripts in ~11 minutes).
+- Confirm GitHub Actions v0.8.6 Windows compilation, then test user perception of +2-step fonts on ASUS in all five screens and EN/ES.
+- Only after typography approval, address optional RTX 4070 CUDA acceleration separately; do not conflate successful CPU fallback with CUDA repair.
 
-## Build completed — v0.8.5
-- Run **SUCCESS**: https://github.com/kl4ne/meetingsplit/actions/runs/39531211344
-- Artifact `MeetingSplit-v0.8.5-Windows-build-unvalidated-on-user-hardware`, ID `12315582489`, includes `MeetingSplit_Setup_v0.8.5.exe` and portable archive.
-- Next: on ASUS, close v0.8.4, try portable v0.8.5; verify D: local folder acceptance and maximum wait, Start Processing immediate busy indicator/timer, short CPU small transcription. No confidential samples; never use removable J:.
-- If D: is rejected, gather only Windows physical-disk bus metadata with user consent; do not allow USB merely because GetDriveType says fixed. If transcription remains excessively slow, investigate real timing/output manifest and CUDA runtime compatibility without claiming GPU is fixed.
+## v0.8.6 next
+1. Validate 5 independent pages in EN/ES at 1366×768, 1440×900 and 1920×1080 with larger typography.
+2. Run engine tests and Windows CI, verify updated installer artifact.
+3. Ask user to validate legibility on ASUS before pursuing CUDA speed-up. CPU fallback in v0.8.5 WORKS, D: ACCEPTED.
 
 # MeetingSplit v0.8.5 — Next action
 

@@ -2,7 +2,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 NOTICE='© 2026 Roberto S. Macfie. All rights reserved.'
 def test_rights_notice_both_interfaces():
-    for p in ('ui/index.html','MEETINGSPLIT_PREVIEW_v0.8.5.html'):
+    for p in ('ui/index.html','MEETINGSPLIT_PREVIEW_v0.8.6.html'):
         s=(ROOT/p).read_text(encoding='utf-8')
         assert s.count(NOTICE)==1
         assert s.index('id="developer-signature"') < s.index('id="copyright-line"')

@@ -1,3 +1,8 @@
+## v0.8.6 — Readability pass
+- Increased UI typography two steps throughout all five English/Spanish screens, including dropdowns, status and footer.
+- Rebalanced layout to protect visible text and preserve independent, scrollable screens at shorter heights.
+- No change to audio processing, CUDA fallback, storage policy, donation handling, or author privacy.
+
 ## v0.8.5 — Storage detection, CPU recovery and immediate feedback
 
 - Faster native Windows physical bus detection for internal D: (keeps USB/removable blocked); fallback query capped at 4 seconds. Hardware acceptance still pending.

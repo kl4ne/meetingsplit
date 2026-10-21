@@ -1,8 +1,14 @@
+## VERIFIED USER ACCEPTANCE — MeetingSplit v0.8.5 (2026-10-20)
+- User confirmed internal D: was ACCEPTED.
+- User confirmed all six audio segments were successfully transcribed on CPU, taking approximately 11 minutes.
+- Windows CUDA acceleration is still unavailable because cublas64_12.dll cannot load; CPU fallback works. No GPU fix claimed.
+- User requested that all UI fonts be TWO STEPS LARGER, on every screen. v0.8.6 implements only layout/typography and version metadata, preserving working audio functions and storage security.
+- Chromium QA visually checked five EN/ES screens at 1366x768, 1440x900, 1920x1080, 2560x1440. Windows CI and ASUS approval pending.
 
-## Windows CI acceptance checkpoint — v0.8.5
-- **SUCCESS**: GitHub Actions run #39531211344 (commit `929f5dd`), 35 tests passed and 1 skipped in Windows CI, PyInstaller EXE self-check passed, Windows portable ZIP and installer existence verified, upload completed.
-- Artifact: `MeetingSplit-v0.8.5-Windows-build-unvalidated-on-user-hardware` (ID `12315582489`, roughly 654 MB), 14-day retention.
-- Real ASUS validation for D: disk and CPU transcription remains PENDING. The missing CUDA DLLs were not installed; CPU `small` fallback is used instead.
+## v0.8.6 typography checkpoint
+- User confirmed v0.8.5 accepted internal D: and transcribed 6 audio segments on CPU successfully in approximately 11 minutes.
+- CUDA 12 is still missing cublas64_12.dll; fallback is functional but GPU acceleration is not fixed.
+- User requested ALL UI letters two typographic steps larger, implemented in CSS for v0.8.6. Pending Windows CI and visual acceptance.
 
 # MeetingSplit v0.8.5 — Checkpoint
 

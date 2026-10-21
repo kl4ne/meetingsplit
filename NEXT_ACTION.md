@@ -1,3 +1,11 @@
+## MeetingSplit v0.8.6 — Ready for ASUS visual acceptance
+1. Successful Windows workflow: https://github.com/kl4ne/meetingsplit/actions/runs/39537216562
+2. Download artifact `MeetingSplit-v0.8.6-Windows-build-unvalidated-on-user-hardware` (artifact ID 12317478170). Contains `MeetingSplit_Setup_v0.8.6.exe` and portable `MeetingSplit-v0.8.6-Windows-portable.zip`.
+3. Prefer portable to check enlarged typography on ASUS. Review EN and ES on Home, Import, Settings, Processing, Results; check no clipping; no need to re-run 11-min transcription just to validate typography.
+4. Leave CPU splitting/transcription and D: disk storage untouched. Later: NVIDIA CUDA setup to resolve `cublas64_12.dll` if user approves, validate performance separately.
+5. App is still unvalidated for public Release; do not claim SmartScreen is removed or that GPU support is ready.
+6. Integrity Business Filings remains untouched.
+
 ## NEXT: v0.8.6 accessibility/layout validation
 - Keep D: storage support and CPU fallback stable (user verified six completed transcripts in ~11 minutes).
 - Confirm GitHub Actions v0.8.6 Windows compilation, then test user perception of +2-step fonts on ASUS in all five screens and EN/ES.

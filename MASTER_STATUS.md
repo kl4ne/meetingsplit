@@ -14,7 +14,7 @@
 - Unit and integration regressions added. Check GitHub CI before claiming Windows acceptance.
 
 ## Gates
-- **GitHub Actions #39527141699 SUCCEEDED**: 32 Windows tests (incl. 1 skip if applicable), PyInstaller self-check, installer and portable archive, artifacts upload. Artifact ID 12313499857 (about 654 MB). Still unvalidated on user's ASUS.
+- **GitHub Actions #39527141699 SUCCEEDED**: 31 Windows tests passed; 1 test skipped (verified from CI logs), PyInstaller self-check, installer and portable archive, artifacts upload. Artifact ID 12313499857 (about 654 MB). Still unvalidated on user's ASUS.
 - Validate D: selection and C: non-synced folder on actual ASUS; confirm removable J: is rejected.
 - Validate GPU preflight CPU fallback without missing cublas error, then evaluate legitimate CUDA 12/cuDNN 9 installation for GPU.
 - Validate actual transcriptions, model download, installer, 1–3h runs, license notices. No public Release until then.

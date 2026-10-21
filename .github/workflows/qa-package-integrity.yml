@@ -1,0 +1,91 @@
+name: MeetingSplit v0.8.6 isolated consolidated component-integrity QA
+
+# One deliberately scoped test-build after the component integrity change.
+# This is NEVER a public Release; release gate MUST stay false.
+on:
+  push:
+    branches: [qa/release-evidence-20261021]
+    paths:
+      - '.github/workflows/qa-package-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: meeting-pinned-component-integrity-package-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-verify:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QTWEBENGINE_CHROMIUM_FLAGS: --disable-gpu
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: x64
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Prove public release blocked before building
+        shell: pwsh
+        run: |
+          python -c "from qa.check_release_gate import main; assert main() == 2"
+          if ((Get-Content qa/release_gate.json -Raw | ConvertFrom-Json).release_allowed -ne $false) { throw 'Illegal release state' }
+      - name: Install source build tools and app dependencies
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+          .\.venv\Scripts\python.exe -m pip install --upgrade 'pip>=26.1.2'
+      - name: Prepare exact pinned LGPL FFmpeg and source-built PyAV
+        shell: pwsh
+        run: ./scripts/prepare_lgpl_media.ps1
+      - name: Install QA-only installer compiler
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+      - name: Build and validate frozen app, complete regressions, native audit
+        shell: cmd
+        run: scripts\compilar_windows.bat
+      - name: Verify actual disposable QA installer and external data preservation
+        shell: pwsh
+        run: ./qa/windows_installer_smoke.ps1
+      - name: Assert last gate still BLOCKED
+        shell: pwsh
+        run: |
+          python -c "from qa.check_release_gate import main; assert main() == 2"
+          if (!(Test-Path 'build/lgpl-wheel/lgpl-media-receipt.json')) { throw 'Pinned source receipt missing' }
+          if (!(Test-Path 'build/native-inventory.json')) { throw 'Exact frozen binary evidence missing' }
+          if ((Get-Content build/native-inventory.json -Raw | ConvertFrom-Json).release_allowed -ne $false) { throw 'Binary evidence must never approve release' }
+      - name: Preserve developer QA reports (NOT redistribution approval)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-v086-integrity-QA-reports-${{ github.sha }}
+          path: |
+            build/native-inventory.json
+            build/lgpl-wheel/lgpl-media-receipt.json
+            build/legal
+            work/installer-smoke/installer-qa.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve internal test installer (NOT final download)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-v086-integrity-QA-installer-${{ github.sha }}
+          path: dist/MeetingSplit_Setup_v0.8.6.exe
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve internal test portable package (NOT final download)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-v086-integrity-QA-portable-${{ github.sha }}
+          path: dist/MeetingSplit-v0.8.6-Windows-portable.zip
+          if-no-files-found: error
+          retention-days: 14

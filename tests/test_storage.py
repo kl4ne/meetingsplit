@@ -18,7 +18,10 @@ def test_unknown_non_system_disk_rejected():
     assert not classify_storage(3,'')[0]
 
 
-def test_selected_directory_creates_local_meetingsplit_folder(tmp_path):
+def test_selected_directory_creates_local_meetingsplit_folder(tmp_path, monkeypatch):
+    # Simulate a physical internal drive: GitHub's Windows runner is virtual.
+    monkeypatch.setattr('desktop.storage._windows_drive_type', lambda letter: 3)
+    monkeypatch.setattr('desktop.storage._windows_bus_type', lambda letter: 'NVMe')
     output=configure_data_root(tmp_path)
     assert output == tmp_path/'MeetingSplit'
     assert output.is_dir()

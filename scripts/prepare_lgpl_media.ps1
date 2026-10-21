@@ -6,12 +6,12 @@ Set-Location ([IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')))
 $python = Join-Path (Get-Location) '.venv\Scripts\python.exe'
 $wheelRoot = Join-Path (Get-Location) 'build\lgpl-wheel'
 $archive = Join-Path $wheelRoot 'ffmpeg-lgpl.zip'
-$assetUrl = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-20-13-08/ffmpeg-n8.1.3-18-g46d899d7a0-win64-lgpl-shared-8.1.zip'
+$assetUrl = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n9.0-latest-win64-lgpl-shared-9.0.zip'
 New-Item -ItemType Directory -Force $wheelRoot | Out-Null
 Write-Host 'Fetching LGPL shared FFmpeg. Development QA only; exact hash is recorded.'
 Invoke-WebRequest -Uri $assetUrl -OutFile $archive -MaximumRedirection 8
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-if ($hash -ne '453a30a5019676e805a85d4845e3aad31234dfed4ae0ea2b1d4e97254dc44b0a') { throw 'Downloaded LGPL FFmpeg does not match pinned official GitHub release SHA-256' }
+if ($hash -ne '453a30a5019676e805a85d4845e3aad31234dfed4ae0ea2b1d4e97254dc44b0a') { throw 'Downloaded LGPL FFmpeg does not match pinned official release SHA-256' }
 if ((Get-Item $archive).Length -lt 10000000) { throw 'FFmpeg archive unexpectedly small' }
 $extract = Join-Path $wheelRoot 'lgpl-ffmpeg'
 New-Item -ItemType Directory -Force $extract | Out-Null
@@ -45,6 +45,7 @@ New-Item -ItemType Directory -Force $src | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Could not download official PyAV 16.0.1 source archive' }
 $tarFile = Get-ChildItem -Path $src -Filter 'av-16.0.1.tar.gz' | Select-Object -First 1
 if (-not $tarFile) { throw 'PyAV 16.0.1 source missing' }
+if ((Get-FileHash $tarFile.FullName -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'dd2ce779fa0b5f5889a6d9e00fbbbc39f58e247e52d31044272648fe16ff1dbf') { throw 'Official PyAV source digest has changed' }
 # Windows ships tar.exe. The user-provided output folder is not used.
 & tar.exe -xzf $tarFile.FullName -C $src
 if ($LASTEXITCODE -ne 0) { throw 'Unable to extract PyAV source' }

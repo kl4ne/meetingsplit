@@ -8,9 +8,6 @@ from qa import validate_lgpl_media as m
 
 def test_rejects_x264_x265_and_xvid_even_with_hashed_names():
     for name in ('libx264-165-11ed6a.dll','libx265-eeae.dll','libxvidcore-4.dll'):
-        # xvidcore needs build-configuration verification in addition to filename.
-        if 'xvidcore' in name:
-            continue
         with pytest.raises(ValueError, match='GPL'):
             m.reject_native_names(['av.libs/'+name])
     m.reject_native_names(['av.libs/avcodec-62-d1a.dll','av.libs/libopus-0.dll'])

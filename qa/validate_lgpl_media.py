@@ -11,7 +11,7 @@ import subprocess
 import sys
 import zipfile
 
-BLOCKED = re.compile(r'(?:^|[-_])(?:lib)?(?:x264|x265|xvid)(?:[-_.]|$)', re.I)
+BLOCKED = re.compile(r'(?:^|[-_])(?:lib)?(?:x264|x265|xvid(?:core)?|xavs2)(?:[-_.]|$)', re.I)
 
 
 def reject_native_names(names: list[str]) -> None:

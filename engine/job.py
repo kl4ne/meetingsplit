@@ -65,7 +65,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         folder=base/f'MeetingSplit-{slug}-{stamp}-{suffix}';suffix+=1
     folder.mkdir(parents=False,exist_ok=False)
     manifest={
-        'version':'0.8.5', 'source_name':src.name,'source_bytes':src.stat().st_size,
+        'version':'0.8.6', 'source_name':src.name,'source_bytes':src.stat().st_size,
         'created':datetime.now().isoformat(), 'status':'started',
         'mode':x['action'],'max_export_seconds':x['minutes']*60,
         'overlap_seconds':x['overlap'],'model':x['model'],

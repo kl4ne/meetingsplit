@@ -31,3 +31,14 @@ successfully but PyAV 16.0.1 did not compile with n9.0 latest headers:
 `pix_fmts` and `sample_fmts` are absent. No binary was packaged.
 Attempt 2 uses the upstream-documented BtbN n8.1 LGPL shared headers.
 Acceptance still requires a full wheel + native package verification.
+
+## QA reproducibility update
+
+The final QA candidate is pinned to BtbN's dated, immutable
+`autobuild-2026-10-20-13-08` release (LGPL/shared 8.1.3), SHA-256
+`453a30a5019676e805a85d4845e3aad31234dfed4ae0ea2b1d4e97254dc44b0a`.
+Official PyAV 16.0.1 source SHA-256:
+`dd2ce779fa0b5f5889a6d9e00fbbbc39f58e247e52d31044272648fe16ff1dbf`.
+Both digests are **verified before building**. The previous mutable-latest
+source produced a clean LGPL package, but these specific dated bytes still
+require the final Windows QA run; do not assume identical zip contents.

@@ -26,23 +26,44 @@ $prior = Get-ChildItem -Path $priorExtract -Filter 'MeetingSplit_Setup_v0.8.5.ex
 if (-not $prior) { throw 'Official v0.8.5 installer not found inside GitHub artifact' }
 $new = Join-Path $repoRoot 'dist\MeetingSplit_Setup_v0.8.6.exe'
 if (-not (Test-Path -LiteralPath $new)) { throw 'Current QA installer missing' }
-function Run-Installer([string]$exe,[string[]]$args) {
-  $process = Start-Process -FilePath $exe -ArgumentList $args -PassThru -WindowStyle Hidden
-  if (-not $process.WaitForExit(240000)) {
-    Stop-Process -Id $process.Id -Force
-    throw 'Legacy upgrade installer exceeded 240-second timeout'
+function Run-Installer([string]$exe,[string[]]$args,[string]$label,[string]$logFile) {
+  Write-Host "QA installer stage: $label"
+  $extraArgs = @($args) + @('/SP-',('/LOG="'+$logFile+'"'))
+  $process = Start-Process -FilePath $exe -ArgumentList $extraArgs -PassThru -WindowStyle Hidden
+  $clock = [Diagnostics.Stopwatch]::StartNew()
+  $last = -1
+  while (-not $process.HasExited) {
+    if ($clock.Elapsed.TotalSeconds -ge 360) {
+      $tail = if (Test-Path $logFile) { (Get-Content -LiteralPath $logFile -Tail 40) -join "`n" } else { 'No Inno Setup log yet.' }
+      Write-Host "Installer process timeout $label PID=$($process.Id): $tail"
+      Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'MeetingSplit_Setup|unins' } |
+        Select-Object Name,ProcessId,ParentProcessId,CommandLine | Format-List | Out-String | Write-Host
+      & "$env:SystemRoot\System32\taskkill.exe" /PID $process.Id /T /F 2>$null | Out-Null
+      throw "Legacy QA installer $label exceeded 360 seconds; log: $tail"
+    }
+    $elapsed = [int]$clock.Elapsed.TotalSeconds
+    if ($elapsed % 30 -eq 0 -and $elapsed -ne $last) {
+      Write-Host "$label still active ($elapsed seconds)."
+      $last = $elapsed
+    }
+    Start-Sleep -Seconds 2
+    $process.Refresh()
   }
-  if ($process.ExitCode -ne 0) { throw "Legacy upgrade installer failed: $($process.ExitCode)" }
+  if ($process.ExitCode -ne 0) {
+    $tail = if (Test-Path $logFile) { (Get-Content -LiteralPath $logFile -Tail 30) -join "`n" } else { 'No Inno Setup log.' }
+    throw "Legacy QA $label exited with $($process.ExitCode); log: $tail"
+  }
+  Write-Host "$label successfully finished after $([int]$clock.Elapsed.TotalSeconds) seconds."
 }
 $parameters = @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/NOICONS','/TASKS=""',('/DIR="'+$installDir+'"'))
-Run-Installer $prior.FullName $parameters
+Run-Installer $prior.FullName $parameters 'Install v0.8.5' (Join-Path $root 'legacy-install.log')
 $app = Join-Path $installDir 'MeetingSplit.exe'
 if (-not (Test-Path -LiteralPath $app)) { throw 'Legacy v0.8.5 did not install' }
 # Capture a marker in the external data folder plus a separate harmless file
 # in the application installation path to verify Inno upgrade behavior.
 $marker = Join-Path $installDir 'meeting-synthetic-marker.txt'
 'present before upgrade' | Set-Content -LiteralPath $marker -Encoding UTF8
-Run-Installer $new $parameters
+Run-Installer $new $parameters 'Upgrade to v0.8.6' (Join-Path $root 'upgrade-install.log')
 if (-not (Test-Path -LiteralPath $app)) { throw 'v0.8.6 upgrade lost MeetingSplit.exe' }
 if (-not (Test-Path -LiteralPath $dataFile)) { throw 'v0.8.6 upgrade removed external user data' }
 $check = Join-Path $root 'updated-self-check.json'
@@ -51,7 +72,7 @@ if (-not $proc.WaitForExit(60000)) { Stop-Process -Id $proc.Id -Force; throw 'Up
 if ($proc.ExitCode -ne 0 -or -not (Test-Path $check)) { throw 'Upgraded app failed frozen self-check' }
 $status = Get-Content -LiteralPath $check -Raw | ConvertFrom-Json
 if ($status.version -ne '0.8.6' -or -not $status.packaged) { throw 'Upgrade did not install v0.8.6' }
-Run-Installer (Join-Path $installDir 'unins000.exe') @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART')
+Run-Installer (Join-Path $installDir 'unins000.exe') @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') 'Uninstall' (Join-Path $root 'uninstall.log')
 if (Test-Path -LiteralPath $app) { throw 'Uninstaller left MeetingSplit.exe behind' }
 if (-not (Test-Path -LiteralPath $dataFile)) { throw 'Uninstall removed external user data' }
 @{

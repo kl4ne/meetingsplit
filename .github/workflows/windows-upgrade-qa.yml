@@ -2,7 +2,7 @@ name: MeetingSplit isolated legacy upgrade QA
 on:
   push:
     branches: [qa/consolidated-20261021]
-    paths: [.github/workflows/windows-upgrade-qa.yml]
+    paths: [.github/workflows/windows-upgrade-qa.yml, qa/windows_upgrade_from_v085.ps1]
 permissions:
   contents: read
   actions: read
@@ -39,6 +39,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MeetingSplit-isolated-legacy-upgrade-qa-${{ github.sha }}
-          path: work/legacy-upgrade-qa/upgrade-qa.json
+          path: |
+            work/legacy-upgrade-qa/upgrade-qa.json
+            work/legacy-upgrade-qa/*.log
           if-no-files-found: warn
           retention-days: 14

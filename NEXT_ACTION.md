@@ -1,3 +1,12 @@
+## Optional Ollama setup failure-state regression
+
+- Source now records `status=complete`, `cancelled`, or `failed`
+  instead of leaving an interrupted download stuck at `testing`.
+- Three isolated tests cover failed download, cancellation, and successful
+  reuse of an existing model. No real model download or installer has run.
+- These tests must pass on the next tests-only Windows CI before QA packaging.
+- Public release remains blocked; version stays 0.8.6.
+
 ## Pre-installer actions (new checkpoint)
 
 1. Run the Windows **tests-only** workflow once, without `package_for_qa`,

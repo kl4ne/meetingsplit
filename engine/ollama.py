@@ -253,7 +253,7 @@ def setup_ollama(root, progress, cancel):
                 raise RuntimeError('Ollama did not supply the model license')
             (component_root/'QWEN3_LICENSE.txt').write_text(license_text,encoding='utf-8')
             from engine.summarize import summarize_local
-            transcript='[00:00:01] Ana will send the draft on Friday.\\n[00:00:06] Luis agreed to review it on Monday.'
+            transcript='[00:00:01] Ana will send the draft on Friday.\n[00:00:06] Luis agreed to review it on Monday.'
             report=summarize_local(transcript,'minutes','en',MODEL,progress=progress,
                                    endpoint=service.endpoint,cancel=cancel)
             cancel.check()

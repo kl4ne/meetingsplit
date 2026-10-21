@@ -4,10 +4,10 @@ Keep 0.8.6; continue main/checkpoints. Do not publish Release, deliver a new bui
 ask user to install anything, or touch kl4ne/integrity-business-filings. Historical
 delivery steps below are superseded by this section and the user's release hold.
 
-1. Confirm corrected Ollama minutes generation on synthetic text, including EN/ES
-   factual review. Old qwen3 template opens thinking even with think=false; client
-   now supplies empty thinking assistant prefill and /no_think and rejects truncation.
-   Never treat a stale validation JSON as evidence for a failed/retried test.
+1. Finish Spanish synthetic minutes review. Corrected English output now preserves
+   both tasks/dates and uses English headings. qwen3:4b declares thinking.values=[true],
+   so client enables the separate thinking channel, discards reasoning and rejects
+   truncation. Never treat a stale validation JSON as evidence for a failed retry.
 2. Run final engine/security/browser tests; refresh existing preview with
    qa/build_preview.py. Preserve enlarged five-screen EN/ES UI, PayPal and credit.
 3. Explicit Windows development installer CI ([qa-installer] commit marker or manual

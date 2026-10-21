@@ -67,6 +67,10 @@ jobs:
         run: |
           if (-not (Test-Path 'dist/MeetingSplit-v0.8.6-Windows-portable.zip')) { throw 'Portable package missing' }
           if (-not (Test-Path 'dist/MeetingSplit_Setup_v0.8.6.exe')) { throw 'Windows installer missing' }
+      - name: Test installer on disposable runner
+        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || contains(github.event.head_commit.message, '[qa-installer]')
+        shell: pwsh
+        run: ./qa/windows_installer_smoke.ps1
       - name: Upload Windows build artifacts
         if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || contains(github.event.head_commit.message, '[qa-installer]')
         uses: actions/upload-artifact@v4
@@ -75,5 +79,6 @@ jobs:
           path: |
             dist/MeetingSplit-v0.8.6-Windows-portable.zip
             dist/MeetingSplit_Setup_v0.8.6.exe
+            work/installer-smoke/installer-qa.json
           if-no-files-found: error
           retention-days: 14

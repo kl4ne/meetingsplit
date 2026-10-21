@@ -46,7 +46,8 @@ def existing_status(endpoint=DEFAULT_ENDPOINT) -> dict:
     try:
         version=request_json(endpoint,'/api/version').get('version')
         models=request_json(endpoint,'/api/tags').get('models',[])
-        installed=next((m for m in models if m.get('name')==MODEL or m.get('model')==MODEL),None)
+        installed=next((m for m in models if (m.get('name')==MODEL or m.get('model')==MODEL)
+                        and not m.get('remote_host') and not m.get('remote_model')),None)
         return {'available':bool(version),'version':version,'model':installed}
     except (OSError,ValueError,RuntimeError):
         return {'available':False,'version':None,'model':None}
@@ -55,7 +56,7 @@ def existing_status(endpoint=DEFAULT_ENDPOINT) -> dict:
 @contextmanager
 def _stream_open(endpoint, route, payload, cancel):
     """Cold model load can take minutes before headers; keep this wait cancellable."""
-    if endpoint not in (DEFAULT_ENDPOINT,MANAGED_ENDPOINT) or route not in ('/api/chat','/api/pull'):
+    if endpoint not in (DEFAULT_ENDPOINT,MANAGED_ENDPOINT) or route not in ('/api/chat','/api/generate','/api/pull'):
         raise ValueError('Only fixed local Ollama streaming routes are allowed')
     port=11434 if endpoint==DEFAULT_ENDPOINT else 11435
     connection=http.client.HTTPConnection('127.0.0.1',port,timeout=3)
@@ -93,27 +94,23 @@ def stream_json(endpoint, route, payload, cancel, progress, deadline_seconds=900
 def chat(messages, endpoint=DEFAULT_ENDPOINT, model=MODEL, cancel=None, progress=lambda _:None, timeout=900):
     if model!=MODEL: raise ValueError('Only the local qwen3:4b model is supported')
     control=cancel or Cancellation()
-    chunks=[]; total=0; done=False; last_update=0
-    messages=[dict(m) for m in messages]
-    # Qwen documents /no_think as a prompt switch; older model templates may
-    # not implement the runtime's separate think=false control correctly.
-    for message in reversed(messages):
-        if message.get('role')=='user':
-            message['content']+='\n/no_think';break
-    # The official qwen3:4b template always opens <think>. Complete its empty
-    # thinking block as an assistant prefill (Qwen's hard non-thinking switch).
-    # This avoids leaking an unclosed reasoning continuation as document text.
-    messages.append({'role':'assistant','content':'<think>\n\n</think>\n\n'})
-    payload={'model':MODEL,'messages':messages,'stream':True,'think':False,
-             'keep_alive':0,'truncate':False,'options':{'temperature':0.2,'num_ctx':8192,
-                'num_predict':2048,'repeat_penalty':1.1}}
+    chunks=[]; total=0; done=False; last_update=0; thinking_chars=0
+    # The current official qwen3:4b reports thinking.values=[true]. Requesting
+    # false is then coerced to its default and leaks reasoning into content on
+    # some runtimes. Enable the separate thinking channel and discard that field.
+    # Reserve enough generation/context budget for both reasoning and final text.
+    payload={'model':MODEL,'messages':[dict(m) for m in messages],'stream':True,'think':True,
+             'keep_alive':0,'truncate':False,'options':{'temperature':0.6,'num_ctx':16384,
+                'num_predict':8192,'repeat_penalty':1.1}}
     for record in stream_json(endpoint,'/api/chat',payload,control,lambda _:None,timeout):
         text=record.get('message',{}).get('content','')
+        thinking_chars+=len(record.get('message',{}).get('thinking',''))
+        if thinking_chars>512*1024: raise ValueError('Ollama reasoning exceeded its limit')
         total += len(text)
         if total>1024*1024: raise ValueError('Ollama generated too much text')
         chunks.append(text)
         if time.monotonic()-last_update>.5:
-            progress('Ollama: '+str(total)+' characters');last_update=time.monotonic()
+            progress('Ollama: '+str(total)+' characters' if total else 'Ollama: preparing the report…');last_update=time.monotonic()
         if record.get('done'):
             if record.get('done_reason')=='length':
                 raise RuntimeError('Ollama reached its output limit; the incomplete report was not saved')
@@ -178,7 +175,11 @@ class LocalService:
 
     def ensure_model(self, allow_download=False):
         status=existing_status(self.endpoint)
-        if status['model']: return status['model']
+        if status['model']:
+            details=request_json(self.endpoint,'/api/show',{'model':MODEL})
+            if details.get('remote_host') or details.get('remote_model'):
+                raise RuntimeError('Remote Ollama model aliases are not allowed')
+            return status['model']
         if not allow_download or not self.process:
             raise RuntimeError('qwen3:4b is missing. Use optional component setup to download it.')
         import shutil
@@ -193,7 +194,15 @@ class LocalService:
 
     def __exit__(self, *_):
         if self.process and self.process.poll() is None:
-            self.process.terminate()
+            if os.name=='nt':
+                # Terminate only the owned server's tree, including model runners.
+                taskkill=Path(os.environ.get('WINDIR',r'C:\Windows'))/'System32'/'taskkill.exe'
+                try:
+                    subprocess.run([str(taskkill),'/PID',str(self.process.pid),'/T','/F'],
+                        stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=8,
+                        creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                except (OSError,subprocess.TimeoutExpired): self.process.terminate()
+            else: self.process.terminate()
             try: self.process.wait(timeout=8)
             except subprocess.TimeoutExpired:
                 self.process.kill(); self.process.wait(timeout=3)
@@ -202,6 +211,11 @@ class LocalService:
 
 def setup_ollama(root, progress, cancel):
     from desktop.components import install_package, OLLAMA_PACKAGE
+    component_root=validate_local_folder(root)/'Componentes'
+    component_root.mkdir(exist_ok=True)
+    receipt=component_root/'ollama-validation.json'
+    receipt.write_text(json.dumps({'ok':False,'status':'testing'}),encoding='utf-8')
+    (component_root/'ollama-smoke-minutes.md').unlink(missing_ok=True)
     # An existing service with the exact local model requires no installation.
     if not existing_status().get('model'):
         install_package(OLLAMA_PACKAGE,root,progress,cancel)
@@ -211,8 +225,6 @@ def setup_ollama(root, progress, cancel):
         # Preserve the actual downloaded model's license, not a guessed label.
         license_text=details.get('license','')
         if not license_text.strip(): raise RuntimeError('Ollama did not supply the model license')
-        component_root=validate_local_folder(root)/'Componentes'
-        component_root.mkdir(exist_ok=True)
         (component_root/'QWEN3_LICENSE.txt').write_text(license_text,encoding='utf-8')
         from engine.summarize import summarize_local
         transcript='[00:00:01] Ana will send the draft on Friday.\n[00:00:06] Luis agreed to review it on Monday.'
@@ -220,6 +232,6 @@ def setup_ollama(root, progress, cancel):
                                endpoint=service.endpoint,cancel=cancel)
         (component_root/'ollama-smoke-minutes.md').write_text(report,encoding='utf-8')
         (component_root/'ollama-validation.json').write_text(json.dumps({
-            'model':MODEL,'digest':model.get('digest'),'endpoint':service.endpoint,
+            'ok':True,'model':MODEL,'digest':model.get('digest'),'endpoint':service.endpoint,
             'test':'synthetic meeting, generation completed; factual review required',
             'characters':len(report)},indent=2),encoding='utf-8')

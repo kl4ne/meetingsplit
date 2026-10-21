@@ -56,7 +56,7 @@ def load_cpu_whisper(model_name: str='medium', *, model_cache:Path|None=None):
                         cpu_threads=min(8, os.cpu_count() or 4), **_model_options(model_cache))
 
 
-def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_status:Callable[[str],None]=lambda _:None):
+def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_status:Callable[[str],None]=lambda _:None, cancel:Cancellation|None=None):
     if model_cache is not None:
         from desktop.components import activate_gpu
         activate_gpu(Path(model_cache).parent)
@@ -70,7 +70,7 @@ def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_sta
         # Probe in a disposable child so a missing dependency cannot kill the UI.
         from desktop.cuda_probe import probe_cuda
         on_status('Comprobando inferencia CUDA en proceso aislado...')
-        report=probe_cuda(model_name,Path(model_cache))
+        report=probe_cuda(model_name,Path(model_cache),cancel=cancel)
         ready=report.get('ok',False)
         reason=report.get('error','CUDA probe failed')
     if ready:

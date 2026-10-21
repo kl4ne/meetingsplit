@@ -15,7 +15,7 @@
 </div>
 
 > [!IMPORTANT]
-> **Development build · v0.8.6 · Not a production release.** The source is under active development. GitHub Actions generated an installer, but an ASUS test of v0.8.3 identified a CUDA library failure and an internal D: detection problem. The v0.8.6 corrections still require Windows hardware validation. Please do not process confidential recordings until the Windows build and privacy checks are complete.
+> **Development checkpoint · v0.8.6 · Release on hold.** No new version or installer delivery until CUDA, optional Ollama, installer QA, regressions and licensing have all been evaluated. Source CUDA inference now works in short synthetic EN/ES tests on the ASUS RTX 4070 Laptop; frozen installer acceptance remains separate. See [current status](MASTER_STATUS.md).
 
 ---
 
@@ -23,9 +23,11 @@
 
 The app accepts folders on **verified internal C: or D:** drives, and deliberately refuses USB/removable/network targets and folders inside OneDrive, Google Drive, Dropbox or iCloud Drive. In Windows, choose a non-synced folder such as `C:\MeetingSplit` (if writable), or a directory under `%LOCALAPPDATA%`. D: is verified using Windows Storage with a CIM fallback for systems where `Get-Disk` reports an unavailable bus type. Unknown physical connections remain blocked for safety.
 
-NVIDIA GPU transcription with Faster-Whisper requires **CUDA 12 cuBLAS and compatible cuDNN 9 libraries** available to the app, not merely a GPU driver. MeetingSplit now checks the DLLs before using CUDA, and retries on CPU if CUDA fails at runtime; CPU processing may be considerably slower. CUDA DLLs are not bundled into the application without a license and packaging review. Do not download DLLs from untrusted websites. Test with a disposable, consented short recording before processing real meetings.
+NVIDIA GPU transcription requires **CUDA 12 cuBLAS and cuDNN 9**, beyond the driver. Optional setup downloads pinned official NVIDIA archives into a validated internal folder, registers them only for this process, and tests lazy inference in an isolated child. CPU fallback remains available. No driver, System32 or global PATH changes occur. The base installer does not contain these archives.
 
-**v0.8.6 development notice:** Windows storage detection and slow CPU transcription are under hardware validation. Without compatible CUDA 12/cuDNN 9 libraries, MeetingSplit falls back to CPU with the `small` model when Medium or Large was selected; processing may still take several minutes per clip, and accuracy can be lower. A new elapsed-time indicator is shown during long work. USB drives remain blocked.
+**Optional local minutes:** the installer and Settings offer an unchecked component wizard for Ollama and `qwen3:4b`. It detects a ready existing local model, otherwise downloads a checksum verified standalone runtime and stores models in the chosen internal folder. Download/generation progress, cancellation, loopback validation and a synthetic minutes test are included. Original vendor/model licenses are retained. See [optional components and storage details](docs/OPTIONAL_COMPONENTS.md). This implementation remains under development QA; it is not a new published version.
+
+**Verified baseline:** the user confirmed internal D: and six CPU transcripts in about 11 minutes. Current read-only ASUS checks accept internal C:/D: and reject USB J:. Without working CUDA, CPU uses `small` when Medium or Large was selected; accuracy may be lower. Enlarged typography, five EN/ES pages and elapsed-time feedback remain in place.
 
 ## Overview
 
@@ -66,12 +68,12 @@ Version 0.8.6 enlarges typography two steps across the five screens in English a
 | Independent screens and permanent developer credit | Implemented; browser/UI tests completed |
 | Import MP3, M4A, WAV and other FFmpeg-supported formats | Implemented; format-dependent validation pending |
 | Silence-aware splitting, bounded overlap and coverage manifest | Implemented; engine tests completed |
-| Local transcription with Faster-Whisper | Integrated; real bilingual GPU/CPU validation pending |
+| Local transcription with Faster-Whisper | Actual ASUS short synthetic GPU/CPU EN/ES tests passed; frozen/long QA pending |
 | TXT, JSON, SRT, audio chunks and ZIP export | Implemented; integration tests completed |
 | Optional local summary / meeting minutes via Ollama | Integrated; quality validation pending |
 | ChatGPT/Gemini preparation and prompts | Implemented; **no direct paid-plan API assumption** |
 | Choose a local data folder per computer | Implemented; Windows drive detection QA pending |
-| Windows portable build / installer recipe | Prepared; **no verified `.exe` yet** |
+| Windows portable build / installer recipe | Development EXE builds exist; current optional setup installer QA pending |
 
 ### Bilingual by design
 
@@ -187,7 +189,7 @@ MeetingSplit es una aplicación de escritorio para **Windows 11** que divide gra
 
 ### ¿Ya puedo instalarlo?
 
-**Todavía no hay un instalador `.exe` verificado.** La versión v0.7 es código en desarrollo. Los resultados y capturas no reemplazan las pruebas reales en Windows 11. Para compilar, consulta [`COMPILACION_WINDOWS.md`](COMPILACION_WINDOWS.md).
+**La publicación sigue detenida en v0.8.6.** No se entregará otra versión hasta evaluar CUDA, Ollama opcional, instalador, regresiones, seguridad y licencias. CUDA ya ejecutó voz sintética EN/ES en el ASUS real; eso no sustituye la aceptación del instalador completo. Consulta [`MASTER_STATUS.md`](MASTER_STATUS.md) para el estado comprobado.
 
 ### Privacidad
 

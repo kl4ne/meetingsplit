@@ -45,10 +45,15 @@ Observed here on the actual ASUS (source environment; no private meeting audio):
 - Python dependency audit after CT2/setuptools/pip correction: no known advisories
   from pip-audit. Native licensing/security review remains pending.
 - Ollama runtime/model downloaded; endpoint, model and license validated. Initial
-  minutes tests exposed cold-load timeout and an old Qwen template opening thinking
-  even with think=false. The corrected client uses Qwen's empty thinking assistant
-  prefill, /no_think and truncation rejection. Corrected output/factual review is
-  still pending; a completed HTTP request is not sufficient acceptance.
+  minutes tests exposed cold-load timeout and a model declaring thinking.values=[true].
+  Disabling thinking was not supported. The corrected client enables its separate
+  thinking channel, discards that field, reserves adequate context/output budget,
+  and rejects truncation. A finished English synthetic minute was generated and
+  reviewed; explicit locale/task rules corrected mixed-language headings and an
+  omitted task. Corrected English output includes both Ana/Friday and Luis/Monday,
+  no invented date and no claim of confirmed attendance. Spanish QA is running.
+- Full local regression with final pinned dependencies: 68 passed (no skips),
+  including browser EN/ES navigation. Subsequent small fixes require targeted checks.
 
 Remaining: corrected EN/ES minutes assessment, frozen EXE/installer end-to-end GPU
 and Ollama, clean/upgrade/cancel/uninstall, long-recording/resource tests, complete

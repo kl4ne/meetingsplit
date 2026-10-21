@@ -143,14 +143,14 @@ def test_pinned_pyav_decodes_the_audio_api_used_by_faster_whisper(tmp_path):
     assert len(decode_audio(str(source)))==16000
 
 
-def test_qwen_prefill_does_not_mutate_source_messages(monkeypatch):
+def test_qwen_thinking_is_separate_and_does_not_mutate_source(monkeypatch):
     captured=[]
     def open_stream(endpoint,route,payload,cancel):
         captured.append(payload)
-        return io.BytesIO(b'{"message":{"content":"# Minutes"},"done":true,"done_reason":"stop"}\n')
+        return io.BytesIO(b'{"message":{"thinking":"internal analysis"}}\n{"message":{"content":"# Minutes"},"done":true,"done_reason":"stop"}\n')
     monkeypatch.setattr(ollama,'_stream_open',open_stream)
     messages=[{'role':'user','content':'Source text'}]
     assert ollama.chat(messages)=='# Minutes'
     assert messages==[{'role':'user','content':'Source text'}]
-    assert captured[0]['messages'][-1]['content']=='<think>\n\n</think>\n\n'
-    assert captured[0]['think'] is False
+    assert captured[0]['messages']==messages
+    assert captured[0]['think'] is True

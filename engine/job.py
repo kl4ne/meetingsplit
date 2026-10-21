@@ -107,7 +107,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         if do_transcribe:
             task.check()
             model,device=load_whisper(x['model'],model_cache=base/'Modelos',
-                                       on_status=lambda message:progress(message,15))
+                                       on_status=lambda message:progress(message,15),cancel=task)
             manifest['device']=device
             if device == 'CPU':
                 manifest['actual_model'] = 'small' if x['model'] in ('medium', 'large-v3') else x['model']

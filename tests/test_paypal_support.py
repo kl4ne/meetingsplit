@@ -4,7 +4,7 @@ import os, shutil
 import pytest
 ROOT=Path(__file__).resolve().parents[1]
 PAYPAL='https://www.paypal.com/ncp/payment/XPUK3HVHJW8KE'
-PREVIEW=ROOT/'MEETINGSPLIT_PREVIEW_v0.8.3.html'
+PREVIEW=ROOT/'MEETINGSPLIT_PREVIEW_v0.8.4.html'
 
 def test_paypal_link_is_owner_provided_and_no_sdk():
     for file in (ROOT/'ui/index.html',PREVIEW):
@@ -34,7 +34,7 @@ def test_external_browser_native_and_no_personal_card_link():
 BROWSER=os.getenv('CHROMIUM_BINARY') or shutil.which('chromium') or shutil.which('google-chrome')
 @pytest.mark.skipif(not BROWSER,reason='Chromium unavailable')
 def test_support_bilingual_navigation_and_real_outbound_click():
-    from playwright.sync_api import sync_playwright
+    sync_playwright = pytest.importorskip('playwright.sync_api').sync_playwright
     with sync_playwright() as p:
         browser=p.chromium.launch(executable_path=BROWSER,headless=True,args=['--no-sandbox'])
         context=browser.new_context(viewport={'width':1366,'height':768})

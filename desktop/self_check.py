@@ -41,15 +41,20 @@ def run_checks() -> tuple[dict, int]:
         import ctranslate2
         record('whisper',True,f'Faster-Whisper present; CTranslate2 {ctranslate2.__version__}')
         try:
-            formats=sorted(ctranslate2.get_supported_compute_types('cuda'))
-            record('cuda',bool(formats),'GPU compute types: '+', '.join(formats),False)
+            from engine.transcription import _gpu_runtime_ready
+            ready,reason=_gpu_runtime_ready()
+            if not ready:
+                record('cuda',False,'CUDA libraries unavailable; CPU fallback enabled: '+reason[:130],False)
+            else:
+                formats=sorted(ctranslate2.get_supported_compute_types('cuda'))
+                record('cuda',bool(formats),'GPU compute types: '+', '.join(formats),False)
         except Exception as e:
             record('cuda',False,'CUDA unavailable; CPU fallback expected: '+str(e)[:120],False)
     except Exception as e:
         record('whisper',False,f'{type(e).__name__}: {e}'[:240])
         record('cuda',False,'Not tested because Faster-Whisper is unavailable',False)
     report={
-        'product':'MeetingSplit','version':'0.8.3','offline':True,
+        'product':'MeetingSplit','version':'0.8.4','offline':True,
         'python':platform.python_version(),
         'packaged':bool(getattr(sys,'frozen',False)),
         'checks':checks,

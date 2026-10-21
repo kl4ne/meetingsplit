@@ -15,9 +15,15 @@
 </div>
 
 > [!IMPORTANT]
-> **Development build · v0.8.3 · Not a production release.** The source is under active development. A Windows `.exe` installer and real GPU transcription on target hardware have **not yet been validated**. Please do not process confidential recordings until the Windows build and privacy checks are complete.
+> **Development build · v0.8.4 · Not a production release.** The source is under active development. GitHub Actions generated an installer, but an ASUS test of v0.8.3 identified a CUDA library failure and an internal D: detection problem. The v0.8.4 corrections still require Windows hardware validation. Please do not process confidential recordings until the Windows build and privacy checks are complete.
 
 ---
+
+## Windows storage and NVIDIA runtime (development v0.8.4)
+
+The app accepts folders on **verified internal C: or D:** drives, and deliberately refuses USB/removable/network targets and folders inside OneDrive, Google Drive, Dropbox or iCloud Drive. In Windows, choose a non-synced folder such as `C:\MeetingSplit` (if writable), or a directory under `%LOCALAPPDATA%`. D: is verified using Windows Storage with a CIM fallback for systems where `Get-Disk` reports an unavailable bus type. Unknown physical connections remain blocked for safety.
+
+NVIDIA GPU transcription with Faster-Whisper requires **CUDA 12 cuBLAS and compatible cuDNN 9 libraries** available to the app, not merely a GPU driver. MeetingSplit now checks the DLLs before using CUDA, and retries on CPU if CUDA fails at runtime; CPU processing may be considerably slower. CUDA DLLs are not bundled into the application without a license and packaging review. Do not download DLLs from untrusted websites. Test with a disposable, consented short recording before processing real meetings.
 
 ## Overview
 
@@ -197,7 +203,7 @@ This project depends on software with **separate licenses** (including Qt/PySide
 
 **Designed & Developed by Roberto S. Macfie**
 
-<sub>MeetingSplit · Independent Windows desktop software · Development version 0.8.3</sub>
+<sub>MeetingSplit · Independent Windows desktop software · Development version 0.8.4</sub>
 
 </div>
 

@@ -1,9 +1,52 @@
 """Optional locally executed Faster-Whisper; never contacts ChatGPT or Gemini."""
 from __future__ import annotations
 from pathlib import Path
+import ctypes
+import sys
 from typing import Callable
 from .planning import Clip, assign_text_to_core
 from .control import Cancellation
+
+
+def _gpu_runtime_ready() -> tuple[bool, str]:
+    """Avoid broken Windows GPU paths before launching CTranslate2 inference.
+
+    CTranslate2 can construct the GPU model before its lazy generator loads
+    cuBLAS/cuDNN. Checking the libraries first prevents missing-DLL failures
+    that sometimes terminate the process instead of raising Python errors.
+    """
+    if sys.platform != 'win32':
+        return True, ''
+    for dll in ('cublas64_12.dll', 'cublasLt64_12.dll', 'cudnn64_9.dll'):
+        try:
+            ctypes.WinDLL(dll)
+        except (OSError, AttributeError) as exc:
+            return False, f'{dll}: {str(exc)[:100]}'
+    return True, ''
+
+
+def is_cuda_runtime_error(exc: Exception) -> bool:
+    """Only fall back for accelerator-related errors; surface other failures."""
+    message = str(exc).lower()
+    return any(token in message for token in (
+        'cuda', 'cublas', 'cudnn', 'cudart', 'cufft',
+        'out of memory', 'no kernel image', 'compute capability',
+        'failed to load library', 'cannot load library',
+    ))
+
+
+def _model_options(model_cache: Path | None) -> dict:
+    options = {}
+    if model_cache is not None:
+        model_cache = Path(model_cache)
+        model_cache.mkdir(parents=True, exist_ok=True)
+        options['download_root'] = str(model_cache)
+    return options
+
+
+def load_cpu_whisper(model_name: str='medium', *, model_cache:Path|None=None):
+    from faster_whisper import WhisperModel
+    return WhisperModel(model_name, device='cpu', compute_type='int8', **_model_options(model_cache))
 
 
 def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_status:Callable[[str],None]=lambda _:None):
@@ -11,17 +54,18 @@ def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_sta
         from faster_whisper import WhisperModel
     except ImportError as err:
         raise RuntimeError('Falta faster-whisper. Ejecuta instalar.bat para instalar las dependencias.') from err
-    options={}
-    if model_cache is not None:
-        model_cache=Path(model_cache)
-        model_cache.mkdir(parents=True,exist_ok=True)
-        options['download_root']=str(model_cache)
-    try:
-        on_status('Preparando aceleración NVIDIA (CUDA)...')
-        return WhisperModel(model_name,device='cuda',compute_type='int8_float16',**options), 'NVIDIA GPU'
-    except Exception as exc:
-        on_status(f'CUDA no disponible ({str(exc)[:100]}). Usando CPU en modo seguro.')
-        return WhisperModel(model_name,device='cpu',compute_type='int8',**options), 'CPU'
+    ready, reason = _gpu_runtime_ready()
+    if ready:
+        try:
+            on_status('Preparando aceleración NVIDIA (CUDA)...')
+            return WhisperModel(model_name, device='cuda', compute_type='int8_float16',
+                                **_model_options(model_cache)), 'NVIDIA GPU'
+        except Exception as exc:
+            if not is_cuda_runtime_error(exc):
+                raise
+            reason = str(exc)[:130]
+    on_status(f'GPU CUDA 12 no disponible ({reason}). Continuando por CPU; puede tardar más.')
+    return load_cpu_whisper(model_name, model_cache=model_cache), 'CPU'
 
 
 def transcribe_clip(model, clip: Clip, path: Path, *, language: str='auto', cancel: Cancellation|None=None) -> list[dict]:

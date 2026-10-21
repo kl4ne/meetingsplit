@@ -1,3 +1,12 @@
+## v0.8.4 — ASUS Windows runtime recovery (development)
+- Correct internal D: drive validation with Windows Storage and CIM fallbacks, while rejecting USB and cloud-synced folders.
+- The default folder dialog opens from local AppData instead of potentially cloud-synced Desktop/Documents.
+- Preflight Windows CUDA 12 cuBLAS/cuDNN DLLs; if missing, choose CPU before inference.
+- If CUDA DLL / runtime failure occurs on the first actual transcription pass (lazy generator), retry only that segment on CPU and record the warning and device used.
+- Regression tests for GPU failure, storage classification, progress and lack of duplicate transcript rows.
+- GPU acceleration still requires compatible CUDA 12/cuDNN 9 libraries installed and discoverable on Windows. No unreviewed CUDA DLLs bundled.
+- Not a production release. Requires testing on actual ASUS Windows 11 and RTX 4070 before distribution.
+
 # Change log
 
 ## v0.7 — Windows packaging readiness

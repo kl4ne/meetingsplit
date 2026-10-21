@@ -1,6 +1,7 @@
 """Disk-first offline recording pipeline with persisted status and cooperative stop."""
 from __future__ import annotations
 import json
+import gc
 from pathlib import Path
 import re
 from datetime import datetime
@@ -9,7 +10,8 @@ from .control import Cancellation, JobCancelled
 from .output import format_srt, pack_result
 from .planning import plan_clips
 from .summarize import instructions, summarize_local
-from .transcription import format_transcript, load_whisper, transcribe_clip
+from .transcription import (format_transcript, load_whisper, load_cpu_whisper,
+                            is_cuda_runtime_error, transcribe_clip)
 from desktop.storage import validate_local_folder
 
 ALLOWED={'.mp3','.m4a','.wav','.aac','.ogg','.flac','.mp4','.wma','.opus'}
@@ -63,7 +65,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         folder=base/f'MeetingSplit-{slug}-{stamp}-{suffix}';suffix+=1
     folder.mkdir(parents=False,exist_ok=False)
     manifest={
-        'version':'0.7.0', 'source_name':src.name,'source_bytes':src.stat().st_size,
+        'version':'0.8.4', 'source_name':src.name,'source_bytes':src.stat().st_size,
         'created':datetime.now().isoformat(), 'status':'started',
         'mode':x['action'],'max_export_seconds':x['minutes']*60,
         'overlap_seconds':x['overlap'],'model':x['model'],
@@ -122,7 +124,28 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                 try:
                     task.check()
                     progress(f'Transcribiendo audio {index+1} de {len(clips)}',int(49+39*index/len(clips)))
-                    part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
+                    try:
+                        part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
+                    except Exception as exc:
+                        # The first real CUDA call can occur while iterating the
+                        # lazy Whisper generator, AFTER successful model creation.
+                        # Retry only the current clip on CPU, never duplicate rows.
+                        if device != 'NVIDIA GPU' or not is_cuda_runtime_error(exc):
+                            raise
+                        task.check()
+                        progress('Fallo de bibliotecas NVIDIA/CUDA. Reintentando el audio por CPU.',
+                                 int(49+39*index/len(clips)))
+                        manifest['warnings'].append(
+                            'GPU no disponible durante la inferencia; transcripción continuó por CPU. '
+                            + str(exc)[:180])
+                        model = None
+                        gc.collect()
+                        model = load_cpu_whisper(x['model'],model_cache=base/'Modelos')
+                        device = 'CPU'
+                        manifest['device'] = device
+                        _write_json(folder/'manifest.json',manifest)
+                        task.check()
+                        part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
                     lines.extend(part)
                     (folder/f'transcripcion_parte_{clip.number:02}.txt').write_text(
                         format_transcript(part),encoding='utf-8')

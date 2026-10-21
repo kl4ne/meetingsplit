@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light"><title>MeetingSplit · Estudio privado de reuniones</title>
+  <style>:root{font-family:'Segoe UI Variable','Segoe UI',Arial,sans-serif;color:#14253b;background:#f1f0ec;--navy:#061327;--navy2:#0c2038;--gold:#c29346;--gold-hi:#f4d28a;--line:#e1dfd9;--cream:#faf9f5}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}button,select{font:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #c99845;outline-offset:3px}[hidden]{display:none!important}
+.app-shell{display:grid;grid-template-columns:240px minmax(0,1fr);height:100vh;min-height:0;overflow:hidden}
+.sidebar{min-height:0;display:flex;flex-direction:column;position:relative;overflow:hidden;background:linear-gradient(157deg,#08192f 0%,#061327 54%,#030a15 100%);color:#e9e8e6;border-right:1px solid rgba(220,172,93,.37)}
+.sidebar:before{content:'';position:absolute;left:-80px;bottom:-100px;width:300px;height:300px;background:radial-gradient(circle,rgba(191,142,67,.11),transparent 67%);pointer-events:none}
+.brand{min-height:106px;padding:27px 20px 22px;display:flex;align-items:center;gap:11px;position:relative}.brand-icon{height:41px;width:41px;display:grid;place-items:center;border:1px solid rgba(248,217,153,.75);color:#f7d89e;background:linear-gradient(140deg,rgba(247,209,140,.15),rgba(3,12,25,.12));box-shadow:0 0 25px rgba(212,157,70,.1)}.brand-icon svg{width:29px;height:29px}.brand-word strong{display:block;font-size:15px;letter-spacing:.095em;line-height:1.2;font-weight:700}.brand-word strong span{color:var(--gold-hi)}.brand-word small{display:block;font-size:8px;letter-spacing:.19em;color:#b8b8b7;margin-top:6px}.sidebar-divider{height:1px;background:linear-gradient(90deg,rgba(235,194,119,.62),rgba(235,194,119,.03));margin:0 22px}.nav-heading{color:#bd9864;font-size:10px;font-weight:700;letter-spacing:.24em;padding:28px 25px 15px;margin:0}.sidebar nav{display:flex;flex-direction:column;padding:0 11px;gap:8px}.nav-item{position:relative;width:100%;height:49px;text-align:left;border:1px solid transparent;background:transparent;color:#b9c3d2;display:flex;gap:13px;align-items:center;padding:0 14px;border-radius:5px;font-size:12px;font-weight:650;transition:background .15s,color .15s}.nav-item:hover{background:rgba(255,255,255,.045);color:#fff}.nav-item.active{color:#ffe6ab;border-color:rgba(218,174,95,.35);background:linear-gradient(90deg,rgba(185,139,65,.20),rgba(189,145,79,.03))}.nav-item.active:before{content:'';position:absolute;left:0;top:7px;bottom:7px;width:2px;background:#f0c47b}.nav-icon{font-size:22px;line-height:1;display:grid;place-items:center;width:24px;color:#bd9860}.nav-arrow{margin-left:auto;color:#d0b27c;font-size:21px;font-weight:300}.sidebar-bottom{margin-top:auto;padding:22px 23px 18px;color:#a9b5c5}.security-mark{font-size:9px;color:#d4c5a5;letter-spacing:.11em;display:flex;align-items:center;gap:9px}.green-dot{width:7px;height:7px;border-radius:50%;background:#63d7a5;display:inline-block;box-shadow:0 0 8px rgba(85,229,167,.33);flex-shrink:0}.sidebar-bottom p{font-size:10px;line-height:1.65;margin:13px 0 20px}.sidebar-identity{border-top:1px solid rgba(211,182,133,.15);padding-top:13px;display:flex;justify-content:space-between;font-size:9px;letter-spacing:.16em;color:#c1a677}
+.main-shell{min-width:0;min-height:0;display:flex;flex-direction:column;background:#f5f4f0}.topbar{height:69px;min-height:69px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(23px,3vw,50px);background:#fbfaf8;border-bottom:1px solid #e0ded7;gap:12px}.page-position{display:flex;align-items:center;gap:13px;font-size:12px;font-weight:650;color:#59677a}.location-kicker{font-size:10px;letter-spacing:.17em;color:#9d753e}.crumb{color:#d9c9b1}.top-right{display:flex;align-items:center;gap:19px}.gold-separator{height:23px;width:1px;background:#d6bd90}.privacy-badge{font-size:10px;font-weight:800;letter-spacing:.11em;color:#336d57;display:flex;gap:8px;align-items:center}.version-chip{font-size:10px;letter-spacing:.12em;color:#8b93a0}#screen-container{min-width:0;min-height:0;flex:1;position:relative;overflow:hidden}.screen{display:none;overflow-y:auto;overflow-x:hidden;height:100%;padding:24px clamp(23px,3vw,50px) 22px;scrollbar-width:thin;scrollbar-color:#cab896 transparent}.screen.active-screen{display:flex;flex-direction:column;gap:20px}.bottomline{height:39px;min-height:39px;border-top:1px solid #e3e0d8;padding:0 clamp(23px,3vw,50px);color:#7e8998;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:9px;letter-spacing:.13em;white-space:nowrap}.bottomline b{color:var(--gold)}
+.eyebrow{font-size:10px;font-weight:850;letter-spacing:.2em;display:flex;align-items:center;gap:10px;margin:0}.eyebrow.gold{color:#f1cf91}.eyebrow.ink{color:#a3763a}.eyebrow-line{height:1px;width:29px;background:linear-gradient(90deg,#f6da9f,#946637)}h1,h2,p{margin-top:0}h1,h2{font-family:'Bodoni MT','Bodoni Moda','Didot',Georgia,serif;font-weight:400}em{font-family:'Bodoni MT','Bodoni Moda',Didot,Georgia,serif;font-weight:400}
+.cinematic{position:relative;min-height:320px;height:clamp(298px,44vh,405px);flex-shrink:0;overflow:hidden;color:#fff;background:linear-gradient(115deg,#061329,#0c1f39 63%,#142b3b);border:1px solid #94723d;box-shadow:0 15px 28px rgba(2,17,38,.1)}.scenery{position:absolute;inset:0;background:radial-gradient(ellipse at 84% 46%,rgba(236,177,92,.15),transparent 40%),linear-gradient(90deg,#041024 0%,#07182e 35%,#0a2037 100%)}.scenery:after{content:'';position:absolute;right:13%;top:0;height:100%;width:15%;background:linear-gradient(92deg,transparent,rgba(235,177,88,.16) 46%,transparent);transform:skewX(-18deg);filter:blur(19px)}.light-beam{position:absolute;right:3%;top:-20%;width:20%;height:140%;background:linear-gradient(90deg,transparent,rgba(228,175,95,.1) 49%,transparent);transform:rotate(9deg)}.glow-one,.glow-two{position:absolute;border-radius:50%;filter:blur(19px)}.glow-one{right:14%;bottom:19%;height:3px;width:3px;background:#fff2bf;box-shadow:0 0 70px 39px rgba(236,181,97,.45)}.glow-two{right:35%;top:26%;height:2px;width:2px;background:#fff;box-shadow:0 0 55px 18px rgba(220,169,92,.34)}.orbits{position:absolute;width:430px;height:430px;right:-20px;top:-104px;border:1px solid rgba(244,200,127,.22);border-radius:50%;box-shadow:0 0 0 33px rgba(220,179,121,.035),0 0 0 70px rgba(220,179,121,.024)}.wave-ribbon{position:absolute;right:-20px;top:25%;width:44%;color:#eac07e;opacity:.35}.wave-ribbon svg{display:block;width:100%;height:200px}.cinematic-copy{position:relative;z-index:1;padding:clamp(33px,4.4vh,55px) clamp(34px,4vw,67px);max-width:940px}.cinematic-copy h1{font-size:clamp(39px,4.2vw,64px);line-height:1.04;letter-spacing:-.046em;margin:24px 0 12px;text-shadow:0 4px 20px rgba(0,0,0,.28)}.cinematic-copy h1 em{background:linear-gradient(100deg,#fff4c6 0%,#e0ac57 45%,#ffe4a5 85%);background-clip:text;-webkit-background-clip:text;color:transparent}.cinematic-copy p:not(.eyebrow){color:#e2e5e7;line-height:1.72;font-size:13px;max-width:625px;margin-bottom:23px}.cinematic-mark{position:absolute;bottom:19px;right:24px;font-size:9px;letter-spacing:.2em;color:#d4b478}.gold-button{display:inline-flex;justify-content:center;align-items:center;gap:15px;min-height:44px;padding:12px 18px;border:1px solid #ddac57;background:linear-gradient(110deg,#fff0ba,#dcad59 45%,#f2cf89 100%);color:#11233a;font-size:10px;font-weight:900;letter-spacing:.12em;border-radius:3px;box-shadow:inset 0 1px 0 #fff8d9,0 9px 20px rgba(13,28,47,.13);transition:filter .15s,transform .15s}.gold-button:hover{filter:brightness(1.06);transform:translateY(-1px)}.gold-button span{font-size:16px}.home-section-heading{display:flex;align-items:end;justify-content:space-between;gap:20px}.home-section-heading h2{font-size:clamp(25px,2.4vw,35px);margin:8px 0 0;letter-spacing:-.025em}.home-section-heading>span{font-size:11px;color:#687585}.steps-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;flex:1;min-height:0}.step-card{text-align:left;position:relative;display:flex;flex-direction:column;min-height:166px;padding:19px 22px 17px;background:linear-gradient(135deg,#fffefa,#faf9f6);border:1px solid #dedbd3;border-top:2px solid #c8aa72;border-radius:4px;box-shadow:0 10px 20px rgba(9,31,52,.04);transition:transform .15s,border-color .15s}.step-card:hover{transform:translateY(-2px);border-color:#c3a370}.step-number{font-size:9px;letter-spacing:.17em;font-weight:800;color:#a27d4d}.step-icon{position:absolute;right:20px;top:12px;color:#b58d4d;font-size:27px}.step-card strong{font-family:'Bodoni MT',Georgia,serif;font-size:25px;font-weight:500;letter-spacing:-.03em;margin-top:17px}.step-card small{font-size:11px;color:#637081;line-height:1.6;margin-top:4px}.step-link{font-size:9px;color:#97703a;letter-spacing:.1em;font-weight:800;margin-top:auto;padding-top:14px}
+.screen-intro{display:flex;justify-content:space-between;align-items:center;gap:20px;min-height:107px;flex-shrink:0}.screen-intro h1{margin:8px 0 6px;font-size:clamp(36px,3.6vw,52px);letter-spacing:-.045em}.screen-intro h1 em{color:#a77c40}.screen-intro p:not(.eyebrow){margin:0;font-size:12px;color:#667386}.step-count{font-size:10px;letter-spacing:.15em;color:#9c7e4d;border:1px solid #dacbb0;padding:12px 14px;white-space:nowrap}.two-cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(330px,.85fr);gap:20px;flex:1;min-height:0}.surface-card{background:linear-gradient(136deg,#fffefa,#fcfbf8);border:1px solid #dfddd6;border-radius:6px;box-shadow:0 12px 25px rgba(12,25,47,.045)}.card-caption{padding:17px 23px 13px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e9e5dd;font-weight:900;color:#6c788a;letter-spacing:.16em;font-size:10px}.card-caption span{color:#ae874e}.card-caption.light{border-bottom-color:rgba(238,201,149,.2);color:#d8c59e}.drop-zone{height:calc(100% - 148px);min-height:250px;width:calc(100% - 46px);margin:22px 23px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:radial-gradient(ellipse at center -25%,rgba(207,160,91,.12),transparent 66%),#faf7f0;border:1px dashed #bda06f;border-radius:5px}.drop-zone:hover{background:#fff8e8}.upload-symbol{width:64px;height:64px;display:grid;place-items:center;border:1px solid #d8c6a7;border-radius:50%;font-size:40px;font-weight:200;color:#a47a3e}.drop-zone strong{font-size:25px;font-family:'Bodoni MT',Georgia,serif;color:#263952;white-space:nowrap;max-width:80%;overflow:hidden;text-overflow:ellipsis}.drop-zone small{font-size:11px;color:#8490a0;max-width:92%;text-overflow:ellipsis;overflow:hidden}.outline-cta{padding:11px 16px;display:inline-flex;justify-content:center;align-items:center;background:transparent;border:1px solid #bd9b65;color:#97713b;font-weight:800;font-size:10px;letter-spacing:.11em;border-radius:2px;min-height:41px;margin-top:7px}.folder-row{border-top:1px solid #e7e3dc;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 23px}.field-label{display:block;font-size:10px;font-weight:800;letter-spacing:.105em;color:#748094;margin:0}.folder-text{font-size:12px;color:#243d58;margin:7px 0 0;max-width:390px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.text-button{padding:9px 0;border:0;border-bottom:1px solid #ba985d;color:#916a39;background:transparent;font-size:10px;letter-spacing:.1em;font-weight:850;flex-shrink:0}.import-info{display:flex;flex-direction:column;gap:15px;min-height:0}.dark-card{background:linear-gradient(152deg,#0c2440,#051528 72%,#020b17);color:#fff;border:1px solid #bd995f;border-radius:6px;box-shadow:0 13px 25px rgba(0,14,33,.12)}.import-info .dark-card{flex:1}.import-info .dark-card h2{font-size:clamp(37px,3.4vw,51px);margin:30px 24px 12px;line-height:1.09}.dark-card h2 em{color:#f3cf87}.import-info .dark-card>p{font-size:12px;line-height:1.75;color:#c7d3dd;margin:0 24px 22px}.info-rule{border-top:1px solid rgba(244,213,152,.16);color:#e2c58e;padding:12px 24px;letter-spacing:.11em;font-size:10px}.next-button{width:100%;flex-shrink:0}
+.compact-intro{min-height:90px}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;flex:1;min-height:0}.settings-card{display:flex;flex-direction:column;min-width:0;overflow-y:auto}.fields{padding:17px 22px 11px;display:grid;grid-template-columns:1fr 1fr;column-gap:15px;row-gap:16px}.fields label{display:flex;flex-direction:column;gap:7px;min-width:0}.fields select{width:100%;min-width:0;height:40px;padding:0 11px;background:#f7f7f4;border:1px solid #d7dbdf;color:#293e59;border-radius:3px;font-size:12px;font-weight:650}.ai-notice{margin:2px 22px 10px;padding:9px 11px;background:#f8f1e4;border-left:2px solid #c69e60;display:flex;gap:10px;color:#756444;line-height:1.45;font-size:10.5px}.info-symbol{font:italic 16px Georgia,serif;color:#916b37}.checkbox-row{padding:7px 22px;display:flex;gap:10px;align-items:flex-start;cursor:pointer}.checkbox-row input{accent-color:#b89150;width:17px;height:17px;margin:3px 0 0;flex-shrink:0}.checkbox-row b{font-size:11px;color:#293a50;display:block}.checkbox-row small{display:block;font-size:10px;color:#7b8794;margin-top:4px}.settings-footer{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-shrink:0}.settings-footer>span{font-size:10px;color:#647388}
+.process-layout{grid-template-columns:minmax(0,1fr) minmax(330px,.86fr)}.processing-stage{display:flex;flex-direction:column;min-height:0}.waveform{margin:20px 24px 16px;min-height:100px;flex:1;max-height:180px;overflow:hidden;border-bottom:1px solid rgba(233,193,131,.19)}.waveform svg{width:100%;height:100%}.processing-stage h2{font-size:clamp(35px,3.4vw,51px);line-height:1.08;margin:4px 24px 13px}.processing-stage p{font-size:12px;line-height:1.7;color:#c3d0dd;max-width:550px;margin:0 24px 23px}.stage-features{margin-top:auto;display:flex;flex-wrap:wrap;gap:10px;padding:20px 23px;border-top:1px solid rgba(236,205,153,.18)}.stage-features span{font-size:9px;letter-spacing:.07em;color:#e3c188}.run-card{padding-bottom:19px;display:flex;flex-direction:column}.state-label{margin:31px 23px 0;letter-spacing:.12em;font-size:11px;color:#a37b42;font-weight:850}.progress-track{height:8px;margin:14px 23px 0;background:#e9e6df;border-radius:9px;overflow:hidden}.progress-track span{height:100%;width:0%;display:block;background:linear-gradient(90deg,#aa7a37,#f1c47b);transition:width .2s}.run-card #job-status{font-size:12px;line-height:1.75;color:#627185;min-height:65px;margin:20px 23px 20px}.full{margin:0 23px 10px}.cancel-button{height:42px;border:1px solid #b29065;background:#fcf5e7;color:#805a36;font-size:10px;font-weight:800;letter-spacing:.08em}.gold-button:disabled{opacity:.52;cursor:wait}.run-note{margin:auto 23px 0;border-top:1px solid #e5e2da;padding-top:17px;color:#788594;font-size:11px;line-height:1.7}.results-layout{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}.result-emblem{font:60px Georgia,serif;color:#c29d62}.result-eyebrow{font-size:10px;font-weight:850;letter-spacing:.13em;color:#a38050;margin:10px 0 13px}.results-layout h2{font-size:clamp(34px,4vw,53px);margin:0 0 13px;line-height:1.05}.results-layout h2 em{color:#b38a50}.results-layout>p{max-width:480px;font-size:12px;color:#69768a;line-height:1.8}.results-path{margin:14px;max-width:min(650px,100%);padding:13px 16px;border:1px solid #ded1ba;background:#faf6ed;word-break:break-all;font-size:12px;color:#284159}.results-layout #results-open-folder{margin:11px 0}.results-layout #results-new{margin:15px 0}
+@media(max-width:1190px){.app-shell{grid-template-columns:210px minmax(0,1fr)}.brand{padding-inline:14px}.brand-word strong{font-size:12px}.fields{column-gap:9px;padding-inline:15px}.fields select{font-size:11px}.ai-notice{margin-inline:15px}.checkbox-row{padding-inline:15px}.cinematic-copy h1{font-size:clamp(36px,4vw,52px)}.privacy-badge{font-size:9px}}
+@media(max-width:1000px){.app-shell{grid-template-columns:75px minmax(0,1fr)}.brand{justify-content:center}.brand-word,.nav-heading,.sidebar-bottom p,.security-mark,.sidebar-identity,.nav-item span:not(.nav-icon){display:none}.nav-item{justify-content:center;padding:0}.nav-icon{font-size:23px}.sidebar-bottom{height:70px}.steps-grid{gap:9px}.step-card{padding:16px 13px}.step-card strong{font-size:21px}.two-cols{grid-template-columns:1fr 1fr}.screen-intro h1{font-size:38px}}
+@media(max-width:760px){.topbar{height:57px;min-height:57px}.version-chip,.gold-separator,.bottomline span:last-child{display:none}.screen{padding:19px}.screen.active-screen{gap:14px}.two-cols,.settings-grid{grid-template-columns:1fr}.screen{overflow-y:auto}.cinematic{height:auto;min-height:360px}.cinematic-copy{padding:30px}.cinematic-copy h1{font-size:37px}.home-section-heading>span{display:none}.steps-grid{grid-template-columns:1fr}.step-card{min-height:125px}.settings-grid{flex:none}.settings-card{overflow:visible}.import-info .dark-card{min-height:350px}.processing-stage{min-height:330px}.run-card{min-height:340px}}
+@media(max-height:720px) and (min-width:761px){.screen{gap:12px!important;padding-block:15px}.cinematic{height:clamp(245px,41vh,300px);min-height:245px}.cinematic-copy{padding-top:28px}.cinematic-copy h1{font-size:43px;margin:14px 0 8px}.cinematic-copy p:not(.eyebrow){margin-bottom:14px}.home-section-heading h2{font-size:26px}.step-card{min-height:135px}.screen-intro{min-height:82px}.compact-intro{min-height:70px}.settings-grid{gap:12px}.card-caption{padding:11px 16px}.fields{padding-top:10px;row-gap:10px}.fields select{height:34px}.ai-notice{padding-block:6px;margin-bottom:4px}.checkbox-row{padding-block:4px}.processing-stage h2{font-size:39px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* Files are listed only after a completed native job, not fabricated in preview. */
+.result-files{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;max-width:680px;margin:6px 0 8px}
+.result-file{background:#fff;border:1px solid #d0bb95;padding:9px 12px;border-radius:3px;color:#85602b;font-size:10px;font-weight:750}
+.result-file:hover{background:#f6e9d0}
+
+/* v0.6 Persistent language switcher and author credit — independent screens */
+.top-right{display:flex;align-items:center;gap:clamp(6px,1.2vw,17px)}
+.ui-language-control{display:inline-flex;align-items:center;flex-shrink:0;gap:6px;border:1px solid rgba(202,164,100,.58);border-radius:999px;padding:4px 8px;background:rgba(255,253,247,.83);box-shadow:0 2px 11px rgba(9,18,35,.06)}
+.language-label{font-size:10px;font-weight:800;letter-spacing:.12em;color:#48596b;margin-right:2px}
+.ui-lang-btn{min-width:29px;min-height:27px;border:0;border-radius:30px;padding:4px 7px;background:transparent;color:#526275;font-size:11px;font-weight:800;letter-spacing:.08em;transition:background .15s ease,color .15s ease}
+.ui-lang-btn.selected{background:linear-gradient(125deg,#082039,#142f4e);color:#ffe2a0;box-shadow:0 0 0 1px rgba(184,133,58,.35)}
+.lang-rule{color:#9a8c74;font-size:11px}
+.developer-signature{font-size:11px;white-space:nowrap;letter-spacing:.02em;color:#677483}
+.developer-signature a{color:#9a7035;text-decoration:none;font-weight:700;border-bottom:1px solid rgba(154,112,53,.45)}
+.developer-signature a:is(:hover,:focus-visible){color:#614210;border-bottom-color:currentColor}
+@media(max-width:1200px){.language-label{display:none}.top-right{gap:7px}.ui-language-control{padding:3px 5px}.version-chip{display:none}}
+@media(max-width:960px){.privacy-badge{display:none}.developer-signature{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.ui-lang-btn{transition:none}}
+
+/* Rights notice beneath developer signature; always visible on every view. */
+.bottomline{min-height:55px;height:55px}
+.credit-stack{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:3px;min-width:0}
+.copyright-line{font-size:10px;line-height:1.12;letter-spacing:.025em;color:#808896;white-space:nowrap}
+@media(max-width:760px){.bottomline .copyright-line{display:block}.bottomline .developer-signature{display:inline}.credit-stack{max-width:75%;text-align:right}.copyright-line{font-size:9px}}
+@media(max-width:450px){.bottomline{gap:4px;padding-inline:9px;font-size:7px}.developer-signature{font-size:9px}.copyright-line{font-size:8px}}
+
+/* v0.8.4 — Luxury, nonintrusive voluntary PayPal support link. No external SDK in the desktop renderer. */
+.sidebar-support{width:100%;min-height:42px;display:flex;align-items:center;justify-content:center;gap:9px;margin:0 0 18px;border:1px solid rgba(239,193,110,.64);border-radius:4px;color:#fae3b3;background:linear-gradient(110deg,rgba(203,156,74,.15),rgba(7,24,44,.65));font-size:11px;font-weight:700;letter-spacing:.018em;transition:border-color .15s,background .15s}
+.sidebar-support:hover,.sidebar-support:focus-visible{background:linear-gradient(110deg,rgba(203,156,74,.31),rgba(11,32,55,.75));border-color:#ffe1a1}
+.support-heart{color:#f7c984;font:23px/1 Georgia,serif}
+.support-arrow{color:#dfba76;font-size:16px;margin-left:auto}
+@media(max-width:1000px){.sidebar-support{width:47px;height:46px;min-height:46px;margin:0 auto 5px;padding:0}.sidebar-support>span:not(.support-heart){display:none}.sidebar-bottom{height:auto;min-height:70px;padding:10px 13px 13px}}
+@media(prefers-reduced-motion:reduce){.sidebar-support{transition:none}}
+
+
+/* v0.8.4 — Readability pass across all FIVE individual screens.
+   WCAG AA text contrast on cream/white surfaces, while preserving
+   approved deep-navy / cinematic gold components. Desktop & preview share
+   these exact tokens: no pale labels on light panels. */
+:root {
+  --light-ink: #192b42;
+  --light-secondary: #425268;
+  --light-muted: #4e5d70;
+  --light-gold: #77501b;
+}
+/* Explicit foreground color in bright cards; do not inherit decorative gold/white. */
+.main-shell, .surface-card, .step-card, .results-layout, .settings-card, .run-card {
+  color: var(--light-ink);
+}
+/* Supporting copy on off-white surfaces */
+.page-position, .home-section-heading>span,
+.step-card small, .screen-intro p:not(.eyebrow),
+.drop-zone small, .folder-text, .settings-footer>span,
+.run-card #job-status, .run-note, .results-layout>p,
+.checkbox-row small, .ai-notice, .card-caption {
+  color: var(--light-secondary);
+}
+/* Captions and tiny metadata must still read clearly against white. */
+.location-kicker, .eyebrow.ink, .step-number, .step-link,
+.step-count, .card-caption span, .field-label, .text-button,
+.result-eyebrow, .outline-cta, .state-label,
+.result-file, .results-layout h2 em, .screen-intro h1 em {
+  color: var(--light-gold);
+}
+.card-caption, .field-label, .step-number, .step-link, .step-count,
+.result-eyebrow, .state-label, .eyebrow.ink, .outline-cta,
+.text-button {font-size: 11px;}
+.card-caption {letter-spacing:.105em;}
+.field-label {letter-spacing:.055em;}
+.step-card small, .screen-intro p:not(.eyebrow), .drop-zone small,
+.run-card #job-status, .results-layout>p, .checkbox-row small,
+.settings-footer>span, .run-note {font-size: 12px;}
+.home-section-heading>span {font-size: 12px;}
+.fields select, .checkbox-row b {font-size: 12px;color:var(--light-ink);}
+.fields select {background:#fff;border-color:#c1c9d2;}
+.ai-notice {font-size:11.5px;color:#58472b;}
+.drop-zone small {color:var(--light-secondary);}
+.version-chip {color:#546175;}
+/* Brand credit remains ALWAYS legible beneath every screen */
+.bottomline, .copyright-line, .developer-signature {
+  color:#46566c;
+}
+.bottomline {font-size:10px;letter-spacing:.045em;}
+.copyright-line {font-size:10.5px;}
+.developer-signature {font-size:11px;}
+.developer-signature a {color:#76501f;}
+/* Dark surfaces keep intentional light type and gold lettering. */
+.sidebar, .cinematic, .dark-card, .processing-stage {color:#f2f3f4;}
+.dark-card .card-caption.light,
+.processing-stage .card-caption.light {color:#e9d7b4;}
+.dark-card .card-caption.light span,
+.processing-stage .card-caption.light span {color:#f5d08a;}
+/* Distinctive action text now meets contrast on pale gold. */
+.gold-button {color:#172338;}
+@media(max-width:760px) {
+  .bottomline {font-size:9px;}
+  .developer-signature {font-size:10px;}
+  .copyright-line {font-size:9px;}
+}
+
+/* v0.8.4 — Premium, accessible PayPal CTA, click goes straight to PayPal NCP. */
+.sidebar-support {
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;min-height:54px;margin:0 0 16px;padding:9px 12px;
+  border:1px solid #ffe5ab;border-radius:8px;
+  background:linear-gradient(115deg,#f9dd95 0%,#edbd59 49%,#dfaa49 100%);
+  box-shadow:0 0 0 1px rgba(255,248,207,.2) inset,0 12px 28px rgba(215,154,58,.26);
+  color:#132033;text-decoration:none;font-size:11.5px;font-weight:900;
+  letter-spacing:.035em;line-height:1.3;text-align:center;
+  transition:transform .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+.sidebar-support:is(:hover,:focus-visible){color:#0c1c30;background:linear-gradient(115deg,#fff2c4 0%,#f5cb78 52%,#e7b85b 100%);filter:brightness(1.02);transform:translateY(-2px);box-shadow:0 16px 30px rgba(227,170,66,.3)}
+.sidebar-support:focus-visible{outline:3px solid #fff4d7;outline-offset:3px}
+.sidebar-support .support-heart{color:#6c3e10;font-size:23px;line-height:1;flex:0 0 auto}
+.sidebar-support .support-arrow{color:#513511;font-size:18px;flex:0 0 auto;margin-left:auto}
+#developer-name{font-weight:700;color:#694719;text-decoration:none;cursor:default}
+@media(max-width:1000px){.sidebar-support{width:48px;min-height:48px;height:48px;padding:0;margin:0 auto 8px;border-radius:8px}.sidebar-support>span:not(.support-heart){display:none}}
+@media(prefers-reduced-motion:reduce){.sidebar-support{transition:none}.sidebar-support:is(:hover,:focus-visible){transform:none}}
+
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Navegación principal">
+    <div class="brand" aria-label="MeetingSplit">
+      <div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M4 26h8l4-11 5 22 6-32 6 34 4-13h7" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg></div>
+      <div class="brand-word"><strong>MEETING<span>SPLIT</span></strong><small>PRIVATE AUDIO STUDIO</small></div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <p class="nav-heading">ESTUDIO</p>
+    <nav id="primary-navigation" aria-label="Pantallas">
+      <button class="nav-item active" type="button" data-go="home" aria-current="page"><span class="nav-icon">◈</span><span>Inicio</span><span class="nav-arrow">›</span></button>
+      <button class="nav-item" type="button" data-go="import"><span class="nav-icon">⇧</span><span>Importar audio</span><span class="nav-arrow">›</span></button>
+      <button class="nav-item" type="button" data-go="settings"><span class="nav-icon">⚙</span><span>Configuración</span><span class="nav-arrow">›</span></button>
+      <button class="nav-item" type="button" data-go="process"><span class="nav-icon">◉</span><span>Procesamiento</span><span class="nav-arrow">›</span></button>
+      <button class="nav-item" type="button" data-go="results"><span class="nav-icon">▤</span><span>Resultados</span><span class="nav-arrow">›</span></button>
+    </nav>
+    <div class="sidebar-bottom">
+      <a class="sidebar-support" id="support-development" href="https://www.paypal.com/ncp/payment/XPUK3HVHJW8KE" target="_blank" rel="noopener noreferrer" aria-label="Support MeetingSplit Development" title="Open secure PayPal contribution page">
+        <span class="support-heart" aria-hidden="true">♡</span><span>Apoyar el desarrollo</span><span class="support-arrow" aria-hidden="true">↗</span>
+      </a>
+      <div class="security-mark"><span class="green-dot"></span><span>ARCHIVOS EN TU EQUIPO</span></div>
+      <p>Privacidad por diseño. Tus grabaciones no se envían a servidores.</p>
+      <div class="sidebar-identity"><span>MS / DESKTOP</span><span>v0.8.4</span></div>
+    </div>
+  </aside>
+  <div class="main-shell">
+    <header class="topbar">
+      <div class="page-position"><span class="location-kicker">MEETINGSPLIT</span><span class="crumb">/</span><span id="page-crumb">Inicio</span></div>
+      <div class="top-right"><div class="ui-language-control" role="group" aria-label="Interface language" id="ui-language-control">
+        <span class="language-label" id="language-label">LANGUAGE</span><button type="button" class="ui-lang-btn selected" id="lang-en" data-locale="en" aria-pressed="true" lang="en">EN</button><span class="lang-rule" aria-hidden="true">/</span><button type="button" class="ui-lang-btn" id="lang-es" data-locale="es" aria-pressed="false" lang="es">ES</button>
+      </div><span class="gold-separator"></span><span class="privacy-badge"><span class="green-dot"></span> PROCESAMIENTO LOCAL</span><span class="version-chip">EDICIÓN PRIVADA · v0.8.4</span></div>
+    </header>
+    <main id="screen-container" tabindex="-1">
+      <!-- One individual view is present at a time; navigation never stacks pages vertically. -->
+      <section class="screen home-screen active-screen" id="view-home" data-view="home" aria-labelledby="home-title">
+        <div class="cinematic">
+          <div class="scenery" aria-hidden="true"><div class="light-beam"></div><div class="glow-one"></div><div class="glow-two"></div><div class="orbits"></div><div class="wave-ribbon"><svg viewBox="0 0 460 220" preserveAspectRatio="none"><path d="M0 108C35 108 45 54 82 54s46 108 81 108 34-135 75-135 44 158 90 158 53-77 132-77" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".7"/></svg></div></div>
+          <div class="cinematic-copy"><p class="eyebrow gold"><span class="eyebrow-line"></span> TU VOZ. TU INFORMACIÓN. TU CONTROL.</p>
+            <h1 id="home-title">Cada palabra cuenta.<br><em>Cada decisión permanece.</em></h1>
+            <p>Reúne la claridad de tus reuniones en un solo lugar. Divide y transcribe hasta tres horas de audio, sin abandonar tu computadora.</p>
+            <button type="button" class="gold-button lead-cta" data-go="import">PREPARAR UNA REUNIÓN <span>↗</span></button>
+          </div><span class="cinematic-mark">ESTUDIO PRIVADO / 01</span>
+        </div>
+        <div class="home-section-heading"><div><p class="eyebrow ink">UN FLUJO, TRES PASOS</p><h2>De la conversación a la claridad.</h2></div><span>Sin servidor · Español e inglés · Control total</span></div>
+        <div class="steps-grid">
+          <button type="button" class="step-card" data-go="import"><span class="step-number">01 / IMPORTAR</span><span class="step-icon">⇧</span><strong>Selecciona el audio</strong><small>Reuniones almacenadas en tu equipo o descargadas de iCloud y Drive.</small><span class="step-link">ABRIR IMPORTADOR ↗</span></button>
+          <button type="button" class="step-card" data-go="settings"><span class="step-number">02 / CONFIGURAR</span><span class="step-icon">⚙</span><strong>Define el análisis</strong><small>Idioma, modelo Whisper, tamaño de fragmentos y formato de minuta.</small><span class="step-link">VER CONFIGURACIÓN ↗</span></button>
+          <button type="button" class="step-card" data-go="process"><span class="step-number">03 / PROCESAR</span><span class="step-icon">◉</span><strong>Obtén resultados</strong><small>Audios divididos, transcripción con tiempos y exportaciones organizadas.</small><span class="step-link">IR AL ESTUDIO ↗</span></button>
+        </div>
+      </section>
+      <section class="screen" id="view-import" data-view="import" aria-labelledby="import-title" hidden>
+        <div class="screen-intro"><div><p class="eyebrow ink">01 / ORIGEN DE LA REUNIÓN</p><h1 id="import-title">Importar <em>grabación.</em></h1><p>Tu audio original permanece intacto. Selecciona un archivo local para comenzar.</p></div><span class="step-count">PASO 01 — 03</span></div>
+        <div class="two-cols import-layout">
+          <div class="surface-card import-box"><div class="card-caption">GRABACIÓN DE ORIGEN <span>01</span></div>
+            <button type="button" class="drop-zone" id="choose-file"><span class="upload-symbol">⇧</span><strong id="file-title">Seleccionar grabación</strong><small id="file-sub">MP3 · M4A · WAV · AAC · FLAC · OGG</small><span class="outline-cta">EXPLORAR ARCHIVOS ↗</span></button>
+            <div class="folder-row"><div><p class="field-label">CARPETA DE DATOS Y RESULTADOS</p><p id="folder-display" class="folder-text">Pendiente: elegir carpeta local</p></div><button type="button" id="choose-output" class="text-button">CAMBIAR ↗</button></div>
+          </div>
+          <div class="import-info"><div class="dark-card"><span class="card-caption light">PRIVACIDAD ESENCIAL <span>✦</span></span><h2>El audio sigue<br><em>siendo tuyo.</em></h2><p>Los cortes y la transcripción funcionan en tu equipo, sin entregar la grabación a terceros. Los archivos importados desde la nube deben estar descargados.</p><div class="info-rule">ARCHIVO ORIGINAL SIN MODIFICAR</div><div class="info-rule">DESTINO LOCAL ELEGIDO POR TI</div><div class="info-rule">HASTA 3 HORAS POR REUNIÓN</div></div>
+            <button type="button" class="gold-button next-button" data-go="settings">CONTINUAR A CONFIGURACIÓN <span>↗</span></button></div>
+        </div>
+      </section>
+      <section class="screen" id="view-settings" data-view="settings" aria-labelledby="settings-title" hidden>
+        <div class="screen-intro compact-intro"><div><p class="eyebrow ink">02 / AJUSTES DEL ANÁLISIS</p><h1 id="settings-title">Configura <em>tu reunión.</em></h1><p>Cada ajuste se aplica únicamente en tu computadora.</p></div><span class="step-count">PASO 02 — 03</span></div>
+        <div class="settings-grid">
+          <div class="surface-card settings-card"><div class="card-caption">AUDIO Y TRANSCRIPCIÓN <span>01</span></div><div class="fields">
+            <label><span class="field-label">ACCIÓN PRINCIPAL</span><select id="action"><option value="both">Dividir + Transcribir</option><option value="transcribe">Solo transcribir</option><option value="split">Solo dividir</option></select></label>
+            <label><span class="field-label">IDIOMA DE AUDIO</span><select id="input-language"><option value="auto">Automático · Español + Inglés</option><option value="es">Español</option><option value="en">Inglés</option></select></label>
+            <label><span class="field-label">FRAGMENTOS MÁXIMOS</span><select id="minutes"><option value="5">5 minutos</option><option value="10">10 minutos</option><option value="15">15 minutos</option><option value="20">20 minutos</option></select></label>
+            <label><span class="field-label">SOLAPAMIENTO</span><select id="overlap"><option value="20">20 segundos</option><option value="10">10 segundos</option><option value="30">30 segundos</option></select></label>
+            <label><span class="field-label">FORMATO DE SALIDA</span><select id="format"><option value="mp3">MP3 · Compacto</option><option value="m4a">M4A · AAC</option><option value="wav">WAV · Sin comprimir</option></select></label>
+            <label><span class="field-label">MODELO DE VOZ</span><select id="model"><option value="small">Small · Económico</option><option value="medium" selected>Medium · Equilibrado</option><option value="large-v3">Large-v3 · Alta precisión</option></select></label>
+          </div></div>
+          <div class="surface-card settings-card"><div class="card-caption">MINUTAS E INTELIGENCIA ARTIFICIAL <span>02</span></div><div class="fields">
+            <label><span class="field-label">PLATAFORMA DE PREFERENCIA</span><select id="provider"><option value="chatgpt">ChatGPT</option><option value="gemini">Gemini</option></select></label>
+            <label><span class="field-label">SUSCRIPCIÓN</span><select id="plan"><option value="paid">De pago</option><option value="free">Gratuita</option></select></label>
+            <label><span class="field-label">TIPO DE DOCUMENTO</span><select id="report"><option value="both">Resumen + minuta</option><option value="summary">Solo resumen</option><option value="minutes">Solo minuta</option></select></label>
+            <label><span class="field-label">IDIOMA DEL DOCUMENTO</span><select id="report-language"><option value="es">Español</option><option value="en">Inglés</option><option value="both">Español e inglés</option></select></label>
+          </div><div class="ai-notice" id="provider-hint"><span class="info-symbol">i</span><span>Los resultados se preparan para utilizarlos en tu plataforma preferida.</span></div>
+            <label class="checkbox-row"><input type="checkbox" id="local-summary"><span><b>Minuta automática local con Ollama</b><small>Opcional. Necesita Ollama y qwen3:4b instalados.</small></span></label>
+            <label class="checkbox-row"><input type="checkbox" id="zip-output" checked><span><b>Exportar un ZIP con resultados</b><small>Incluye los archivos generados.</small></span></label>
+          </div>
+        </div><div class="settings-footer"><span>Las suscripciones de ChatGPT/Gemini no equivalen a acceso API automático.</span><button type="button" class="gold-button" data-go="process">CONTINUAR AL ESTUDIO <span>↗</span></button></div>
+      </section>
+      <section class="screen" id="view-process" data-view="process" aria-labelledby="process-title" hidden>
+        <div class="screen-intro"><div><p class="eyebrow ink">03 / MOTOR DE PROCESAMIENTO</p><h1 id="process-title">Estudio <em>de audio.</em></h1><p>Tu reunión se procesa localmente con cortes seguros y transcripción temporal.</p></div><span class="step-count">PASO 03 — 03</span></div>
+        <div class="two-cols process-layout">
+          <div class="dark-card processing-stage"><span class="card-caption light">PROCESAMIENTO INTELIGENTE <span>03</span></span><div class="waveform" aria-hidden="true"><svg id="wave-svg" viewBox="0 0 310 105" preserveAspectRatio="none"></svg></div><h2>La precisión <em>es prioridad.</em></h2><p>Detectamos pausas naturales, conservamos segundos de contexto y registramos la procedencia de cada fragmento.</p><div class="stage-features"><span>ANÁLISIS LOCAL</span><span>CORTES CON SOLAPAMIENTO</span><span>IDIOMAS MIXTOS</span></div></div>
+          <div class="surface-card run-card"><div class="card-caption">ESTADO DEL TRABAJO <span>LIVE</span></div><div class="state-label" id="state-label">ESPERANDO GRABACIÓN</div><div class="progress-track"><span id="progress-fill"></span></div><p id="job-status" role="status" aria-live="polite">Importa una grabación para comenzar.</p><button id="start-job" class="gold-button full" type="button">INICIAR PROCESAMIENTO <span>↗</span></button><button id="cancel-job" class="cancel-button full" type="button" hidden>CANCELAR PROCESAMIENTO ✕</button><button id="open-result" class="outline-cta full" type="button" hidden>ABRIR RESULTADOS ↗</button><div class="run-note">El modelo de voz puede requerir Internet únicamente la primera vez para su descarga. Los análisis posteriores son locales.</div></div>
+        </div>
+      </section>
+      <section class="screen" id="view-results" data-view="results" aria-labelledby="results-title" hidden>
+        <div class="screen-intro"><div><p class="eyebrow ink">04 / ENTREGA Y EXPORTACIÓN</p><h1 id="results-title">Tus <em>resultados.</em></h1><p>Transcripciones con tiempos, fragmentos numerados y documentos de seguimiento.</p></div><span class="step-count">ARCHIVO LOCAL</span></div>
+        <div class="results-layout surface-card"><div class="result-emblem">▤</div><div class="result-eyebrow" id="result-eyebrow">TODAVÍA NO HAY UNA REUNIÓN PROCESADA</div><h2 id="result-heading">Tu información,<br><em>organizada con claridad.</em></h2><p id="result-description">Cuando termine una reunión, podrás abrir la carpeta elegida y consultar los archivos generados sin salir de MeetingSplit.</p><div class="results-path" id="result-path" hidden></div><div class="result-files" id="result-files" hidden></div><button type="button" id="results-open-folder" class="gold-button" hidden>ABRIR CARPETA DE RESULTADOS ↗</button><button type="button" id="results-new" data-go="import" class="text-button">PREPARAR UNA REUNIÓN ↗</button></div>
+      </section>
+    </main>
+    <div class="bottomline"><span>MEETINGSPLIT <b>·</b> PRIVATE AUDIO STUDIO</span><div class="credit-stack"><span class="developer-signature" id="developer-signature">Designed &amp; Developed by <span id="developer-name">Roberto S. Macfie</span></span><span class="copyright-line" id="copyright-line">© 2026 Roberto S. Macfie. All rights reserved.</span></div></div>
+  </div>
+</div>
+
+<script>// MeetingSplit v0.8.4 — UI translations. Spanish originals are the keys; English is the initial UI locale.
+// This UI language preference does NOT change meeting audio language or report language.
+window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
+  "MeetingSplit · Estudio privado de reuniones": "MeetingSplit · Private Meeting Studio",
+  "ESTUDIO": "STUDIO",
+  "Inicio": "Home",
+  "Importar audio": "Import audio",
+  "Configuración": "Settings",
+  "Procesamiento": "Processing",
+  "Resultados": "Results",
+  "Apoyar el desarrollo": "Support Development",
+  "ARCHIVOS EN TU EQUIPO": "FILES STAY ON YOUR PC",
+  "Privacidad por diseño. Tus grabaciones no se envían a servidores.": "Private by design. Your recordings never leave your device.",
+  "PROCESAMIENTO LOCAL": "LOCAL PROCESSING",
+  "EDICIÓN PRIVADA · v0.8.4": "PRIVATE EDITION · v0.8.4",
+  "TU VOZ. TU INFORMACIÓN. TU CONTROL.": "YOUR VOICE. YOUR DATA. YOUR CONTROL.",
+  "Cada palabra cuenta.": "Every word matters.",
+  "Cada decisión permanece.": "Every decision stays.",
+  "Reúne la claridad de tus reuniones en un solo lugar. Divide y transcribe hasta tres horas de audio, sin abandonar tu computadora.": "Bring meeting clarity into one place. Split and transcribe up to three hours of audio, right on your computer.",
+  "PREPARAR UNA REUNIÓN": "PREPARE A MEETING",
+  "ESTUDIO PRIVADO / 01": "PRIVATE STUDIO / 01",
+  "UN FLUJO, TRES PASOS": "ONE WORKFLOW, THREE STEPS",
+  "De la conversación a la claridad.": "From conversation to clarity.",
+  "Sin servidor · Español e inglés · Control total": "No server · English & Spanish · Complete control",
+  "01 / IMPORTAR": "01 / IMPORT",
+  "Selecciona el audio": "Choose your audio",
+  "Reuniones almacenadas en tu equipo o descargadas de iCloud y Drive.": "Recordings stored on your PC or downloaded from iCloud and Drive.",
+  "ABRIR IMPORTADOR ↗": "OPEN IMPORTER ↗",
+  "02 / CONFIGURAR": "02 / CONFIGURE",
+  "Define el análisis": "Set up the analysis",
+  "Idioma, modelo Whisper, tamaño de fragmentos y formato de minuta.": "Language, Whisper model, chunk size, and meeting minutes format.",
+  "VER CONFIGURACIÓN ↗": "OPEN SETTINGS ↗",
+  "03 / PROCESAR": "03 / PROCESS",
+  "Obtén resultados": "Get your results",
+  "Audios divididos, transcripción con tiempos y exportaciones organizadas.": "Split audio, time-stamped transcripts, and organized exports.",
+  "IR AL ESTUDIO ↗": "OPEN STUDIO ↗",
+  "01 / ORIGEN DE LA REUNIÓN": "01 / MEETING SOURCE",
+  "Importar": "Import",
+  "grabación.": "recording.",
+  "Tu audio original permanece intacto. Selecciona un archivo local para comenzar.": "Your original audio stays untouched. Select a local file to begin.",
+  "PASO 01 — 03": "STEP 01 — 03",
+  "GRABACIÓN DE ORIGEN": "SOURCE RECORDING",
+  "Seleccionar grabación": "Choose a recording",
+  "EXPLORAR ARCHIVOS ↗": "BROWSE FILES ↗",
+  "CARPETA DE DATOS Y RESULTADOS": "DATA & RESULTS FOLDER",
+  "Pendiente: elegir carpeta local": "Pending: choose a local folder",
+  "CAMBIAR ↗": "CHANGE ↗",
+  "PRIVACIDAD ESENCIAL": "ESSENTIAL PRIVACY",
+  "El audio sigue": "Your audio",
+  "siendo tuyo.": "stays yours.",
+  "Los cortes y la transcripción funcionan en tu equipo, sin entregar la grabación a terceros. Los archivos importados desde la nube deben estar descargados.": "Splitting and transcription run on your PC without sending audio to third parties. Cloud recordings must be downloaded locally.",
+  "ARCHIVO ORIGINAL SIN MODIFICAR": "ORIGINAL FILE UNCHANGED",
+  "DESTINO LOCAL ELEGIDO POR TI": "YOUR CHOSEN LOCAL FOLDER",
+  "HASTA 3 HORAS POR REUNIÓN": "UP TO 3 HOURS PER MEETING",
+  "CONTINUAR A CONFIGURACIÓN": "CONTINUE TO SETTINGS",
+  "02 / AJUSTES DEL ANÁLISIS": "02 / ANALYSIS SETTINGS",
+  "Configura": "Configure",
+  "tu reunión.": "your meeting.",
+  "Cada ajuste se aplica únicamente en tu computadora.": "Every setting applies only on your computer.",
+  "PASO 02 — 03": "STEP 02 — 03",
+  "AUDIO Y TRANSCRIPCIÓN": "AUDIO & TRANSCRIPTION",
+  "ACCIÓN PRINCIPAL": "MAIN ACTION",
+  "Dividir + Transcribir": "Split + Transcribe",
+  "Solo transcribir": "Transcribe only",
+  "Solo dividir": "Split only",
+  "IDIOMA DE AUDIO": "AUDIO LANGUAGE",
+  "Automático · Español + Inglés": "Auto · Spanish + English",
+  "Español": "Spanish",
+  "Inglés": "English",
+  "FRAGMENTOS MÁXIMOS": "MAXIMUM CHUNK LENGTH",
+  "5 minutos": "5 minutes",
+  "10 minutos": "10 minutes",
+  "15 minutos": "15 minutes",
+  "20 minutos": "20 minutes",
+  "SOLAPAMIENTO": "OVERLAP",
+  "20 segundos": "20 seconds",
+  "10 segundos": "10 seconds",
+  "30 segundos": "30 seconds",
+  "FORMATO DE SALIDA": "OUTPUT FORMAT",
+  "MP3 · Compacto": "MP3 · Compact",
+  "WAV · Sin comprimir": "WAV · Uncompressed",
+  "MODELO DE VOZ": "SPEECH MODEL",
+  "Small · Económico": "Small · Lightweight",
+  "Medium · Equilibrado": "Medium · Balanced",
+  "Large-v3 · Alta precisión": "Large-v3 · High accuracy",
+  "MINUTAS E INTELIGENCIA ARTIFICIAL": "MEETING MINUTES & ARTIFICIAL INTELLIGENCE",
+  "PLATAFORMA DE PREFERENCIA": "PREFERRED PLATFORM",
+  "SUSCRIPCIÓN": "SUBSCRIPTION",
+  "De pago": "Paid",
+  "Gratuita": "Free",
+  "TIPO DE DOCUMENTO": "DOCUMENT TYPE",
+  "Resumen + minuta": "Summary + meeting minutes",
+  "Solo resumen": "Summary only",
+  "Solo minuta": "Meeting minutes only",
+  "IDIOMA DEL DOCUMENTO": "DOCUMENT LANGUAGE",
+  "Español e inglés": "Spanish and English",
+  "Los resultados se preparan para utilizarlos en tu plataforma preferida.": "Results are prepared for use in your preferred platform.",
+  "Minuta automática local con Ollama": "Local automatic meeting minutes with Ollama",
+  "Opcional. Necesita Ollama y qwen3:4b instalados.": "Optional. Requires Ollama and qwen3:4b installed.",
+  "Exportar un ZIP con resultados": "Export results as ZIP",
+  "Incluye los archivos generados.": "Includes generated files.",
+  "Las suscripciones de ChatGPT/Gemini no equivalen a acceso API automático.": "ChatGPT/Gemini subscriptions do not automatically provide API access.",
+  "CONTINUAR AL ESTUDIO": "CONTINUE TO STUDIO",
+  "03 / MOTOR DE PROCESAMIENTO": "03 / PROCESSING ENGINE",
+  "Estudio": "Audio",
+  "de audio.": "studio.",
+  "Tu reunión se procesa localmente con cortes seguros y transcripción temporal.": "Your meeting is processed locally with safe splits and time-stamped transcription.",
+  "PASO 03 — 03": "STEP 03 — 03",
+  "PROCESAMIENTO INTELIGENTE": "INTELLIGENT PROCESSING",
+  "La precisión": "Accuracy",
+  "es prioridad.": "comes first.",
+  "Detectamos pausas naturales, conservamos segundos de contexto y registramos la procedencia de cada fragmento.": "We detect natural pauses, keep surrounding context, and record the source time of every chunk.",
+  "ANÁLISIS LOCAL": "LOCAL ANALYSIS",
+  "CORTES CON SOLAPAMIENTO": "OVERLAPPING CUTS",
+  "IDIOMAS MIXTOS": "MIXED LANGUAGES",
+  "ESTADO DEL TRABAJO": "JOB STATUS",
+  "ESPERANDO GRABACIÓN": "WAITING FOR RECORDING",
+  "Importa una grabación para comenzar.": "Import a recording to get started.",
+  "INICIAR PROCESAMIENTO": "START PROCESSING",
+  "CANCELAR PROCESAMIENTO ✕": "CANCEL PROCESSING ✕",
+  "ABRIR RESULTADOS ↗": "OPEN RESULTS ↗",
+  "El modelo de voz puede requerir Internet únicamente la primera vez para su descarga. Los análisis posteriores son locales.": "The speech model may require Internet for its first download only. Later analyses are local.",
+  "04 / ENTREGA Y EXPORTACIÓN": "04 / DELIVERY & EXPORT",
+  "Tus": "Your",
+  "resultados.": "results.",
+  "Transcripciones con tiempos, fragmentos numerados y documentos de seguimiento.": "Time-stamped transcripts, numbered chunks, and follow-up documents.",
+  "ARCHIVO LOCAL": "LOCAL FILES",
+  "TODAVÍA NO HAY UNA REUNIÓN PROCESADA": "NO MEETING PROCESSED YET",
+  "Tu información,": "Your information,",
+  "organizada con claridad.": "clearly organized.",
+  "Cuando termine una reunión, podrás abrir la carpeta elegida y consultar los archivos generados sin salir de MeetingSplit.": "When processing finishes, open your chosen folder and access the generated files without leaving MeetingSplit.",
+  "ABRIR CARPETA DE RESULTADOS ↗": "OPEN RESULTS FOLDER ↗",
+  "DISEÑADO PARA CLARIDAD · CREADO PARA PRIVACIDAD": "DESIGNED FOR CLARITY · BUILT FOR PRIVACY",
+  "Perfil conservador: 5 minutos por fragmento. Verifica el límite total de audio de tu plan; también puedes entregar la transcripción de texto.": "Conservative profile: 5 minutes per chunk. Check your plan’s total audio limit; you can also submit the text transcript.",
+  "ChatGPT Free puede tener restricciones para audios. MeetingSplit produce texto local para utilizarlo como alternativa.": "ChatGPT Free may restrict audio files. MeetingSplit produces local text as an alternative.",
+  "Sugerencia para Gemini de pago: 20 min por archivo, contando el solapamiento. Los límites reales pueden cambiar.": "Suggested for paid Gemini: 20 minutes per file including overlap. Actual limits may change.",
+  "Sugerencia para ChatGPT de pago: 15 min por archivo, contando el solapamiento. Los límites reales pueden cambiar.": "Suggested for paid ChatGPT: 15 minutes per file including overlap. Actual limits may change.",
+  "Se seleccionará desde la aplicación Windows.": "Choose this folder in the Windows application.",
+  "Esta vista previa no puede abrir archivos. La selección funciona al ejecutar la aplicación Windows.": "This preview cannot open files. Selection works in the Windows application.",
+  "La carpeta de resultados se abrirá desde MeetingSplit en Windows después de procesar una grabación.": "The results folder opens from MeetingSplit on Windows after processing a recording.",
+  "Vista previa: instala o ejecuta MeetingSplit para procesar audio.": "Preview only: run MeetingSplit on Windows to process audio.",
+  "Primero selecciona una grabación": "Choose a recording first",
+  "PROCESANDO EN TU PC": "PROCESSING ON YOUR PC",
+  "Preparando los archivos en el disco...": "Preparing files on disk...",
+  "Solicitando cancelación segura; los resultados parciales se conservarán.": "Requesting safe cancellation; completed files will be retained.",
+  "PROCESAMIENTO COMPLETADO": "PROCESSING COMPLETE",
+  "Resultados listos. Puedes abrir la carpeta local.": "Results are ready. You can open the local folder.",
+  "Reunión lista.": "Meeting complete.",
+  "Información organizada.": "Information organized.",
+  "Abre la carpeta para acceder a tus audios, transcripción y otros resultados disponibles según la configuración.": "Open the folder to access your audio, transcript, and any other results from your selected settings.",
+  "REVISAR PROCESAMIENTO": "CHECK PROCESSING",
+  "CANCELADO": "CANCELLED",
+  "Grabación cargada. Revisa las opciones e inicia el procesamiento.": "Recording loaded. Review your options and start processing.",
+  "GRABACIÓN LISTA": "RECORDING READY",
+  "Transcripción completa": "Full transcript",
+  "Subtítulos SRT": "SRT subtitles",
+  "Resumen y minuta local": "Local summary and meeting minutes",
+  "Paquete ZIP": "ZIP package",
+  "Instrucciones para IA": "AI instructions",
+  "Inspeccionando duración y formato": "Inspecting duration and format",
+  "Analizando silencios sin cargar todo el audio en RAM": "Analyzing silences without loading all audio into RAM",
+  "Preparando aceleración NVIDIA (CUDA)...": "Preparing NVIDIA acceleration (CUDA)...",
+  "Preparando minuta local con Ollama": "Preparing local meeting minutes with Ollama",
+  "Creando paquete ZIP de resultados": "Creating results ZIP package",
+  "Resultados terminados. Ya puedes abrirlos.": "Results are complete. You can open them now.",
+  "Falta faster-whisper. Ejecuta instalar.bat para instalar las dependencias.": "Faster-Whisper is missing. Run instalar.bat to install the dependencies.",
+  "Grabación cargada. Revisa las opciones e inicia el procesamiento.": "Recording loaded. Review your options and start processing.",
+  "Cancelando; se conservarán las partes completadas...": "Cancelling; completed parts will be kept...",
+  "Error: ": "Error: "
+})});
+</script>
+<script>(function(){
+'use strict';
+const el = (id) => document.getElementById(id);
+const screens = ['home','import','settings','process','results'];
+const names = {home:'Inicio',import:'Importar audio',settings:'Configuración',process:'Procesamiento',results:'Resultados'};
+const enDictionary=window.MeetingSplitLocales.englishBySpanish;
+let uiLocale='en', currentPage='home', statusOriginal='', stateLabelOriginal='', currentNotice='';
+const staticText=[];
+const SKIP_DYNAMIC=new Set(['page-crumb','file-title','file-sub','folder-display','state-label','job-status',
+'result-eyebrow','result-heading','result-description','result-path','result-files','provider-hint']);
+function translate(text){
+  if(uiLocale==='es')return text;
+  const direct=enDictionary[text];if(direct)return direct;
+  // Native processing emits useful progress from Python. Translate without discarding counts.
+  let m;
+  if((m=/^Exportando audio (\d+) de (\d+)$/.exec(text)))return `Exporting audio ${m[1]} of ${m[2]}`;
+  if((m=/^Transcribiendo audio (\d+) de (\d+)$/.exec(text)))return `Transcribing audio ${m[1]} of ${m[2]}`;
+  if(text.startsWith('Error: '))return 'Error: '+translate(text.slice(7));
+  if(text.startsWith('CUDA no disponible ('))return text.replace('CUDA no disponible (','CUDA unavailable (').replace('Usando CPU en modo seguro.','Using CPU in safe mode.');
+  return text;
+}
+function translatePreserveWhitespace(text){const s=text.trim();return s&&enDictionary[s]?text.replace(s,translate(s)):text;}
+function collectStaticText(){
+  const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  let node;
+  while((node=w.nextNode())){
+    const parent=node.parentElement;
+    if(!parent || ['SCRIPT','STYLE'].includes(parent.tagName)||parent.closest('#developer-signature')||parent.closest('#ui-language-control'))continue;
+    if(parent.closest('[id]') && SKIP_DYNAMIC.has(parent.closest('[id]').id))continue;
+    const source=node.nodeValue.trim();
+    if(enDictionary[source])staticText.push({node,source,original:node.nodeValue});
+  }
+}
+function setStateLabel(spanish){stateLabelOriginal=spanish;el('state-label').textContent=translate(spanish);}
+function updateLocalizedDynamicFields(){
+  const initial={
+    'file-title':'Seleccionar grabación',
+    'folder-display':'Pendiente: elegir carpeta local',
+    'state-label':'ESPERANDO GRABACIÓN',
+    'job-status':'Importa una grabación para comenzar.',
+    'result-eyebrow':'TODAVÍA NO HAY UNA REUNIÓN PROCESADA',
+    'result-description':'Cuando termine una reunión, podrás abrir la carpeta elegida y consultar los archivos generados sin salir de MeetingSplit.'
+  };
+  for(const [id,source] of Object.entries(initial)){
+    const node=el(id),current=node.textContent;
+    if(current===source||current===enDictionary[source])node.textContent=translate(source);
+  }
+  // Only reset placeholder text when there is no actual meeting result.
+  if(!resultPath){
+    const heading=el('result-heading');
+    const first=heading.firstChild,last=heading.querySelector('em');
+    if(first&&last){first.textContent=translate('Tu información,')+' ';last.textContent=translate('organizada con claridad.');}
+  }else{
+    el('result-eyebrow').textContent=translate('PROCESAMIENTO COMPLETADO');
+    el('result-heading').innerHTML=translate('Reunión lista.')+'<br><em>'+translate('Información organizada.')+'</em>';
+    el('result-description').textContent=translate('Abre la carpeta para acceder a tus audios, transcripción y otros resultados disponibles según la configuración.');
+  }
+}
+function saveUILocale(lang){try{localStorage.setItem('meetingsplit-ui-language',lang);}catch(_){} if(bridge && typeof bridge.setUILanguage==='function')bridge.setUILanguage(lang);}
+function applyUILocale(lang,persist=true){
+  uiLocale=lang==='es'?'es':'en';
+  document.documentElement.lang=uiLocale;
+  document.title=uiLocale==='en'?'MeetingSplit · Private Meeting Studio':'MeetingSplit · Estudio privado de reuniones';
+  staticText.forEach(({node,original,source})=>{
+    // Never overwrite a user-supplied path, meeting filename or changed result.
+    if(node.isConnected)node.nodeValue=original.replace(source,translate(source));
+  });
+  document.querySelectorAll('.ui-lang-btn').forEach(b=>{
+    const active=b.dataset.locale===uiLocale;
+    b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));
+  });
+  el('language-label').textContent=uiLocale==='en'?'LANGUAGE':'IDIOMA';
+  const support=el('support-development');
+  if(support){
+    support.title=uiLocale==='en'?'Open secure PayPal contribution page':'Abrir página segura de aportaciones en PayPal';
+    support.setAttribute('aria-label',uiLocale==='en'?'Support MeetingSplit development':'Apoyar el desarrollo de MeetingSplit');
+  }
+  el('ui-language-control').setAttribute('aria-label',uiLocale==='en'?'Interface language':'Idioma de la aplicación');
+  const sidebar=document.querySelector('.sidebar');
+  sidebar.setAttribute('aria-label',uiLocale==='en'?'Main navigation':'Navegación principal');
+  el('primary-navigation').setAttribute('aria-label',uiLocale==='en'?'Screens':'Pantallas');
+  el('page-crumb').textContent=translate(names[currentPage]);
+  el('screen-container').setAttribute('aria-label',translate(names[currentPage]));
+  updateLocalizedDynamicFields();
+  recommendation(false);
+  if(statusOriginal)el('job-status').textContent=translate(statusOriginal);
+  if(stateLabelOriginal)el('state-label').textContent=translate(stateLabelOriginal);
+  if(resultIndexJSON)renderResults(resultIndexJSON);
+  if(persist)saveUILocale(uiLocale);
+}
+window.meetingSplitSetUILanguage=applyUILocale;
+document.querySelectorAll('.ui-lang-btn').forEach(b=>b.addEventListener('click',()=>applyUILocale(b.dataset.locale)));
+function savedUILocale(){try{return localStorage.getItem('meetingsplit-ui-language')||'en';}catch(_){return 'en';}}
+collectStaticText();
+let bridge = null, working = false, chosenFile = '', resultPath = '', resultIndexJSON = '';
+const navItems = Array.from(document.querySelectorAll('.nav-item'));
+
+function navigate(page){
+  if(!screens.includes(page)) return;
+  currentPage=page;
+  screens.forEach((key)=>{
+    const node = el('view-'+key);
+    node.hidden = key!==page;
+    node.classList.toggle('active-screen',key===page);
+  });
+  navItems.forEach((node)=>{
+    const selected = node.dataset.go===page;
+    node.classList.toggle('active',selected);
+    if(selected) node.setAttribute('aria-current','page');
+    else node.removeAttribute('aria-current');
+  });
+  el('page-crumb').textContent=translate(names[page]);
+  el('view-'+page).scrollTop=0;
+  el('screen-container').setAttribute('aria-label',translate(names[page]));
+}
+window.meetingSplitNavigate = navigate; // Used only for UI inspection and tests.
+document.querySelectorAll('[data-go]').forEach((node)=>node.addEventListener('click',()=>navigate(node.dataset.go)));
+
+const wave=el('wave-svg');
+if(wave){
+  let bars='';
+  for(let i=0;i<84;i++){
+    const level=Math.abs(Math.sin(i*1.98)*Math.cos(i*.337))*.83+Math.abs(Math.cos(i*.71))*.13;
+    const h=4+level*75;
+    bars+=`<rect x="${2+i*3.67}" y="${((105-h)/2).toFixed(1)}" width="2.2" height="${h.toFixed(1)}" rx="1" fill="${i<28?'#b28343':i<58?'#f2d69b':'#bf9655'}" />`;
+  }
+  wave.innerHTML=bars;
+}
+function setStatus(message,pct){
+  statusOriginal=message;
+  el('job-status').textContent=translate(message);
+  el('progress-fill').style.width=Math.max(0,Math.min(100,Number(pct)||0))+'%';
+}
+function recommendation(adjustDuration=true){
+  const ai=el('provider').value,plan=el('plan').value;
+  const target=ai==='gemini'&&plan==='free'?5:(ai==='gemini'?20:15);
+  if(adjustDuration)el('minutes').value=String(target);
+  let note;
+  if(ai==='gemini'&&plan==='free')note='Perfil conservador: 5 minutos por fragmento. Verifica el límite total de audio de tu plan; también puedes entregar la transcripción de texto.';
+  else if(ai==='chatgpt'&&plan==='free')note='ChatGPT Free puede tener restricciones para audios. MeetingSplit produce texto local para utilizarlo como alternativa.';
+  else note=`Sugerencia para ${ai==='gemini'?'Gemini':'ChatGPT'} de pago: ${target} min por archivo, contando el solapamiento. Los límites reales pueden cambiar.`;
+  currentNotice=note;
+  el('provider-hint').lastElementChild.textContent=translate(note);
+}
+el('provider').addEventListener('change',recommendation);
+el('plan').addEventListener('change',recommendation);
+
+// Voluntary support opens the owner-provided PayPal NCP link ONLY on click.
+// Preview: standard HTTPS anchor opens the browser tab. Native: Qt bridge
+// opens the same URL in the user's system browser, with no SDK in the app.
+const supportButton=el('support-development');
+if(supportButton) supportButton.addEventListener('click',(event)=>{
+  if(bridge && typeof bridge.openPayPalSupport==='function'){
+    event.preventDefault();
+    bridge.openPayPalSupport();
+  }
+});
+el('choose-file').addEventListener('click',()=>{
+  if(bridge) bridge.pickFile();
+  else {navigate('process');setStatus('Esta vista previa no puede abrir archivos. La selección funciona al ejecutar la aplicación Windows.',0);}
+});
+el('choose-output').addEventListener('click',()=>{
+  if(bridge) bridge.pickOutput();
+  else {navigate('import');el('folder-display').textContent=translate('Se seleccionará desde la aplicación Windows.');}
+});
+function openFolder(){
+  if(bridge&&resultPath) bridge.openResult();
+  else {navigate('results');el('result-description').textContent=translate('La carpeta de resultados se abrirá desde MeetingSplit en Windows después de procesar una grabación.');}
+}
+el('open-result').addEventListener('click',openFolder);
+el('results-open-folder').addEventListener('click',openFolder);
+
+function finished(){
+  working=false;
+  el('start-job').disabled=false;
+  el('cancel-job').hidden=true;
+  el('cancel-job').disabled=false;
+}
+el('start-job').addEventListener('click',()=>{
+  navigate('process');
+  if(working) return;
+  if(!bridge){setStatus('Vista previa: instala o ejecuta MeetingSplit para procesar audio.',0);return;}
+  if(!chosenFile){navigate('import');el('file-title').textContent=translate('Primero selecciona una grabación');return;}
+  const data={};
+  for(const id of ['action','provider','plan','minutes','overlap','format','model','report'])data[id]=el(id).value;
+  data.input_language=el('input-language').value;
+  data.report_language=el('report-language').value;
+  data.local_summary=el('local-summary').checked;
+  data.zip_output=el('zip-output').checked;
+  data.ollama_model='qwen3:4b';
+  working=true;
+  el('cancel-job').hidden=false;
+  el('start-job').disabled=true;
+  el('open-result').hidden=true;
+  setStateLabel('PROCESANDO EN TU PC');
+  setStatus('Preparando los archivos en el disco...',2);
+  bridge.startJob(JSON.stringify(data));
+});
+el('cancel-job').addEventListener('click',()=>{
+  if(bridge&&working){bridge.cancelJob();el('cancel-job').disabled=true;setStatus('Solicitando cancelación segura; los resultados parciales se conservarán.',0);}
+});
+function renderResults(index){
+  resultIndexJSON=index;
+  const container=el('result-files');
+  container.textContent='';
+  const allowed=new Set(['TRANSCRIPCION_COMPLETA.txt','TRANSCRIPCION_SUBTITULOS.srt',
+    'RESUMEN_Y_MINUTA_LOCAL.md','RESULTADOS_COMPLETOS.zip','INSTRUCCIONES_CHATGPT_GEMINI.txt']);
+  let items=[];
+  try { items=JSON.parse(index); }catch(_){ return; }
+  if(!Array.isArray(items))return;
+  for(const item of items){
+    if(!item || !allowed.has(item.name) || typeof item.label!=='string')continue;
+    const button=document.createElement('button');
+    button.type='button';button.className='result-file';button.textContent=translate(item.label)+' ↗';
+    button.addEventListener('click',()=>{if(bridge)bridge.openOutputFile(item.name);});
+    container.appendChild(button);
+  }
+  container.hidden=container.children.length===0;
+}
+function showResult(folder){
+  finished();
+  resultPath=folder;
+  el('open-result').hidden=false;
+  setStateLabel('PROCESAMIENTO COMPLETADO');
+  setStatus('Resultados listos. Puedes abrir la carpeta local.',100);
+  el('result-eyebrow').textContent=translate('PROCESAMIENTO COMPLETADO');
+  el('result-heading').innerHTML=translate('Reunión lista.')+'<br><em>'+translate('Información organizada.')+'</em>';
+  el('result-description').textContent=translate('Abre la carpeta para acceder a tus audios, transcripción y otros resultados disponibles según la configuración.');
+  el('result-path').textContent=folder;
+  el('result-path').hidden=false;
+  el('results-open-folder').hidden=false;
+  if(bridge && typeof bridge.getResultIndex==='function') bridge.getResultIndex(renderResults);
+  navigate('results');
+}
+if(typeof QWebChannel!=='undefined' && typeof qt!=='undefined' && qt.webChannelTransport){
+  new QWebChannel(qt.webChannelTransport,function(channel){
+    bridge=channel.objects.desktop;
+    bridge.fileSelected.connect(function(path){
+      chosenFile=path;
+      el('file-title').textContent=path.split(/[\\/]/).pop();
+      el('file-sub').textContent=path;
+      setStateLabel('GRABACIÓN LISTA');
+      setStatus('Grabación cargada. Revisa las opciones e inicia el procesamiento.',0);
+    });
+    bridge.folderSelected.connect(path=>{el('folder-display').textContent=path;});
+    bridge.progress.connect((msg,pct)=>{setStatus(msg,pct);});
+    bridge.completed.connect((path)=>showResult(path));
+    bridge.failed.connect((msg)=>{
+      finished();
+      setStateLabel('REVISAR PROCESAMIENTO');
+      setStatus('Error: '+msg,0);
+      navigate('process');
+    });
+    bridge.cancelled.connect((msg)=>{
+      finished();
+      setStateLabel('CANCELADO');
+      setStatus(msg,0);
+      navigate('process');
+    });
+    bridge.getDefaultOutput(path=>{
+      el('folder-display').textContent=path||translate('Pendiente: elegir carpeta local');
+      if(!path)bridge.ensureOutput();
+    });
+    if(typeof bridge.getUILanguage==='function')bridge.getUILanguage(value=>applyUILocale(value||'en',false));
+  });
+}
+recommendation();applyUILocale(savedUILocale(),false);navigate('home');
+})();
+</script>
+</body>
+</html>

@@ -1,13 +1,9 @@
-# MeetingSplit — NEXT_ACTION (Windows CI passed)
+# MeetingSplit — NEXT_ACTION v0.8.4
 
-**CI status: SUCCESS** — https://github.com/kl4ne/meetingsplit/actions/runs/39522806473
-
-1. From the run page, download artifact `MeetingSplit-v0.8.3-Windows-build-unvalidated-on-user-hardware` (GitHub login may be required). It contains `MeetingSplit-v0.8.3-Windows-portable.zip` and `MeetingSplit_Setup_v0.8.3.exe`.
-2. Start with a controlled **portable** launch on ASUS Windows 11, without installing or bypassing OS security warnings. Keep source audio private; use a disposable, consented 5–10 minute sample.
-3. Check actual UI, EN default / ES selection, contrast, one-screen navigation, unlinked author credit, PayPal direct external URL, and local output folder on C: or D: (reject USB J:).
-4. Process sample audio: split coverage, no lost sentence at seams, WAV/MP3/M4A exports, TXT/SRT/ZIP; verify actual Whisper CPU/GPU behavior and model download.
-5. Capture diagnostics as text and fix any Windows-specific runtime issue; then try Setup install/uninstall and a 1–3-hour audio.
-6. Audit bundled third-party license notices, model licenses and code signing/SmartScreen before publishing official Release.
-7. Integrity Business Filings is read-only / untouched.
-
-Artifact retention 14 days. Do not call CI-built executable a production release.
+1. Monitor Windows GitHub Actions for v0.8.4; fix build if CI fails.
+2. Download the v0.8.4 private-run artifact (not a production Release), prefer a short test with the portable version on ASUS before reinstalling.
+3. Verify `D:` internal is accepted, removable `J:` remains blocked, and C: cloud folders are declined with a useful explanation; use local AppData or C:\MeetingSplit for non-synced output.
+4. Run a consented 2–5 minute transcription. With missing CUDA 12/cuDNN 9, it should choose CPU rather than abort; verify `manifest.json` field `device` and warnings.
+5. If GPU acceleration is desired, plan a legal, compatible NVIDIA runtime installation/bundling and repeat RTX 4070 test; do not copy random DLLs from the web.
+6. Audit binary dependencies/licensing/SmartScreen before official Release.
+7. Integrity Business Filings remains untouched.

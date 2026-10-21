@@ -36,9 +36,7 @@ jobs:
           .\.venv\Scripts\python.exe -m pip install -r requirements.txt
           choco install ffmpeg --yes --no-progress
           choco install innosetup --yes --no-progress
-          # The Chocolatey shims in PATH cannot be copied: they refer to
-          # files through relative paths under Chocolatey's lib directory.
-          # Copy the actual executable bytes instead.
+          # Chocolatey .exe shims cannot be copied into the binary package.
           $packageDir = Join-Path $env:ChocolateyInstall 'lib\ffmpeg'
           $ffmpeg = Get-ChildItem -Path $packageDir -Recurse -File -Filter 'ffmpeg.exe' |
             Select-Object -First 1 -ExpandProperty FullName
@@ -59,14 +57,14 @@ jobs:
       - name: Verify installer and portable archive were generated
         shell: pwsh
         run: |
-          if (-not (Test-Path 'dist/MeetingSplit-v0.8.3-Windows-portable.zip')) { throw 'Portable package missing' }
-          if (-not (Test-Path 'dist/MeetingSplit_Setup_v0.8.3.exe')) { throw 'Windows installer missing' }
+          if (-not (Test-Path 'dist/MeetingSplit-v0.8.4-Windows-portable.zip')) { throw 'Portable package missing' }
+          if (-not (Test-Path 'dist/MeetingSplit_Setup_v0.8.4.exe')) { throw 'Windows installer missing' }
       - name: Upload Windows build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: MeetingSplit-v0.8.3-Windows-build-unvalidated-on-user-hardware
+          name: MeetingSplit-v0.8.4-Windows-build-unvalidated-on-user-hardware
           path: |
-            dist/MeetingSplit-v0.8.3-Windows-portable.zip
-            dist/MeetingSplit_Setup_v0.8.3.exe
+            dist/MeetingSplit-v0.8.4-Windows-portable.zip
+            dist/MeetingSplit_Setup_v0.8.4.exe
           if-no-files-found: error
           retention-days: 14

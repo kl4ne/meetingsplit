@@ -97,7 +97,9 @@ class DesktopBridge(QObject):
 
     @Slot()
     def pickOutput(self):
-        start=self._output if self._output else str(Path.home())
+        # LocalAppData is normally outside OneDrive-synced Desktop/Documents.
+        safe_start=Path(os.environ.get('LOCALAPPDATA') or str(Path.home()))
+        start=self._output if self._output else str(safe_start if safe_start.is_dir() else Path.home())
         folder=QFileDialog.getExistingDirectory(None,
             self._tr('Choose a LOCAL folder for MeetingSplit data (no USB)','Elige una carpeta LOCAL para los datos de MeetingSplit (no USB)'),start)
         if not folder:

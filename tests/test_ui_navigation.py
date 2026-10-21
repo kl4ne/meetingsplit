@@ -4,7 +4,7 @@ import os, shutil
 import pytest
 from playwright.sync_api import sync_playwright
 
-HTML=Path(__file__).resolve().parents[1]/'MEETINGSPLIT_PREVIEW_v0.8.3.html'
+HTML=Path(__file__).resolve().parents[1]/'MEETINGSPLIT_PREVIEW_v0.8.4.html'
 BROWSER=os.environ.get('CHROMIUM_BINARY') or shutil.which('chromium') or shutil.which('google-chrome')
 pytestmark=pytest.mark.skipif(not BROWSER,reason='Requires Chromium browser for visual QA')
 

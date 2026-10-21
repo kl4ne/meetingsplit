@@ -1,6 +1,6 @@
 ; Script para Inno Setup 6.5+ (Windows). NO ha sido ejecutado en este entorno Linux.
 #define MyAppName "MeetingSplit"
-#define MyAppVersion "0.8.3"
+#define MyAppVersion "0.8.4"
 [Setup]
 AppId={{DB612738-836F-4524-B199-FACE68AF3D52}
 AppName={#MyAppName}
@@ -9,7 +9,7 @@ AppPublisher=MeetingSplit
 DefaultDirName={localappdata}\Programs\MeetingSplit
 DefaultGroupName=MeetingSplit
 OutputDir=..\dist
-OutputBaseFilename=MeetingSplit_Setup_v0.8.3
+OutputBaseFilename=MeetingSplit_Setup_v0.8.4
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

@@ -1,3 +1,28 @@
+## LGPL-native rebuild checkpoint — 2026-10-21 — RELEASE STILL BLOCKED
+
+- Isolated branch: `qa/consolidated-20261021`. Do not merge untested
+  binary/dependency changes or publish a new user installer.
+- QA Windows run #39594879663 **FAILED SAFELY**: PyAV 16.0.1 compiled
+  against BtbN n9.0 LGPL FFmpeg headers failed on removed
+  `AVCodec.supported_*`/pixel-format fields. No package was published.
+- Next QA Windows run #39595255314 successfully completed the
+  **LGPL FFmpeg 8.1 / source-built PyAV 16.0.1 preparation** and proceeded
+  to PyInstaller. Its packaged self-check and artifact review are still
+  PENDING until the workflow completes.
+- Experimental code under `qa/consolidated-20261021`:
+  `scripts/prepare_lgpl_media.ps1`,
+  `qa/validate_lgpl_media.py`, `tests/test_validate_lgpl_media.py`,
+  `docs/QA_LGPL_PLAN.md`, and stricter package audit.
+  Local negative-gate tests: 5/5 passed.
+- The GPL-enabled Gyan/Chocolatey FFmpeg and official PyAV wheel are NOT
+  replaced in `main` yet. An authentic v0.8.5->0.8.6 isolated upgrade
+  script is staged as `qa/windows_upgrade_from_v085.ps1` but unexecuted.
+- The BtbN `latest` URL is mutable; freeze an exact source and SHA-256
+  before promoting the LGPL build. Full third-party license review,
+  upgrades/cancellation and ASUS acceptance remain open.
+- Version stays 0.8.6; `qa/release_gate.json` remains
+  `release_allowed=false`. Integrity Business Filings untouched.
+
 ## Consolidated Windows QA execution — 2026-10-21
 
 - Isolated QA run #39592132218 **SUCCESS** (development only):

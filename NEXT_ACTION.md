@@ -1,3 +1,19 @@
+## Next required engineering actions after LGPL experiment
+
+1. Inspect QA Windows run #39595255314:
+   https://github.com/kl4ne/meetingsplit/actions/runs/39595255314
+   Check PyInstaller, frozen audio/Qt, install/uninstall and final artifacts.
+2. If successful, download `lgpl-media-receipt.json` and native inventory;
+   verify no bundled x264/x265, LGPL FFmpeg flags and actual MP3/M4A/WAV
+   export/transcription. Pin downloaded LGPL FFmpeg archive digest.
+3. Run the staged authentic prior-installer upgrade test with old Actions
+   artifact #12315582489 and current QA installer in a **separate** throwaway
+   Windows runner, without repackaging unrelated dependencies.
+4. Resolve LGPL attribution/source/Qt WebEngine native notices and test
+   interactive optional-component failures. Only after hardware and legal
+   acceptance can the release gate ever be changed to true.
+5. Preserve existing 0.8.6 and no public user install/release during QA.
+
 ## Next pre-release engineering tasks — after consolidated QA
 
 1. **Highest priority:** address confirmed GPL-enabled FFmpeg 9.0.2 CLI

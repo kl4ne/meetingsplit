@@ -1,0 +1,31 @@
+name: MeetingSplit native notice SHA-256 receipt QA
+
+on:
+  push:
+    branches: [qa/release-evidence-20261021]
+    paths:
+      - '.github/workflows/qa-notices.yml'
+      - 'tests/test_third_party_notice_sources.py'
+      - 'docs/third-party-licenses/**'
+
+permissions:
+  contents: read
+
+jobs:
+  notice-receipts:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Audit original third-party notice bytes against pinned receipts
+        shell: pwsh
+        run: |
+          python -m pip install pytest==9.1.1
+          python -m pytest -q tests/test_third_party_notice_sources.py
+      - name: Keep public distribution blocked
+        shell: pwsh
+        run: |
+          python -c "from qa.check_release_gate import main; assert main() == 2"

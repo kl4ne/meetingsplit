@@ -1,3 +1,16 @@
+## LATEST NEXT_ACTION — post successful frozen QA #39695270843 (2026-10-21)
+
+DO NOT REBUILD the already-passed pinned package merely to reconfirm success.
+- Windows full internal QA #39695270843 **PASSED: 102 tests, 2 skipped**, FFmpeg/PyAV, frozen EXE, native audit, clean/reinstall/uninstall/data retained. Reports artifact #12390712114 verified (SHA-256 `0a2af630e25772402c332f38b771ab151b1aafd5eaba98b199913cf67db52376`), 685 frozen files/211 native; installer QA artifact #12391430920; portable #12390996760. No release.
+- Windows notices SHA receipt run #39696118269 **PASSED**. Tokenizers/Cython/Pyrex notices were committed *after* `90238d6` QA snapshot; they are NOT inside that package and require future final distribution validation.
+
+Outstanding actions, without repeating the passed builds:
+1. Complete the exact LGPL/Qt WebEngine/Chromium matching source/third-party notices, signed-off native security and bundled CTranslate2 cuDNN licensing, including newly added Tokenizers/Cython/Pyrex notices in the eventual final package. Do not represent upstream web links or QA hashes as legal clearance.
+2. Test actual interactive Inno cancellation in GUI-capable disposable Windows: GitHub Actions #39694379638 was INCONCLUSIVE because desktop windows were not visible. Test real optional CUDA/Ollama interruptions, retries, disk exhaustion and occupied-port recovery on isolated environment; source simulations already passed.
+3. Only when ready to validate exact final build on ASUS: NVIDIA Whisper and Qwen3 4B minutes with natural EN/ES/mixed speech, long runtime memory/thermals, and five views at enlarged fonts. Preserve working user installation; no unsolicited install.
+4. After material source/notices/runtime changes and all gates closed, run one final consolidated installer acceptance. Version remains 0.8.6 until authorization; draft PR #1 remains open; `release_allowed=false`. No Release and no Integrity modifications.
+
+---
 ## Live operations handoff — 2026-10-21
 
 1. Check isolated internal package workflow **#39695270843** on commit `90238d6`. Before chat handoff it was still running at PyInstaller/frozen tests, with pinned FFmpeg/PyAV build already successful. Inspect its final job steps, tests, smoke artifacts; do not declare success until actual completion. No Release is authorized.

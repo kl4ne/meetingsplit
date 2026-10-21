@@ -11,6 +11,16 @@ from engine.control import Cancellation, JobCancelled
 from engine.job import run_job
 
 
+@pytest.fixture(autouse=True)
+def _accept_ephemeral_ci_test_directory(monkeypatch):
+    # Windows GitHub runners use VIRTUAL disks. Production deliberately rejects
+    # them; engine tests instead use a trusted pytest-only temporary folder.
+    # Never weaken real desktop.storage.validate_local_folder for customers.
+    import engine.job as job
+    monkeypatch.setattr(job, 'validate_local_folder',
+                        lambda folder: Path(folder).resolve(strict=True))
+
+
 def test_long_stderr_never_deadlocks():
     # More stderr than a typical anonymous OS pipe can hold.
     p=_run([sys.executable,'-c','import sys; sys.stderr.write("A"*450000)'],timeout=12)

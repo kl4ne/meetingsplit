@@ -6,7 +6,7 @@ Set-Location ([IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')))
 $python = Join-Path (Get-Location) '.venv\Scripts\python.exe'
 $wheelRoot = Join-Path (Get-Location) 'build\lgpl-wheel'
 $archive = Join-Path $wheelRoot 'ffmpeg-lgpl.zip'
-$assetUrl = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n9.0-latest-win64-lgpl-shared-9.0.zip'
+$assetUrl = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.1-latest-win64-lgpl-shared-8.1.zip'
 New-Item -ItemType Directory -Force $wheelRoot | Out-Null
 Write-Host 'Fetching LGPL shared FFmpeg. Development QA only; exact hash is recorded.'
 Invoke-WebRequest -Uri $assetUrl -OutFile $archive -MaximumRedirection 8

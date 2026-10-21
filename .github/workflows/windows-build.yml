@@ -2,7 +2,7 @@ name: Windows build - manual and gated
 
 on:
   push:
-    branches: [main]
+    branches: [main, qa/consolidated-20261021]
     paths:
       - '.github/workflows/windows-build.yml'
       - 'engine/**'
@@ -60,29 +60,29 @@ jobs:
           .\bin\ffprobe.exe -version | Select-Object -First 1
       - name: Python engine and integration tests
         # The packaging script runs this same suite itself; avoid running it twice.
-        if: github.event_name != 'workflow_dispatch' || !inputs.package_for_qa
+        if: github.ref != 'refs/heads/qa/consolidated-20261021' && (github.event_name != 'workflow_dispatch' || !inputs.package_for_qa)
         shell: pwsh
         run: .\.venv\Scripts\python.exe -m pytest -q --ignore=tests/test_ui_language.py --ignore=tests/test_ui_navigation.py
       - name: Install optional packaging tool
-        if: github.event_name == 'workflow_dispatch' && inputs.package_for_qa
+        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || (github.event_name == 'push' && github.ref == 'refs/heads/qa/consolidated-20261021')
         shell: pwsh
         run: choco install innosetup --yes --no-progress
       - name: Compile native Windows EXE and optional Setup
-        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa)
+        if: ((github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || (github.event_name == 'push' && github.ref == 'refs/heads/qa/consolidated-20261021'))
         shell: cmd
         run: scripts\compilar_windows.bat
       - name: Verify installer and portable archive were generated
-        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa)
+        if: ((github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || (github.event_name == 'push' && github.ref == 'refs/heads/qa/consolidated-20261021'))
         shell: pwsh
         run: |
           if (-not (Test-Path 'dist/MeetingSplit-v0.8.6-Windows-portable.zip')) { throw 'Portable package missing' }
           if (-not (Test-Path 'dist/MeetingSplit_Setup_v0.8.6.exe')) { throw 'Windows installer missing' }
       - name: Test installer on disposable runner
-        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa)
+        if: ((github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || (github.event_name == 'push' && github.ref == 'refs/heads/qa/consolidated-20261021'))
         shell: pwsh
         run: ./qa/windows_installer_smoke.ps1
       - name: Upload development portable QA artifact
-        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa)
+        if: ((github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || (github.event_name == 'push' && github.ref == 'refs/heads/qa/consolidated-20261021'))
         uses: actions/upload-artifact@v4
         with:
           name: MeetingSplit-development-QA-portable-${{ github.sha }}
@@ -90,7 +90,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload development installer QA artifact
-        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa)
+        if: ((github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || (github.event_name == 'push' && github.ref == 'refs/heads/qa/consolidated-20261021'))
         uses: actions/upload-artifact@v4
         with:
           name: MeetingSplit-development-QA-installer-${{ github.sha }}
@@ -98,7 +98,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload development QA and license reports
-        if: (github.event_name == 'workflow_dispatch' && inputs.package_for_qa)
+        if: ((github.event_name == 'workflow_dispatch' && inputs.package_for_qa) || (github.event_name == 'push' && github.ref == 'refs/heads/qa/consolidated-20261021'))
         uses: actions/upload-artifact@v4
         with:
           name: MeetingSplit-development-QA-reports-${{ github.sha }}

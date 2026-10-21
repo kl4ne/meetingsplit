@@ -1,6 +1,39 @@
 # CURRENT checkpoint — 2026-10-21 — RELEASE HOLD
 
 Latest observed updates:
+- Local frozen EXE tested on the actual ASUS RTX 4070: CUDA/medium synthetic
+  speech passed EN (0.78 s) and ES (0.62 s); Ollama qwen3:4b completed synthetic
+  minutes EN (100.31 s) and ES (87.48 s). Both retained Ana/Friday and Luis/Monday.
+  These are short synthetic checks, not general accuracy or sustained-speed claims.
+  EXE SHA-256: 8c6616ca02b7c54983d3841e650915153d187125dee0500e0754f4479e9e1831.
+  Frozen Qt/FFmpeg/Whisper self-check and hidden five-screen WebEngine load passed.
+  This tested binary predates the subsequent general prompt/legal-text changes;
+  the final consolidated installer still requires acceptance before any delivery.
+- Fixed local packaging contamination: unrelated host Poppler ICU was shadowing
+  Windows ICU and breaking frozen QtCore. Build PATH is process-scoped. Custom
+  Qt hooks exclude unused QML/debugger/virtual-keyboard modules; native package
+  audit passed with no blocked unused Qt modules. This does not close native licensing.
+- Real generated English minutes used "None" for an unspecified pending section.
+  Generalized production instructions now request "Not specified" for absent
+  section information and no longer mention example draft tasks. Separate source
+  evaluation passed in 128.42 s with Priya/reserve room/Tuesday, Marco/confirm
+  capacity/Wednesday and $200; no Ana/Luis/draft tasks appeared, absent sections
+  used "No especificado". Minor generated wording still warrants human review.
+- Original MIT/LGPL/GPL texts missing from exact installed wheel notices are now
+  retained with upstream URLs/hash receipts. License explicitly preserves LGPL
+  library modification/replacement and debugging rights. Full corresponding-source,
+  Chromium/native notice and security review remains OPEN.
+- Local full regression before packaging: 71 passed, zero skips (126.23 s).
+  Latest targeted component/storage/build regression: 32 passed (4.32 s).
+- Previous development runs 39541919344, 39542617600, 39543320166 and 39543467751
+  completed successfully. Disposable CI installer clean/reinstall/uninstall smoke
+  passed on the earlier source; it does not test a real 0.8.5 upgrade or cancellation.
+- User explicitly requested conserving Actions minutes. No Actions run started
+  during this continuation. Installer builds now require manual QA dispatch; commit
+  markers no longer trigger packaging. Superseded runs cancel automatically,
+  optional Inno tooling only installs for packaging, duplicate tests are removed,
+  job timeout reduced to 40 min and frozen startup check bounded to 60 s.
+  Save this checkpoint with [skip ci]; do not dispatch another build speculatively.
 - One-hour synthetic repeated EN/ES workload completed on ASUS CUDA/medium in
   339.3 seconds: 7 exported clips, 622 transcript segments, subtitles and ZIP.
   This is workload evidence, not natural-meeting accuracy or a three-hour test.
@@ -20,8 +53,8 @@ Latest observed updates:
   optional download. Exact Qt/FFmpeg source and native licensing/security obligations
   remain open.
 - First development build 01343bb: Windows compilation, frozen self-check, Setup
-  and portable archive passed (run 39541919344). c415e18 adds disposable installer
-  smoke QA; its result must be checked separately. No new version or Release.
+  and portable archive passed (run 39541919344). c415e18 disposable installer
+  smoke QA also passed (run 39542617600). No new version or Release.
   Artifact downloads have a 512 MiB connector limit; future portable/setup/reports
   are uploaded separately for internal inspection.
 
@@ -51,8 +84,9 @@ Implemented in this checkpoint:
 - Existing five EN/ES pages, enlarged fonts, direct PayPal and plain credit retained.
   Custom/corporate OneDrive roots additionally blocked; USB security retained.
 - Explicit fail-closed qa/release_gate.json and license inventory collection.
-  Normal pushes test only; installer builds require explicit development QA marker
-  or workflow input. CI has no Release permission.
+  Normal pushes test only; installer builds require explicit manual workflow input.
+  CI has no Release permission. Use [skip ci] for locally validated checkpoints
+  when no new runner evidence is needed.
 
 Observed here on the actual ASUS (source environment; no private meeting audio):
 - Hardware: ROG Strix G614JI, RTX 4070 Laptop 8188 MiB, driver 617.42.

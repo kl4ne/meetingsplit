@@ -65,7 +65,7 @@ def reusable_existing(endpoint=DEFAULT_ENDPOINT) -> bool:
         if not match: return False
         source=Path(match.group(1).strip().strip('"'))
         if not source.is_absolute() or not source.is_file(): return False
-        validate_local_folder(source.parent)
+        validate_local_folder(source.resolve(strict=True).parent)
         return True
     except (OSError,ValueError,RuntimeError): return False
 

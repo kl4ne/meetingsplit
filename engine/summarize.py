@@ -48,12 +48,14 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         locale_rules={
             'en': 'Write EVERY heading, status and table cell in English. Use "Not specified" for missing fields. '
                   'Headings: Date, People mentioned (attendance not confirmed), Summary, Topics, Confirmed agreements, '
-                  'Action items, Pending items, Follow-up. Include EVERY explicit future action in the action table, '
-                  'including sending AND reviewing a draft. Do not list mentioned people as confirmed attendees.',
+                  'Action items, Pending items, Follow-up. Include EVERY explicit future action from this source '
+                  'in the action table. Do not add example tasks. Do not list mentioned people as confirmed attendees. '
+                  'For sections with no explicit source information, write "Not specified", not "None".',
             'es': 'Escribe TODOS los títulos, estados y celdas en español. Usa "No especificado" para campos ausentes. '
                   'Encabezados: Fecha, Personas mencionadas (asistencia no confirmada), Resumen, Temas, Acuerdos confirmados, '
-                  'Tareas, Pendientes, Seguimiento. Incluye CADA acción futura explícita en la tabla de tareas, '
-                  'tanto enviar como revisar un borrador. No deduzcas asistencia de personas solo mencionadas.',
+                  'Tareas, Pendientes, Seguimiento. Incluye CADA acción futura explícita de esta fuente en la tabla '
+                  'de tareas. No agregues tareas de ejemplo. No deduzcas asistencia de personas solo mencionadas. '
+                  'En secciones sin información explícita usa "No especificado", no "Ninguno".',
             'both': 'Escribe dos documentos completos separados, primero español y luego inglés. Traduce también '
                     'títulos, estados y celdas. Incluye cada acción explícita en cada tabla. No deduzcas asistencia.'
         }[language]

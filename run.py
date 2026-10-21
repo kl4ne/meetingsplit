@@ -2,6 +2,9 @@
 import sys
 
 if __name__ == '__main__':
+    if '--ui-qa' in sys.argv:
+        from desktop.ui_qa import main as ui_qa_main
+        raise SystemExit(ui_qa_main(sys.argv[sys.argv.index('--ui-qa')+1]))
     if '--hardware-qa' in sys.argv:
         from desktop.hardware_qa import main as hardware_main
         pos=sys.argv.index('--hardware-qa')

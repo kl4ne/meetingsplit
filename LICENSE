@@ -64,6 +64,11 @@ license terms. Where those licenses or applicable law confer rights, they
 prevail over any conflicting restriction in this license for the affected
 third-party component. Required notices and source-code offers, if any, must
 be supplied with relevant distributed builds.
+In particular, this license permits replacement or modification of separately
+licensed LGPL libraries and reverse engineering of the combined application
+to debug modifications to those libraries, to the extent required by their
+licenses. No license check or application signature is used to prevent
+loading an interface-compatible replacement of those shared libraries.
 
 8. PRIVACY AND USER RESPONSIBILITY
 MeetingSplit is intended to process recordings locally. You remain responsible

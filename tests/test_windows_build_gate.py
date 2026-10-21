@@ -29,7 +29,8 @@ def test_build_script_has_required_release_gates_and_version():
     build=(ROOT/'scripts/compilar_windows.bat').read_text(encoding='utf-8')
     setup=(ROOT/'scripts/MeetingSplit.iss').read_text(encoding='utf-8')
     assert 'set "RELEASE=0.8.6"' in build
-    assert 'start /wait "" "dist\\MeetingSplit\\MeetingSplit.exe" --self-check' in build
+    assert "-ArgumentList @('--self-check'" in build
+    assert 'WaitForExit(60000)' in build
     assert 'QtWebEngineWidgets' in build
     assert '--add-binary "bin\\ffmpeg.exe;bin"' in build
     assert 'if not "%PROBE_EXIT%"=="0"' in build

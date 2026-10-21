@@ -3,7 +3,7 @@
   "version_policy": "Keep 0.8.6; development checkpoints only; no Release or user installation request",
   "required": {
     "asus_gpu_real_speech": true,
-    "frozen_app_gpu_and_ollama_on_asus": false,
+    "frozen_app_gpu_and_ollama_on_asus": true,
     "long_synthetic_workload": true,
     "cpu_split_transcription_regression": true,
     "ollama_real_generation_and_failure_paths": true,

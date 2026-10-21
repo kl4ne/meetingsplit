@@ -4,22 +4,27 @@ Keep 0.8.6; continue main/checkpoints. Do not publish Release, deliver a new bui
 ask user to install anything, or touch kl4ne/integrity-business-filings. Historical
 delivery steps below are superseded by this section and the user's release hold.
 
-1. EN/ES synthetic minutes have now generated and been reviewed. Keep separate
-   thinking-channel handling and truncation rejection. Check frozen-app generation,
-   not only source generation. Do not reuse stale validation JSON as evidence.
-2. Run final engine/security/browser tests; refresh existing preview with
-   qa/build_preview.py. Preserve enlarged five-screen EN/ES UI, PayPal and credit.
-3. Explicit Windows development installer CI ([qa-installer] commit marker or manual
-   QA input), inspect results and fix failures. Compilation is not installer acceptance.
-4. Evaluate frozen app/wizard with internal test data: CUDA lazy inference, CPU
-   recovery, Ollama setup/generation, existing instance, occupied port, cancel/retry,
+1. Frozen ASUS CUDA speech and Ollama EN/ES generation now passed; see current
+   MASTER_STATUS for exact timings and EXE hash. Independent updated generic-prompt
+   example also passed (Priya/Marco/$200, 128.42 s). Keep separate thinking-field
+   handling and truncation rejection. Do not reuse stale JSON as new evidence.
+2. 71-test full local regression passed, zero skips; latest focused batch 32 passed.
+   Repeat affected checks after new changes only. Preserve enlarged five-screen
+   EN/ES UI, PayPal and plain author credit. Frozen five-screen load also passed.
+3. Save local verified changes before considering another CI build. Installer
+   packaging now requires an explicit workflow_dispatch QA input; commit markers
+   no longer build installers. Cancel superseded runs automatically. Do not spend
+   Actions minutes repeating checks that can run locally. Compilation is not acceptance.
+4. Final consolidated package still needs installer acceptance after the current
+   packaging hooks, prompt/legal updates and EN/ES installer text. Evaluate wizard
+   with internal test data: CPU recovery, existing instance, occupied port, cancel/retry,
    disk full, clean/upgrade/cancel/uninstall. Preserve the user's working installation.
 5. Finish docs/THIRD_PARTY_REVIEW.md requirements, exact Qt/FFmpeg/PyAV inventory,
    original notices and corresponding-source obligations. Python-only audit is clean;
    native security/license review is still open.
 6. One-hour synthetic CUDA/medium pipeline passed in 339.3 s (7 clips, 622 segments,
    SRT/ZIP). Short actual missing-library CPU fallback also passed EN/ES. Remaining:
-   frozen-app tests, natural-meeting accuracy, three-hour/resource/thermal evaluation.
+   final consolidated installer, natural-meeting accuracy, three-hour/resource/thermal evaluation.
 7. Update checkpoints/gate only with observed evidence. release_allowed stays false
    until every required item is prepared and evaluated.
 

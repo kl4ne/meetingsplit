@@ -11,6 +11,23 @@ retained in the selected data folder with their own notices and hash receipts.
 
 Outstanding checks before distribution:
 
+- Wheel metadata alone was insufficient: CTranslate2 4.6.2 contained no original
+  license file, and the installed PySide6 wheels only supplied the commercial
+  notice despite declaring LGPL/GPL alternatives. Original CTranslate2 MIT,
+  Qt LGPLv3/GPLv3 and FFmpeg LGPLv2.1 texts are now preserved separately under
+  `docs/third-party-licenses`, with upstream URLs and SHA-256 receipts. These
+  texts do not substitute for the full native dependency notices or matching source.
+
+- Local frozen-package investigation found the generic Qt QML hooks collected unused
+  Charts/Graphs/Quick3D/VirtualKeyboard modules. Application-specific hooks exclude
+  application QML plugins, QML debugging and virtual keyboard; `qa/audit_package.py`
+  rejects these native modules. This is a narrow package check, not full LGPL/GPL
+  compliance approval. Preserve required Qt WebEngine/Quick dependencies and test
+  actual frozen rendering after any hook change.
+- Build PATH is scoped to the venv, bundled tools and Windows for this process only.
+  The host's unrelated Poppler ICU DLL previously shadowed Windows ICU and broke
+  QtCore imports in the local frozen app. No host PATH or system DLLs were changed.
+
 - Audit the exact frozen dependency inventory and vulnerability scan, including native
   Qt, FFmpeg/PyAV and CTranslate2 binaries. A pip-only scan does not cover all native code.
 - Review LGPL obligations for Qt/PySide6, including dynamic library replacement,

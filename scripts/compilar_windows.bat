@@ -2,6 +2,8 @@
 setlocal EnableExtensions
 cd /d "%~dp0\.."
 set "RELEASE=0.8.6"
+rem Only this build process: avoid harvesting unrelated Poppler/ICU DLLs from host PATH.
+set "PATH=%CD%\.venv\Scripts;%CD%\bin;%SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0"
 if /I "%~1"=="--release" (
  .venv\Scripts\python.exe qa\check_release_gate.py
  if errorlevel 1 exit /b 3
@@ -29,6 +31,7 @@ if errorlevel 1 (
 if errorlevel 1 exit /b 1
 .venv\Scripts\python.exe -m PyInstaller --noconfirm --clean --onedir --windowed ^
  --name MeetingSplit --icon "assets\meetingsplit.ico" ^
+ --additional-hooks-dir "scripts\hooks" ^
  --add-data "ui;ui" ^
  --add-data "docs;docs" --add-data "LICENSE;." ^
  --add-data "build\legal;legal" ^
@@ -45,8 +48,10 @@ if not exist dist\MeetingSplit\MeetingSplit.exe (
  echo ERROR: falta dist\MeetingSplit\MeetingSplit.exe.
  exit /b 1
 )
+.venv\Scripts\python.exe qa\audit_package.py dist\MeetingSplit
+if errorlevel 1 exit /b 1
 set "CHECK=%TEMP%\meetingsplit-build-check-%RANDOM%.json"
-start /wait "" "dist\MeetingSplit\MeetingSplit.exe" --self-check "%CHECK%"
+powershell.exe -NoProfile -NonInteractive -Command "$p=Start-Process -FilePath 'dist\MeetingSplit\MeetingSplit.exe' -ArgumentList @('--self-check',([char]34+$env:CHECK+[char]34)) -PassThru -WindowStyle Hidden; if (-not $p.WaitForExit(60000)) { Stop-Process -Id $p.Id -Force; exit 3 }; exit $p.ExitCode"
 set "PROBE_EXIT=%ERRORLEVEL%"
 if not exist "%CHECK%" (
  echo ERROR: el ejecutable no genero diagnostico; Qt o el empaquetado podrian estar incompletos.

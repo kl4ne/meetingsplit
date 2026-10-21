@@ -1,0 +1,22 @@
+[
+  {
+    "file": "CTranslate2-4.6.2-MIT.txt",
+    "sha256": "54aa79d9fe3c09e67a16dcd95b9e88676405a6ec174efda31036983cf7672ecb",
+    "source": "https://raw.githubusercontent.com/OpenNMT/CTranslate2/v4.6.2/LICENSE"
+  },
+  {
+    "file": "Qt-6.12.0-LGPL-3.0.txt",
+    "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768",
+    "source": "https://raw.githubusercontent.com/qt/qtbase/v6.12.0/LICENSES/LGPL-3.0-only.txt"
+  },
+  {
+    "file": "GPL-3.0.txt",
+    "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+    "source": "https://raw.githubusercontent.com/qt/qtbase/v6.12.0/LICENSES/GPL-3.0-only.txt"
+  },
+  {
+    "file": "FFmpeg-LGPL-2.1.txt",
+    "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+    "source": "https://raw.githubusercontent.com/FFmpeg/FFmpeg/n8.0/COPYING.LGPLv2.1"
+  }
+]

@@ -27,6 +27,12 @@ if (-not (Test-Path -LiteralPath (Join-Path $installTask '_internal\docs\OPTIONA
 Invoke-BoundedInstallerTask $exeTask @('--self-check',('"'+(Join-Path $qaRootTask 'frozen-check.json')+'"'))
 $checkTask = Get-Content -LiteralPath (Join-Path $qaRootTask 'frozen-check.json') -Raw | ConvertFrom-Json
 if (-not $checkTask.packaged) { throw 'Self-check did not run from frozen application.' }
+$env:QT_QPA_PLATFORM = 'offscreen'
+$env:QTWEBENGINE_CHROMIUM_FLAGS = '--disable-gpu'
+$uiReportTask = Join-Path $qaRootTask 'frozen-ui-check.json'
+Invoke-BoundedInstallerTask $exeTask @('--ui-qa',('"'+$uiReportTask+'"'))
+$uiCheckTask = Get-Content -LiteralPath $uiReportTask -Raw | ConvertFrom-Json
+if (-not $uiCheckTask.ok) { throw 'Frozen WebEngine did not render the existing five-screen UI.' }
 
 # Upgrade/reinstall over the test installation; no real user installation exists.
 Invoke-BoundedInstallerTask $setupTask $argsTask
@@ -37,7 +43,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $dataTask 'preserve.txt'))) { throw 
 
 @{
     clean_install = $true; same_version_reinstall = $true; uninstall = $true
-    external_data_preserved = $true; frozen_self_check = $checkTask
+    external_data_preserved = $true; frozen_self_check = $checkTask; frozen_ui = $uiCheckTask
     not_tested = @('interactive cancellation','upgrade from user-installed 0.8.5',
         'optional runtime network installation','GPU inference on runner','SmartScreen/signing')
 } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $qaRootTask 'installer-qa.json') -Encoding UTF8

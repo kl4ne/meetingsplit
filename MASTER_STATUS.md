@@ -1,3 +1,12 @@
+## CHECKPOINT — live Actions handoff after additional native notice work (2026-10-21)
+
+- QA branch `qa/release-evidence-20261021`, draft PR #1. Do not merge or publish.
+- **Source-only Windows notice verification #39696118269 PASSED (1 test)**: exact original Tokenizers 0.23.3 Apache-2.0, Cython 3.3.0 Apache-2.0 and Cython/Pyrex COPYING texts are committed and SHA-256-pinned alongside earlier upstream notices. Git source refs are recorded. These newer docs were committed **after** build #39695270843 started and are not part of its frozen snapshot.
+- **One justified consolidated full QA rebuild #39695270843** is actively running from snapshot `90238d621160e05097e7b72c3a1c26b18b4a31cd`. Pinned LGPL media preparation and source PyAV compilation PASSED; frozen PyInstaller/installer phase is running at the last check. Retrieve **actual conclusion, logs, artifacts** before claiming this run completed. It is a development-only QA build, not a public Release.
+- Windows focused source test run #39694809814 already PASSED (26). An authentic interactive Inno cancellation attempt #39694379638 was inconclusive because GitHub's runner had no visible desktop; do not repeat on the same headless runner.
+- Version 0.8.6, `release_allowed=false`, Integrity untouched. Remaining legal/ASUS/interactive release blockers unchanged.
+
+---
 ## ACTIVE CHECKPOINT — 2026-10-21 — optional components and Windows QA verified
 
 - Last known original main HEAD: `c292ad5d375ed63b581823b1754ab1064ef67cd8`. Continue on `qa/release-evidence-20261021`, not the divergent historical consolidated QA branch. No main changes or releases in this continuation.

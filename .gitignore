@@ -1,0 +1,40 @@
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.*
+*.log
+
+# Private local meeting data
+*.wav
+*.mp3
+*.m4a
+*.aac
+*.flac
+*.ogg
+*.opus
+*.wma
+*.mp4
+*.srt
+*.transcript.json
+Reuniones/
+Modelos/
+Temporales/
+Resultados/
+
+# Generated installers and local build tools
+build/
+dist/
+bin/
+*.spec
+*.exe
+*.msi
+*.zip
+*.7z
+*.bak
+.idea/
+.vscode/
+.DS_Store

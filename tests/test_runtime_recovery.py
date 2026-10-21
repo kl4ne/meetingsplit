@@ -12,6 +12,7 @@ def test_windows_bus_check_uses_storage_and_cim_and_rejects_usb(monkeypatch):
         calls.append(args)
         # Real output from the PowerShell script's classification stage
         return SimpleNamespace(returncode=0, stdout='USB\n')
+    monkeypatch.setattr('desktop.storage._native_windows_bus_type', lambda letter: '')
     monkeypatch.setattr('desktop.storage.subprocess.run', cmd_run)
     assert _windows_bus_type('J') == 'USB'
     assert not classify_storage(3, _windows_bus_type('J'))[0]
@@ -25,6 +26,7 @@ def test_windows_bus_check_uses_storage_and_cim_and_rejects_usb(monkeypatch):
 def test_windows_bus_fallback_accepts_nvme_disk(monkeypatch):
     def cmd_run(args, **kwargs):
         return SimpleNamespace(returncode=0, stdout='NVMe\n')
+    monkeypatch.setattr('desktop.storage._native_windows_bus_type', lambda letter: '')
     monkeypatch.setattr('desktop.storage.subprocess.run', cmd_run)
     assert _windows_bus_type('D') == 'NVMe'
     assert classify_storage(3, _windows_bus_type('D'))[0]

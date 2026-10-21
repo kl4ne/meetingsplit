@@ -1,3 +1,18 @@
+## Next action after successful pinned main tests-only CI
+
+1. Assemble exact Qt WebEngine/Chromium and bundled cuDNN third-party
+   notices/source/redistribution proofs. Qualified review is needed;
+   SHA-256 inventories alone do not clear this gate.
+2. Perform Windows interactive installer cancellation, optional CUDA/Ollama
+   download interruption/resume and full-disk cases against the exact
+   consolidated candidate (prior mocks do not prove full UI behavior).
+3. Validate the final consolidated GPU/Whisper + Ollama minute workflow on
+   the actual ASUS, then re-check all five views at +2 font scale EN/ES.
+4. Keep signed-publisher/SmartScreen work separate and avoid exposing
+   verified private identity without the user's permission.
+5. Do not increment the version, publish artifacts as a Release, or enable
+   `qa/release_gate.json` until all are verified.
+
 ## Remaining acceptance work after pinned media consolidation
 
 1. Finalize LGPL/Qt WebEngine/Chromium source notices and corresponding

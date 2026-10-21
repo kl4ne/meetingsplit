@@ -1,3 +1,30 @@
+## Continuity checkpoint — timeout recovery / main integration 2026-10-21
+
+- **Main HEAD:** `c3af16d` before this documentation-only checkpoint.
+- Isolated pinned LGPL stack successfully merged to `main`, without a
+  public Release or installer for users. This includes source-built
+  PyAV 16.0.1, BtbN FFmpeg 8.1.3 LGPL/shared (pinned SHA-256),
+  manual-QA-only workflow, audio exports, legal receipts, and
+  fail-closed native codec checks.
+- Windows tests-only CI **#39602465892 PASSED: 84 passed, 2 skipped**.
+  This run skipped executable packaging and installer uploads as intended.
+- Latest full pinned Windows package QA #39599798144 PASS:
+  82 tests passed, 2 skipped, frozen app, MP3/M4A/WAV,
+  installation/reinstall/uninstall; no known GPL codec DLLs.
+- Authentic 0.8.5 to 0.8.6 isolated upgrade #39598790616 PASS.
+- Pinned QA evidence archive saved to Library:
+  `/Proyectos/MeetingSplit/MeetingSplit-pinned-LGPL-QA-reports-2026-10-21.zip`.
+- Exact frozen Windows package contains Qt WebEngine/Chromium and a
+  bundled CTranslate2 `cudnn64_9.dll`. Their redistribution provenance
+  and the complete third-party source/notices must be reviewed. These
+  material findings are documented in `docs/THIRD_PARTY_REVIEW.md`.
+- Remaining blocker flags in `qa/release_gate.json`: complete
+  interactive install/cancel/optional component acceptance and
+  third-party license/security review. Final pinned package on the ASUS
+  with GPU + Ollama still requires confirmation.
+- VERSION REMAINS 0.8.6; `release_allowed=false`. Do not offer a
+  definitive installer or public release. Integrity untouched.
+
 ## 2026-10-21 — pinned LGPL media integrated into main (DEVELOPMENT, NO RELEASE)
 
 - Verified packaged code from isolated branch `qa/consolidated-20261021`

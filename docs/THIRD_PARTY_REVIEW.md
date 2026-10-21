@@ -1,3 +1,18 @@
+## 2026-10-21: confirmed package-level GPL indicators
+
+Windows QA evidence: `docs/QA_CONSOLIDATED_2026-10-21.md`.
+Exact included `ffmpeg.exe` and `ffprobe.exe` are FFmpeg 9.0.2 Gyan
+essentials builds with `--enable-gpl` and `--enable-version3`.
+The PyAV Windows wheel separately includes `libx264` and `libx265` DLLs
+in `av.libs`; licensing the PyAV Python wrapper under BSD does not
+override the licenses of its native libraries. Thus simply adding a
+generic FFmpeg LGPL notice is **not enough**. Either establish the precise
+GPL compliance path and corresponding source for these binaries (including
+the combined-work assessment) or replace with vetted LGPL configurations
+and re-run QA. Do not assume this automatically relicenses MeetingSplit's
+original standalone code. Seek qualified legal review before public
+distribution. Release gate stays closed.
+
 # Redistribution and security review — release HOLD
 
 No new version or Release is authorized until all required QA is evaluated. A

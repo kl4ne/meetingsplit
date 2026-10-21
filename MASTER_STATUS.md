@@ -1,3 +1,19 @@
+## Consolidated Windows QA execution — 2026-10-21
+
+- Isolated QA run #39592132218 **SUCCESS** (development only):
+  https://github.com/kl4ne/meetingsplit/actions/runs/39592132218
+- Actual Windows disposable install/reinstall/uninstall and frozen UI checks passed.
+- SHA-256 manifest: 670 package files / 205 native binaries / 950,475,677 bytes.
+- **New confirmed redistribution blocker:** shipped FFmpeg 9.0.2 has
+  `--enable-gpl --enable-version3 --enable-static`; PyAV separately bundles
+  native x264/x265 codec DLLs. Resolve corresponding source/build/notice duties
+  or replace with compliant packages before distribution.
+- Details: `docs/QA_CONSOLIDATED_2026-10-21.md`.
+- User's actual v0.8.5 upgrade, interactive cancellation, optional download
+  failure matrix and final ASUS acceptance remain untested for this package.
+- Main version stays 0.8.6; release_allowed is false. QA artifacts were
+  uploaded to Actions, not published as a GitHub Release.
+
 # Pre-installer QA checkpoint — 2026-10-21 — RELEASE HOLD
 
 - Latest code checkpoint: `fba16d8`; the application remains **0.8.6**.

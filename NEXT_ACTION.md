@@ -1,3 +1,18 @@
+## Next pre-release engineering tasks — after consolidated QA
+
+1. **Highest priority:** address confirmed GPL-enabled FFmpeg 9.0.2 CLI
+   and PyAV-supplied x264/x265 DLL licensing. Prefer investigating a
+   pinned LGPL-only FFmpeg distribution and compatible PyAV-native build,
+   or supplying corresponding sources/notices/build scripts with legal review.
+2. Implement/verify actual 0.8.5 upgrade path and cancellable Windows
+   installer interactions in a disposable Windows environment.
+3. Execute optional CUDA/Ollama real-download and retry matrix plus resource
+   checks, without affecting the user's installed version.
+4. Re-run consolidated QA **only after** material changes. Do not deliver or
+   publish the QA binary as a release; keep 0.8.6 and release gate blocked.
+5. Link to evidence: `docs/QA_CONSOLIDATED_2026-10-21.md`,
+   Actions #39592132218, report artifact #12342368926.
+
 # Next acceptance gate — before definitive MeetingSplit installer
 
 1. Preserve `release_allowed=false` and version 0.8.6. No more ordinary CI builds

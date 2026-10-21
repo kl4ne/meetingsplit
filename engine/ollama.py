@@ -12,7 +12,7 @@ import sys
 import time
 from urllib.request import build_opener, ProxyHandler, HTTPRedirectHandler, Request
 from desktop.storage import validate_local_folder
-from engine.control import Cancellation
+from engine.control import Cancellation, JobCancelled
 
 MODEL = 'qwen3:4b'
 DEFAULT_ENDPOINT = 'http://127.0.0.1:11434'
@@ -227,6 +227,11 @@ class LocalService:
 
 
 def setup_ollama(root, progress, cancel):
+    """Verify optional local minutes and persist a truthful final setup state.
+
+    A failed or cancelled attempt may leave independently verified downloads in
+    the user's data folder, but must never leave the receipt stuck at 'testing'.
+    """
     from desktop.components import install_package, OLLAMA_PACKAGE
     component_root=validate_local_folder(root)/'Componentes'
     component_root.mkdir(exist_ok=True)
@@ -235,22 +240,36 @@ def setup_ollama(root, progress, cancel):
     receipt=component_root/'ollama-validation.json'
     receipt.write_text(json.dumps({'ok':False,'status':'testing'}),encoding='utf-8')
     (component_root/'ollama-smoke-minutes.md').unlink(missing_ok=True)
-    # An existing service with the exact local model requires no installation.
-    if not reusable_existing():
-        install_package(OLLAMA_PACKAGE,root,progress,cancel)
-    with LocalService(root,cancel,progress) as service:
-        model=service.ensure_model(allow_download=True)
-        details=request_json(service.endpoint,'/api/show',{'model':MODEL})
-        # Preserve the actual downloaded model's license, not a guessed label.
-        license_text=details.get('license','')
-        if not license_text.strip(): raise RuntimeError('Ollama did not supply the model license')
-        (component_root/'QWEN3_LICENSE.txt').write_text(license_text,encoding='utf-8')
-        from engine.summarize import summarize_local
-        transcript='[00:00:01] Ana will send the draft on Friday.\n[00:00:06] Luis agreed to review it on Monday.'
-        report=summarize_local(transcript,'minutes','en',MODEL,progress=progress,
-                               endpoint=service.endpoint,cancel=cancel)
-        (component_root/'ollama-smoke-minutes.md').write_text(report,encoding='utf-8')
-        (component_root/'ollama-validation.json').write_text(json.dumps({
-            'ok':True,'model':MODEL,'digest':model.get('digest'),'endpoint':service.endpoint,
-            'test':'synthetic meeting, generation completed; factual review required',
-            'characters':len(report)},indent=2),encoding='utf-8')
+    try:
+        # Never download into or modify a user's existing, independently managed
+        # local Ollama service.
+        if not reusable_existing():
+            install_package(OLLAMA_PACKAGE,root,progress,cancel)
+        with LocalService(root,cancel,progress) as service:
+            model=service.ensure_model(allow_download=True)
+            details=request_json(service.endpoint,'/api/show',{'model':MODEL})
+            license_text=details.get('license','')
+            if not isinstance(license_text,str) or not license_text.strip():
+                raise RuntimeError('Ollama did not supply the model license')
+            (component_root/'QWEN3_LICENSE.txt').write_text(license_text,encoding='utf-8')
+            from engine.summarize import summarize_local
+            transcript='[00:00:01] Ana will send the draft on Friday.\\n[00:00:06] Luis agreed to review it on Monday.'
+            report=summarize_local(transcript,'minutes','en',MODEL,progress=progress,
+                                   endpoint=service.endpoint,cancel=cancel)
+            cancel.check()
+            (component_root/'ollama-smoke-minutes.md').write_text(report,encoding='utf-8')
+            receipt.write_text(json.dumps({
+                'ok':True,'status':'complete','model':MODEL,'digest':model.get('digest'),
+                'endpoint':service.endpoint,
+                'test':'synthetic meeting, generation completed; factual review required',
+                'characters':len(report)},indent=2),encoding='utf-8')
+    except JobCancelled:
+        receipt.write_text(json.dumps({
+            'ok':False,'status':'cancelled','detail':'Setup cancelled by user; verified components are retained'
+        },indent=2),encoding='utf-8')
+        raise
+    except Exception as exc:
+        receipt.write_text(json.dumps({
+            'ok':False,'status':'failed','error':str(exc)[:400]
+        },indent=2),encoding='utf-8')
+        raise

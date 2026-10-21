@@ -1,0 +1,44 @@
+name: MeetingSplit isolated legacy upgrade QA
+on:
+  push:
+    branches: [qa/consolidated-20261021]
+    paths: [.github/workflows/windows-upgrade-qa.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  upgrade:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve validated consolidated QA installer
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $headers = @{
+            Authorization = ('Bearer ' + $env:GITHUB_TOKEN)
+            Accept = 'application/vnd.github+json'
+            'X-GitHub-Api-Version' = '2022-11-28'
+          }
+          New-Item -ItemType Directory -Force 'dist', 'work/new-installer-artifact' | Out-Null
+          Invoke-WebRequest -Uri 'https://api.github.com/repos/kl4ne/meetingsplit/actions/artifacts/12343558790/zip' -Headers $headers -OutFile 'work/new-installer-artifact.zip' -MaximumRedirection 8
+          Expand-Archive -LiteralPath 'work/new-installer-artifact.zip' -DestinationPath 'work/new-installer-artifact' -Force
+          $found = Get-ChildItem -Path 'work/new-installer-artifact' -Recurse -Filter 'MeetingSplit_Setup_v0.8.6.exe' -File | Select-Object -First 1
+          if (-not $found) { throw 'Validated QA installer not present in artifact' }
+          Copy-Item -LiteralPath $found.FullName -Destination 'dist/MeetingSplit_Setup_v0.8.6.exe' -Force
+      - name: Authentic v0.8.5 to consolidated v0.8.6 upgrade on disposable Windows
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./qa/windows_upgrade_from_v085.ps1
+      - name: Save isolated upgrade QA result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-isolated-legacy-upgrade-qa-${{ github.sha }}
+          path: work/legacy-upgrade-qa/upgrade-qa.json
+          if-no-files-found: warn
+          retention-days: 14

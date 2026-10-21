@@ -1,8 +1,8 @@
-# MeetingSplit v0.8.3 — NEXT ACTION
+# MeetingSplit — NEXT_ACTION
 
-1. Build on Windows 11 with the supplied GitHub Actions or local scripts; no Windows EXE verified yet.
-2. Launch GUI and click Support Development: system default browser must navigate to `https://www.paypal.com/ncp/payment/XPUK3HVHJW8KE` (confirmed by the owner).
-3. Check PayPal page readability in the live browser; do not simulate or execute a real contribution.
-4. Confirm NVIDIA/CUDA Whisper transcription with a bilingual 5–10 min meeting and test memory/performance.
-5. Keep developer signature *plain text*, not linked to any personal card.
-6. Continue from this code, preserve established features and verify Windows installer.
+1. Check Windows GitHub Actions run: https://github.com/kl4ne/meetingsplit/actions/runs/39522806473 .
+2. If it fails, inspect the failed step and job log, implement the smallest fix on `main`, and rerun Windows CI.
+3. If successful, inspect the artifact names, check for `MeetingSplit_Setup_v0.8.3.exe` and portable ZIP, then mark as **CI-built, not yet ASUS-tested**.
+4. Test Windows install/uninstall, English/Spanish UI, direct PayPal support URL, local C:/D: folder picker, audio splitting, and CUDA Whisper on the user's RTX 4070 with consented sample audio.
+5. Review third-party licenses and notices before publishing a public GitHub Release. Do not ask user to install an unverified EXE.
+6. Leave `kl4ne/integrity-business-filings` unchanged.

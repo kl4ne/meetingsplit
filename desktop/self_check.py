@@ -54,7 +54,7 @@ def run_checks() -> tuple[dict, int]:
         record('whisper',False,f'{type(e).__name__}: {e}'[:240])
         record('cuda',False,'Not tested because Faster-Whisper is unavailable',False)
     report={
-        'product':'MeetingSplit','version':'0.8.4','offline':True,
+        'product':'MeetingSplit','version':'0.8.5','offline':True,
         'python':platform.python_version(),
         'packaged':bool(getattr(sys,'frozen',False)),
         'checks':checks,

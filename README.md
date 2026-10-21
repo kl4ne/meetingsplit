@@ -15,15 +15,17 @@
 </div>
 
 > [!IMPORTANT]
-> **Development build · v0.8.4 · Not a production release.** The source is under active development. GitHub Actions generated an installer, but an ASUS test of v0.8.3 identified a CUDA library failure and an internal D: detection problem. The v0.8.4 corrections still require Windows hardware validation. Please do not process confidential recordings until the Windows build and privacy checks are complete.
+> **Development build · v0.8.5 · Not a production release.** The source is under active development. GitHub Actions generated an installer, but an ASUS test of v0.8.3 identified a CUDA library failure and an internal D: detection problem. The v0.8.5 corrections still require Windows hardware validation. Please do not process confidential recordings until the Windows build and privacy checks are complete.
 
 ---
 
-## Windows storage and NVIDIA runtime (development v0.8.4)
+## Windows storage and NVIDIA runtime (development v0.8.5)
 
 The app accepts folders on **verified internal C: or D:** drives, and deliberately refuses USB/removable/network targets and folders inside OneDrive, Google Drive, Dropbox or iCloud Drive. In Windows, choose a non-synced folder such as `C:\MeetingSplit` (if writable), or a directory under `%LOCALAPPDATA%`. D: is verified using Windows Storage with a CIM fallback for systems where `Get-Disk` reports an unavailable bus type. Unknown physical connections remain blocked for safety.
 
 NVIDIA GPU transcription with Faster-Whisper requires **CUDA 12 cuBLAS and compatible cuDNN 9 libraries** available to the app, not merely a GPU driver. MeetingSplit now checks the DLLs before using CUDA, and retries on CPU if CUDA fails at runtime; CPU processing may be considerably slower. CUDA DLLs are not bundled into the application without a license and packaging review. Do not download DLLs from untrusted websites. Test with a disposable, consented short recording before processing real meetings.
+
+**v0.8.5 development notice:** Windows storage detection and slow CPU transcription are under hardware validation. Without compatible CUDA 12/cuDNN 9 libraries, MeetingSplit falls back to CPU with the `small` model when Medium or Large was selected; processing may still take several minutes per clip, and accuracy can be lower. A new elapsed-time indicator is shown during long work. USB drives remain blocked.
 
 ## Overview
 
@@ -203,7 +205,7 @@ This project depends on software with **separate licenses** (including Qt/PySide
 
 **Designed & Developed by Roberto S. Macfie**
 
-<sub>MeetingSplit · Independent Windows desktop software · Development version 0.8.4</sub>
+<sub>MeetingSplit · Independent Windows desktop software · Development version 0.8.5</sub>
 
 </div>
 

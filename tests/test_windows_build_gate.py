@@ -10,7 +10,7 @@ ROOT=Path(__file__).resolve().parents[1]
 def test_self_check_never_requires_online_services():
     report,code=run_checks()
     assert report['offline'] is True
-    assert report['version']=='0.8.4'
+    assert report['version']=='0.8.5'
     assert {'qt_webengine','ffmpeg','ffprobe','whisper','cuda'} <= set(report['checks'])
     assert all(isinstance(row['ok'],bool) for row in report['checks'].values())
     assert all(not row['required'] for key,row in report['checks'].items() if key in ('cuda','platform'))
@@ -28,12 +28,23 @@ def test_self_check_can_export_diagnostic_without_touching_audio(tmp_path):
 def test_build_script_has_required_release_gates_and_version():
     build=(ROOT/'scripts/compilar_windows.bat').read_text(encoding='utf-8')
     setup=(ROOT/'scripts/MeetingSplit.iss').read_text(encoding='utf-8')
-    assert 'set "RELEASE=0.8.4"' in build
+    assert 'set "RELEASE=0.8.5"' in build
     assert 'start /wait "" "dist\\MeetingSplit\\MeetingSplit.exe" --self-check' in build
     assert 'QtWebEngineWidgets' in build
     assert '--add-binary "bin\\ffmpeg.exe;bin"' in build
     assert 'if not "%PROBE_EXIT%"=="0"' in build
-    assert 'MeetingSplit_Setup_v0.8.4' in setup
+    assert 'MeetingSplit_Setup_v0.8.5' in setup
     assert 'AppVersion={#MyAppVersion}' in setup
     assert (ROOT/'assets/meetingsplit.ico').is_file()
     assert (ROOT/'assets/meetingsplit.ico').stat().st_size > 1000
+
+
+def test_ui_immediate_feedback_and_live_elapsed_visible():
+    app=(ROOT/'ui/app.js').read_text(encoding='utf-8')
+    html=(ROOT/'ui/index.html').read_text(encoding='utf-8')
+    css=(ROOT/'ui/styles.css').read_text(encoding='utf-8')
+    assert 'jobStarted=Date.now()' in app
+    assert 'button.disabled=working' in app
+    assert 'setInterval(updateJobElapsed,1000)' in app
+    assert 'id="job-elapsed"' in html
+    assert 'processing-spinner' in app and 'processing-spinner' in css

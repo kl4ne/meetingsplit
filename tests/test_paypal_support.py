@@ -4,7 +4,7 @@ import os, shutil
 import pytest
 ROOT=Path(__file__).resolve().parents[1]
 PAYPAL='https://www.paypal.com/ncp/payment/XPUK3HVHJW8KE'
-PREVIEW=ROOT/'MEETINGSPLIT_PREVIEW_v0.8.4.html'
+PREVIEW=ROOT/'MEETINGSPLIT_PREVIEW_v0.8.5.html'
 
 def test_paypal_link_is_owner_provided_and_no_sdk():
     for file in (ROOT/'ui/index.html',PREVIEW):

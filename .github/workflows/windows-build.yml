@@ -57,14 +57,14 @@ jobs:
       - name: Verify installer and portable archive were generated
         shell: pwsh
         run: |
-          if (-not (Test-Path 'dist/MeetingSplit-v0.8.4-Windows-portable.zip')) { throw 'Portable package missing' }
-          if (-not (Test-Path 'dist/MeetingSplit_Setup_v0.8.4.exe')) { throw 'Windows installer missing' }
+          if (-not (Test-Path 'dist/MeetingSplit-v0.8.5-Windows-portable.zip')) { throw 'Portable package missing' }
+          if (-not (Test-Path 'dist/MeetingSplit_Setup_v0.8.5.exe')) { throw 'Windows installer missing' }
       - name: Upload Windows build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: MeetingSplit-v0.8.4-Windows-build-unvalidated-on-user-hardware
+          name: MeetingSplit-v0.8.5-Windows-build-unvalidated-on-user-hardware
           path: |
-            dist/MeetingSplit-v0.8.4-Windows-portable.zip
-            dist/MeetingSplit_Setup_v0.8.4.exe
+            dist/MeetingSplit-v0.8.5-Windows-portable.zip
+            dist/MeetingSplit_Setup_v0.8.5.exe
           if-no-files-found: error
           retention-days: 14

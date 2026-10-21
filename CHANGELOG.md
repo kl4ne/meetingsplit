@@ -1,4 +1,11 @@
-## v0.8.4 — ASUS Windows runtime recovery (development)
+## v0.8.5 — Storage detection, CPU recovery and immediate feedback
+
+- Faster native Windows physical bus detection for internal D: (keeps USB/removable blocked); fallback query capped at 4 seconds. Hardware acceptance still pending.
+- Missing CUDA/cuBLAS continues with smaller `small` model on CPU; manifest records the actual fallback model and warns of possible accuracy difference. CPU inference uses less expensive decoding where supported.
+- Processing button disables immediately, shows animated activity, and the screen displays elapsed time. Long CPU steps can still take minutes and cancellation may wait for an inference boundary.
+- No external audio transmission or changes to PayPal, author credit, or Integrity.
+
+## v0.8.5 — ASUS Windows runtime recovery (development)
 - Correct internal D: drive validation with Windows Storage and CIM fallbacks, while rejecting USB and cloud-synced folders.
 - The default folder dialog opens from local AppData instead of potentially cloud-synced Desktop/Documents.
 - Preflight Windows CUDA 12 cuBLAS/cuDNN DLLs; if missing, choose CPU before inference.

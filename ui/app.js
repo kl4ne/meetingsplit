@@ -82,6 +82,7 @@ function applyUILocale(lang,persist=true){
   el('page-crumb').textContent=translate(names[currentPage]);
   el('screen-container').setAttribute('aria-label',translate(names[currentPage]));
   updateLocalizedDynamicFields();
+  showWorking();updateJobElapsed();
   recommendation(false);
   if(statusOriginal)el('job-status').textContent=translate(statusOriginal);
   if(stateLabelOriginal)el('state-label').textContent=translate(stateLabelOriginal);
@@ -93,6 +94,22 @@ document.querySelectorAll('.ui-lang-btn').forEach(b=>b.addEventListener('click',
 function savedUILocale(){try{return localStorage.getItem('meetingsplit-ui-language')||'en';}catch(_){return 'en';}}
 collectStaticText();
 let bridge = null, working = false, chosenFile = '', resultPath = '', resultIndexJSON = '';
+let jobStarted = 0, jobTimer = null;
+function formatElapsed(seconds){const m=Math.floor(seconds/60);return String(m).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
+function showWorking(){
+  const button=el('start-job');
+  button.disabled=working;button.classList.toggle('processing',working);
+  button.setAttribute('aria-busy',working?'true':'false');
+  button.innerHTML = working ? ('<span class="processing-spinner" aria-hidden="true"></span> '+(uiLocale==='en'?'PROCESSING…':'PROCESANDO…'))
+                             : (translate('INICIAR PROCESAMIENTO')+' <span>↗</span>');
+}
+function updateJobElapsed(){
+  const node=el('job-elapsed');if(!node)return;
+  node.hidden=!working;
+  if(working){const sec=Math.max(0,Math.floor((Date.now()-jobStarted)/1000));
+    node.textContent=(uiLocale==='en'?'Time elapsed: ':'Tiempo transcurrido: ')+formatElapsed(sec)+
+      (uiLocale==='en'?' · Working locally. CPU may need several minutes per clip.':' · Trabajo local. En CPU cada fragmento puede tardar varios minutos.');}
+}
 const navItems = Array.from(document.querySelectorAll('.nav-item'));
 
 function navigate(page){
@@ -172,7 +189,8 @@ el('results-open-folder').addEventListener('click',openFolder);
 
 function finished(){
   working=false;
-  el('start-job').disabled=false;
+  if(jobTimer!==null){clearInterval(jobTimer);jobTimer=null;}
+  showWorking();updateJobElapsed();
   el('cancel-job').hidden=true;
   el('cancel-job').disabled=false;
 }
@@ -188,9 +206,11 @@ el('start-job').addEventListener('click',()=>{
   data.local_summary=el('local-summary').checked;
   data.zip_output=el('zip-output').checked;
   data.ollama_model='qwen3:4b';
-  working=true;
+  working=true;jobStarted=Date.now();
+  showWorking();updateJobElapsed();
+  if(jobTimer!==null)clearInterval(jobTimer);
+  jobTimer=setInterval(updateJobElapsed,1000);
   el('cancel-job').hidden=false;
-  el('start-job').disabled=true;
   el('open-result').hidden=true;
   setStateLabel('PROCESANDO EN TU PC');
   setStatus('Preparando los archivos en el disco...',2);

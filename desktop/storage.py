@@ -39,55 +39,103 @@ def _windows_drive_type(letter: str) -> int:
     return int(ctypes.windll.kernel32.GetDriveTypeW(f"{letter}:\\"))
 
 
-def _windows_bus_type(letter: str) -> str:
-    """First ask Storage for BusType, then CIM for systems where Get-Disk fails.
+def _native_windows_bus_type(letter: str) -> str:
+    """Fast Windows volume-to-physical-device query (no PowerShell or admin needed).
 
-    Cross-check a PnP USB identifier even when the Storage provider reports
-    SCSI/RAID. Never approve a disk based solely on DRIVE_FIXED.
+    Fail closed on a query error. A fixed USB SSD must never be accepted
+    merely because GetDriveType reports DRIVE_FIXED.
     """
-    if not re.fullmatch(r"[A-Za-z]", letter):
-        return ""
+    if os.name != 'nt' or not re.fullmatch(r'[A-Za-z]', letter):
+        return ''
+    from ctypes import wintypes
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                                   ctypes.c_void_p, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    kernel.CreateFileW.restype = wintypes.HANDLE
+    kernel.DeviceIoControl.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.c_void_p,
+                                      wintypes.DWORD, ctypes.c_void_p, wintypes.DWORD,
+                                      ctypes.POINTER(wintypes.DWORD), ctypes.c_void_p]
+    kernel.DeviceIoControl.restype = wintypes.BOOL
+    kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    invalid = ctypes.c_void_p(-1).value
+
+    def open_device(path):
+        handle = kernel.CreateFileW(path, 0, 7, None, 3, 0, None)
+        if handle is None or handle == invalid:
+            raise OSError(ctypes.get_last_error(), 'Windows storage device unavailable')
+        return handle
+
+    def ioctl(handle, code, request, result_size):
+        result = ctypes.create_string_buffer(result_size)
+        returned = wintypes.DWORD()
+        if not kernel.DeviceIoControl(handle, code, request, 0 if request is None else len(request),
+                                      result, result_size, ctypes.byref(returned), None):
+            raise OSError(ctypes.get_last_error(), 'Windows storage query failed')
+        return result.raw[:returned.value]
+
+    bus_codes = {1:'SCSI', 2:'ATA', 3:'ATA', 4:'1394', 7:'USB',
+                 8:'RAID', 9:'iSCSI', 10:'SAS', 11:'SATA', 12:'SD',
+                 13:'MMC', 14:'Virtual', 15:'Virtual', 16:'Spaces',
+                 17:'NVMe', 18:'PCI', 19:'ATA'}
+    try:
+        volume = open_device(r'\\.' + '\\' + letter.upper() + ':')
+        try:
+            # IOCTL_STORAGE_GET_DEVICE_NUMBER = CTL_CODE(FILE_DEVICE_MASS_STORAGE, 0x420, 0, 0)
+            info = ioctl(volume, 0x002D1080, None, 12)
+            if len(info) < 12:
+                return ''
+            disk_number = int.from_bytes(info[4:8], 'little')
+            if disk_number == 0xFFFFFFFF:
+                return ''
+        finally:
+            kernel.CloseHandle(volume)
+        disk = open_device(r'\\.\PhysicalDrive' + str(disk_number))
+        try:
+            # STORAGE_PROPERTY_QUERY: StorageDeviceProperty / PropertyStandardQuery
+            request = ctypes.create_string_buffer(12)
+            buffer = ctypes.create_string_buffer(256)
+            returned = wintypes.DWORD()
+            if not kernel.DeviceIoControl(disk, 0x002D1400, request, len(request),
+                                          buffer, len(buffer), ctypes.byref(returned), None):
+                return ''
+            if returned.value < 36:
+                return ''
+            bus_id = int.from_bytes(buffer.raw[28:32], 'little')
+            return bus_codes.get(bus_id, '')
+        finally:
+            kernel.CloseHandle(disk)
+    except (OSError, ValueError):
+        return ''
+
+
+def _windows_bus_type(letter: str) -> str:
+    """Fast native detection first; bounded PowerShell fallback if unavailable.
+
+    External USB disks must remain blocked even when marked DRIVE_FIXED.
+    """
+    if not re.fullmatch(r'[A-Za-z]', letter):
+        return ''
+    native = _native_windows_bus_type(letter)
+    if native:
+        return native
+    # Legacy query for unusual disk controllers; four-second absolute cap.
     command = r'''$ErrorActionPreference = 'Stop'
-$bus = ''
 try {
   $part = Get-Partition -DriveLetter '__LETTER__' -ErrorAction Stop
   $disk = $part | Get-Disk -ErrorAction Stop
-  $bus = [string]$disk.BusType
-} catch { $bus = '' }
-try {
-  $ld = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='__LETTER__:'" -ErrorAction Stop
-  if ($ld) {
-    $part = Get-CimAssociatedInstance -InputObject $ld -ResultClassName Win32_DiskPartition -ErrorAction Stop | Select-Object -First 1
-    if ($part) {
-      $physical = Get-CimAssociatedInstance -InputObject $part -ResultClassName Win32_DiskDrive -ErrorAction Stop | Select-Object -First 1
-      if ($physical) {
-        $pnp = [string]$physical.PNPDeviceID
-        $interface = [string]$physical.InterfaceType
-        if ($interface -eq 'USB' -or $pnp -match 'USBSTOR|UASPSTOR|(^USB\\)|(^SD\\)|(^1394\\)|&VEN_USB|&PROD_USB') {
-          $bus = 'USB'
-        } elseif ($pnp -match 'ISCSI|VIRTUAL|VHD|FILEBACKED') {
-          $bus = 'Virtual'
-        } elseif ($bus -eq '' -or $bus -eq 'Unknown') {
-          if ($pnp -match 'NVME|NVM EXPRESS') { $bus = 'NVMe' }
-          elseif ($interface -in @('IDE', 'ATA')) { $bus = 'ATA' }
-          elseif ($interface -in @('SCSI', 'SAS')) { $bus = 'SCSI' }
-          elseif ($interface -eq 'PCI') { $bus = 'PCI' }
-        }
-      }
-    }
-  }
-} catch { }
-Write-Output $bus'''.replace('__LETTER__', letter.upper())
-    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+  [string]$disk.BusType
+} catch { '' }'''.replace('__LETTER__', letter.upper())
     try:
         result = subprocess.run(
-            ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", command],
-            text=True, capture_output=True, timeout=18,
-            creationflags=flags, check=False,
+            ['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', command],
+            text=True, capture_output=True, timeout=4,
+            creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0), check=False,
         )
     except (OSError, subprocess.TimeoutExpired):
-        return ""
-    return result.stdout.strip().splitlines()[-1].strip() if result.returncode == 0 and result.stdout.strip() else ""
+        return ''
+    if result.returncode != 0 or not result.stdout.strip():
+        return ''
+    return result.stdout.strip().splitlines()[-1].strip()
 
 
 def validate_local_folder(folder: Path) -> Path:

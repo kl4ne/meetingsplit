@@ -134,3 +134,10 @@
 #developer-name{font-weight:700;color:#694719;text-decoration:none;cursor:default}
 @media(max-width:1000px){.sidebar-support{width:48px;min-height:48px;height:48px;padding:0;margin:0 auto 8px;border-radius:8px}.sidebar-support>span:not(.support-heart){display:none}}
 @media(prefers-reduced-motion:reduce){.sidebar-support{transition:none}.sidebar-support:is(:hover,:focus-visible){transform:none}}
+
+/* v0.8.5 visible processing feedback; avoid repeated clicking during startup */
+#start-job.processing {opacity:1!important;cursor:progress;background:linear-gradient(105deg,#f9dc9b,#c8913a,#f9dc9b);color:#10243b;border:1px solid #966c31;box-shadow:0 0 0 2px rgba(189,143,71,.24);}
+#start-job.processing .processing-spinner {display:inline-block;width:13px;height:13px;border:2px solid rgba(16,36,59,.27);border-top-color:#122e4b;border-radius:50%;vertical-align:-2px;margin-right:8px;animation:ms-wait .85s linear infinite;}
+@keyframes ms-wait {to{transform:rotate(360deg)}}
+.job-elapsed {font-size:11px;color:#344d66;line-height:1.65;padding:0 23px 5px;margin:0;min-height:16px;}
+@media(prefers-reduced-motion:reduce){#start-job.processing .processing-spinner{animation:none}}

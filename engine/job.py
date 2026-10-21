@@ -65,7 +65,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         folder=base/f'MeetingSplit-{slug}-{stamp}-{suffix}';suffix+=1
     folder.mkdir(parents=False,exist_ok=False)
     manifest={
-        'version':'0.8.4', 'source_name':src.name,'source_bytes':src.stat().st_size,
+        'version':'0.8.5', 'source_name':src.name,'source_bytes':src.stat().st_size,
         'created':datetime.now().isoformat(), 'status':'started',
         'mode':x['action'],'max_export_seconds':x['minutes']*60,
         'overlap_seconds':x['overlap'],'model':x['model'],
@@ -109,6 +109,9 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             model,device=load_whisper(x['model'],model_cache=base/'Modelos',
                                        on_status=lambda message:progress(message,15))
             manifest['device']=device
+            if device == 'CPU':
+                manifest['actual_model'] = 'small' if x['model'] in ('medium', 'large-v3') else x['model']
+                manifest['warnings'].append('Modo CPU: modelo small para acelerar el procesamiento; revisa la precisión.')
             _write_json(folder/'manifest.json',manifest)
         for index,clip in enumerate(clips):
             task.check()
@@ -123,7 +126,8 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                     export_clip(src,file,clip,'mp3',cancel=task)
                 try:
                     task.check()
-                    progress(f'Transcribiendo audio {index+1} de {len(clips)}',int(49+39*index/len(clips)))
+                    progress(f'Transcribiendo audio {index+1} de {len(clips)}. En CPU el primer fragmento puede tardar varios minutos; el tiempo transcurrido se muestra en pantalla.',
+                             int(49+39*index/len(clips)))
                     try:
                         part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
                     except Exception as exc:
@@ -140,7 +144,11 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                             + str(exc)[:180])
                         model = None
                         gc.collect()
-                        model = load_cpu_whisper(x['model'],model_cache=base/'Modelos')
+                        cpu_model = 'small' if x['model'] in ('medium','large-v3') else x['model']
+                        progress('Reintentando con CPU y modelo '+cpu_model+'. Puede tardar varios minutos por fragmento.',
+                                 int(49+39*index/len(clips)))
+                        model = load_cpu_whisper(cpu_model,model_cache=base/'Modelos')
+                        manifest['actual_model'] = cpu_model
                         device = 'CPU'
                         manifest['device'] = device
                         _write_json(folder/'manifest.json',manifest)

@@ -1,6 +1,7 @@
 """Optional locally executed Faster-Whisper; never contacts ChatGPT or Gemini."""
 from __future__ import annotations
 from pathlib import Path
+import os
 import ctypes
 import sys
 from typing import Callable
@@ -46,7 +47,8 @@ def _model_options(model_cache: Path | None) -> dict:
 
 def load_cpu_whisper(model_name: str='medium', *, model_cache:Path|None=None):
     from faster_whisper import WhisperModel
-    return WhisperModel(model_name, device='cpu', compute_type='int8', **_model_options(model_cache))
+    return WhisperModel(model_name, device='cpu', compute_type='int8',
+                        cpu_threads=min(8, os.cpu_count() or 4), **_model_options(model_cache))
 
 
 def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_status:Callable[[str],None]=lambda _:None):
@@ -64,8 +66,9 @@ def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_sta
             if not is_cuda_runtime_error(exc):
                 raise
             reason = str(exc)[:130]
-    on_status(f'GPU CUDA 12 no disponible ({reason}). Continuando por CPU; puede tardar más.')
-    return load_cpu_whisper(model_name, model_cache=model_cache), 'CPU'
+    on_status(f'GPU CUDA 12 no disponible ({reason}). Se utilizará CPU con modelo small (más rápido, precisión posiblemente menor).')
+    cpu_model = 'small' if model_name in ('medium','large-v3') else model_name
+    return load_cpu_whisper(cpu_model, model_cache=model_cache), 'CPU'
 
 
 def transcribe_clip(model, clip: Clip, path: Path, *, language: str='auto', cancel: Cancellation|None=None) -> list[dict]:
@@ -73,6 +76,10 @@ def transcribe_clip(model, clip: Clip, path: Path, *, language: str='auto', canc
         'beam_size':5,'vad_filter':False,'word_timestamps':True,
         'condition_on_previous_text':False,'task':'transcribe',
     }
+    # CPU fallback is slower: make progress practical without increasing RAM.
+    if getattr(getattr(model, 'model', None), 'device', None) == 'cpu':
+        kwargs['beam_size'] = 2
+        kwargs['word_timestamps'] = False
     if language=='auto':
         kwargs.update(language=None,multilingual=True)
     elif language in ('es','en'):

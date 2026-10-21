@@ -1,25 +1,21 @@
 # MeetingSplit — MASTER_STATUS
 
-**Current development checkpoint:** v0.8.1 — high-contrast light theme correction.
+**Source checkpoint:** v0.8.3. **Repository:** public `kl4ne/meetingsplit`, `main`.
 
-## Verified in this environment
-- Preserved previously implemented native UI structure and source.
-- Explicit English default / Spanish UI selector and independent screens retained.
-- Designer credit and 2026 rights notice retained.
-- PayPal hosted button ID `XPUK3HVHJW8KE` retained; PayPal script is isolated in external support page.
-- v0.8.1 contrast patch applied to both desktop CSS and standalone HTML.
-- 10 screen/language combinations tested in Chromium; 38 selective color-contrast assertions passed at >=4.5:1; no page JS errors.
+## Confirmed
+- Public repository initialized and source, README, custom freeware `LICENSE`, privacy-safe `.gitignore`, screenshots, test suite, and GitHub Actions committed.
+- English UI default, Español switcher, separate pages, higher-contrast light panels, and unlinked credit `Designed & Developed by Roberto S. Macfie`.
+- PayPal support uses the user-provided direct NCP URL; no payment SDK runs in the local audio interface.
+- 26 selected local tests passed before publication.
+- GitHub Actions run #39522565477 failed on Windows because Chocolatey launcher shims were copied instead of FFmpeg executables. Fixed in commit `f6df551`.
+- The corrected run #39522806473 passed dependency installation and Windows engine/integration tests; Windows packaging was still running at the last check.
 
-## Pending
-- Compile and validate native `.exe`/installer on Windows 11.
-- Validate Whisper + RTX 4070 local transcription with representative mixed-language recording.
-- Full real-device accessibility and scaling inspection.
-- Run full test suite in a fresh stable Windows CI session (suite timed out here).
+## Pending — do not claim complete
+- Confirm corrected Actions run conclusion and inspect build artifacts.
+- Verify Windows `.exe` startup and installer on the ASUS ROG Strix G614JI with RTX 4070.
+- Test Spanish/English mixed-language real recordings and model downloads.
+- Audit third-party binary/codec/model license notices before public Release.
+- Confirm external PayPal link reaches the official checkout; no live payment was executed.
 
-## Next action
-Continue from this checkpoint, never restart. Build and test native Windows app, maintaining independent pages, readable bright backgrounds, bilingual interface and signature. Do not modify Integrity Business Filings.
-
-## GitHub repository initialization (2026-10-20)
-- Source prepared for `kl4ne/meetingsplit` public repo; custom freeware LICENSE is included.
-- Local tests and publishing audit precede Windows workflow execution.
-- Do not publish Windows binaries as Releases until licensing notices, install behavior, and multilingual real-audio testing are approved.
+## Operational rules
+Continue from the current main branch. Do not restart. Avoid committing meeting audio, transcripts, local data, caches, or credentials. Keep Integrity Business Filings completely untouched.

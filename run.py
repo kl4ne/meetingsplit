@@ -2,6 +2,10 @@
 import sys
 
 if __name__ == '__main__':
+    if '--hardware-qa' in sys.argv:
+        from desktop.hardware_qa import main as hardware_main
+        pos=sys.argv.index('--hardware-qa')
+        raise SystemExit(hardware_main(*sys.argv[pos+1:pos+3]))
     if '--cuda-probe' in sys.argv:
         from desktop.cuda_probe import child
         pos=sys.argv.index('--cuda-probe')

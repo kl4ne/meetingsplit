@@ -50,6 +50,10 @@ if not exist dist\MeetingSplit\MeetingSplit.exe (
 )
 .venv\Scripts\python.exe qa\audit_package.py dist\MeetingSplit
 if errorlevel 1 exit /b 1
+rem Produce an evidence-only, hash-pinned manifest of the ACTUAL frozen package.
+rem Output is kept outside the scanned package to avoid a self-referential hash.
+.venv\Scripts\python.exe qa\native_inventory.py dist\MeetingSplit --output build\native-inventory.json
+if errorlevel 1 exit /b 1
 set "CHECK=%TEMP%\meetingsplit-build-check-%RANDOM%.json"
 powershell.exe -NoProfile -NonInteractive -Command "$p=Start-Process -FilePath 'dist\MeetingSplit\MeetingSplit.exe' -ArgumentList @('--self-check',([char]34+$env:CHECK+[char]34)) -PassThru -WindowStyle Hidden; if (-not $p.WaitForExit(60000)) { Stop-Process -Id $p.Id -Force; exit 3 }; exit $p.ExitCode"
 set "PROBE_EXIT=%ERRORLEVEL%"

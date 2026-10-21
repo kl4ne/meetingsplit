@@ -9,6 +9,23 @@ available original notices and exact installed metadata in `build/legal`, includ
 in the packaged app. Optional NVIDIA/Ollama archives are fetched separately and
 retained in the selected data folder with their own notices and hash receipts.
 
+## Development-only native package evidence (not release approval)
+
+`qa/native_inventory.py` now produces `build/native-inventory.json` only
+after an actual PyInstaller output exists. It records every frozen file's
+relative path, SHA-256, size and native binary classification. It also reads
+the included `_internal/legal/ffmpeg-build.txt` and flags an FFmpeg build
+with `--enable-gpl`, `--enable-version3`, `--enable-nonfree` or missing
+configuration information. The separate QA artifact retains this manifest.
+
+A checksum list is **not** a native security/vulnerability audit, a provenance
+attestation or license clearance. The report explicitly records
+`release_allowed: false` and `license_review_complete: false`; neither can
+be automatically promoted to true. Native origin, Qt/Chromium notices,
+FFmpeg/PyAV build-specific source obligations, LGPL replaceability and
+Qwen/Ollama/NVIDIA notices still require review against actual shipped bytes.
+A new QA installer build is **not** authorized by introducing this script.
+
 Outstanding checks before distribution:
 
 - Wheel metadata alone was insufficient: CTranslate2 4.6.2 contained no original

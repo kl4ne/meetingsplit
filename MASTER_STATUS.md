@@ -1,3 +1,14 @@
+## Pre-installer development checkpoint — 2026-10-21
+
+- Added a frozen-package SHA-256 inventory and conservative FFmpeg build-flag review.
+- Added offline regression tests for interrupted vendor downloads, timeouts,
+  low disk space, an occupied managed Ollama port and existing Ollama reuse.
+- `qa/native_inventory.py` passed 5 local synthetic Python tests. Optional
+  component fault-injection tests require Windows CI validation.
+- Only a future manually authorized **QA build** can collect a report from
+  actual frozen Windows binaries; NO new installer or public Release has been created.
+- The release gate stays BLOCKED and the application version remains 0.8.6.
+
 # CURRENT checkpoint — 2026-10-21 — RELEASE HOLD
 
 Latest observed updates:

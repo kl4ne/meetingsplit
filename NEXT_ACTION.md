@@ -1,3 +1,15 @@
+## Pre-installer actions (new checkpoint)
+
+1. Run the Windows **tests-only** workflow once, without `package_for_qa`,
+   to validate new optional-component failure simulations; do not create another installer.
+2. On a future *explicitly authorized* consolidated QA package build, collect
+   `build/native-inventory.json` and reconcile its SHA-256 entries with
+   Qt, FFmpeg CLI, PyAV native FFmpeg, Chromium and CTranslate2 notices.
+3. Continue the paused clean/upgrade/cancel/uninstall and optional download/
+   retry/disk-full acceptance matrix using isolated test environments only.
+4. Keep `qa/release_gate.json` closed; no new app version or user download until
+   legal review, native dependency evidence and final installer QA pass.
+
 # CURRENT next actions — 2026-10-21 — no new version/delivery
 
 Keep 0.8.6; continue main/checkpoints. Do not publish Release, deliver a new build,

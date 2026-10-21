@@ -105,5 +105,6 @@ jobs:
           path: |
             work/installer-smoke/installer-qa.json
             build/legal
+            build/native-inventory.json
           if-no-files-found: error
           retention-days: 14

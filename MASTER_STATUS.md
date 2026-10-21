@@ -1,3 +1,10 @@
+## MeetingSplit v0.8.6 — Windows CI SUCCESS
+- Github Actions run #39537216562: https://github.com/kl4ne/meetingsplit/actions/runs/39537216562
+- **37 tests PASSED, 1 skipped** in Windows (job ran tests twice); PyInstaller EXE self-check passed; portable ZIP and Setup EXE verified; upload-artifact completed.
+- Artifact ID **12317478170**: `MeetingSplit-v0.8.6-Windows-build-unvalidated-on-user-hardware` (~654 MB, retention 14 days).
+- Large readable typography (+2 scale steps) across all five EN/ES pages published. Acceptance on ASUS Windows hardware remains pending; this is still a development build, not a production Release.
+- User confirmed v0.8.5: internal D: accepted, CPU fallback transcribed six clips correctly in ~11 minutes, GPU CUDA 12 library missing. No changes to working audio engine in v0.8.6.
+
 ## VERIFIED USER ACCEPTANCE — MeetingSplit v0.8.5 (2026-10-20)
 - User confirmed internal D: was ACCEPTED.
 - User confirmed all six audio segments were successfully transcribed on CPU, taking approximately 11 minutes.

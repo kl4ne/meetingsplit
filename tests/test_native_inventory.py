@@ -58,3 +58,12 @@ def test_windows_case_insensitive_file_collision_detected(tmp_path):
     (root/'MEETINGSPLIT.EXE').write_bytes(b'b')
     with pytest.raises(ValueError,match='case-insensitive'):
         inventory_package(root)
+
+
+def test_qa_packaging_collects_native_inventory_before_archiving():
+    root=Path(__file__).resolve().parents[1]
+    build=(root/'scripts'/'compilar_windows.bat').read_text(encoding='utf-8')
+    assert 'qa\\native_inventory.py dist\\MeetingSplit --output build\\native-inventory.json' in build
+    assert build.index('qa\\native_inventory.py') < build.index('Compress-Archive')
+    workflow=(root/'.github'/'workflows'/'windows-build.yml').read_text(encoding='utf-8')
+    assert 'build/native-inventory.json' in workflow

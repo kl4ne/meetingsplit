@@ -32,4 +32,4 @@ def test_mp3_m4a_wav_outputs_and_pyav_decode(tmp_path):
         assert abs(probe(out)-2.0)<.2
         samples=decode_audio(str(out),sampling_rate=16000)
         assert len(samples) >= 30000
-        assert abs(float(samples).max())>.02
+        assert float(abs(samples).max()) > .02

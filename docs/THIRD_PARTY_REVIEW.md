@@ -1,3 +1,32 @@
+## 2026-10-21 — exact pinned QA package: remaining legal evidence
+
+The latest pinned LGPL FFmpeg + source-built PyAV Windows QA succeeded
+(Actions #39599798144, 82 tests passed and 2 skipped), with native SHA
+inventory 680 files / 211 native. The authentic prior-version upgrade
+also succeeded (Actions #39598790616). These technical results do not
+constitute a distribution license clearance.
+
+Review of the **actual** frozen-package inventory found Qt WebEngine/Chromium
+binaries including `Qt6WebEngineCore.dll`, but no file named Chromium
+copyright/licensing notices. The package contains license texts for Qt
+and common Python dependencies, but **that alone is insufficient** for
+the WebEngine third-party notices and source requirements.
+
+The package also contains `_internal/ctranslate2/cudnn64_9.dll`.
+Review its actual upstream redistribution permission, version,
+corresponding notices and provenance; do not assume the optional NVIDIA
+installer's user-consented license receipt covers a DLL bundled in the
+base installer. Inspect further any unreviewed native Qt/PyAV codec
+dependencies.
+
+Official obligations include usable corresponding source (or a compliant
+written offer under the distributor's control), dynamic LGPL replacement
+and reverse-engineering permissions, and Qt WebEngine/Chromium notices.
+Before public distribution supply each required text/source/build receipt
+and have the exact package license checklist reviewed. Do not mark the
+legal gate true based on unit tests, absence of GPL codec names, links
+alone or this memo.
+
 ## 2026-10-21 — LGPL-native remediation tested and integrated (NOT legal clearance)
 
 The original GPL-enabled FFmpeg 9 / PyAV wheel bundle is replaced in the

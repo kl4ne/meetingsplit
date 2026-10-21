@@ -1,6 +1,17 @@
 name: Windows build - manual and gated
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/windows-build.yml'
+      - 'engine/**'
+      - 'desktop/**'
+      - 'ui/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'requirements.txt'
+      - 'run.py'
   workflow_dispatch:
 
 permissions:

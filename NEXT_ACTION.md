@@ -1,3 +1,13 @@
+## CURRENT NEXT ACTION AFTER VERIFIED CTRANSLATE2 ORIGIN — 2026-10-21
+
+1. DO NOT repeat last successful frozen build #39695270843 or source-only Ubuntu test #39698897754. Wheel/DLL provenance MATCH is proven in `docs/CT2_CUDNN_ORIGIN_VERIFIED_2026-10-21.json`; 14 passed in a cheap Ubuntu source job and public release is still blocked. No expensive Windows job was used this continuation.
+2. Upstream 6.140.0 `CHROMIUM_VERSION` and baseline Chromium BSD-3-Clause license were added with a pinned SHA notice. **Full Chromium third-party attribution, actual Qt binary version/signatures and LGPL source/replacement instructions remain pending**. New build must contain all 8 pinned source notices, but cannot be considered legally cleared solely by them.
+3. Finish matching NVIDIA binary version/EULA/attribution and FFmpeg/PyAV LGPL source/provenance + native vulnerability/qualified legal review. The cuDNN SDK EULA generally allows runtime DLL redistribution subject to stated requirements; exact applicability not yet signed off.
+4. GUI-capable disposable Windows acceptance (pre-install and in-progress installer cancellation, real interrupted optional CUDA/Ollama downloads, recovery), not the same headless Actions runner. Test program is `docs/FINAL_RELEASE_ACCEPTANCE_PLAN_2026-10-21.md`.
+5. Only after material license/source work and GUI environment access: single final development build with `qa/collect_licenses.py` + `qa/audit_package.py` pinned notices, ASUS exact-version RTX 4070 / Ollama mixed natural speech & 1–3h acceptance. Preserve data and do not upload user recordings.
+6. Windows signing / SmartScreen decision: `docs/WINDOWS_SIGNING_SMARTSCREEN_DECISION_2026-10-21.md`; publisher/fees require owner approval. No Release, no main change, no Integrity change, version 0.8.6, `release_allowed=false`.
+
+---
 ## LATEST NEXT_ACTION — post successful frozen QA #39695270843 (2026-10-21)
 
 DO NOT REBUILD the already-passed pinned package merely to reconfirm success.

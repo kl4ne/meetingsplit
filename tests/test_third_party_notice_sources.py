@@ -22,6 +22,7 @@ def test_pinned_vendor_notices_match_source_receipts():
         text = (ROOT/name).read_bytes()
         assert text, f'Empty notice: {name}'
         assert hashlib.sha256(text).hexdigest() == record['sha256'], f'Notice changed: {name}'
+    assert 'Chromium-140.0.7339.264-BSD-3-Clause.txt' in names
     assert 'Tokenizers-0.23.3-Apache-2.0.txt' in names
     assert 'Cython-3.3.0-Apache-2.0.txt' in names
     assert 'Cython-3.3.0-Pyrex-COPYING.txt' in names

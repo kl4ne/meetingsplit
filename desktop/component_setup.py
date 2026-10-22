@@ -113,7 +113,7 @@ class ComponentDialog(QDialog):
         self.status=QLabel(self.tr('Nothing will download until you click Prepare. Allow at least 12 GiB free.','No se descargará nada hasta pulsar Preparar. Necesitas al menos 12 GiB libres.'))
         self.status.setWordWrap(True);layout.addWidget(self.status)
         buttons=QHBoxLayout();layout.addLayout(buttons)
-        self.prepare=QPushButton(self.tr('Prepare selected components','Preparar componentes seleccionados'))
+        self.prepare=QPushButton(self.tr('Prepare Ollama (CPU)','Preparar Ollama (CPU)'))
         self.prepare.clicked.connect(self.start);buttons.addWidget(self.prepare)
         self.close_button=QPushButton(self.tr('Close','Cerrar'));self.close_button.clicked.connect(self.close_or_cancel);buttons.addWidget(self.close_button)
         self.open_report_button=QPushButton(self.tr('Open setup report','Abrir informe de instalación'))

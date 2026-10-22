@@ -204,7 +204,9 @@ def install_package(package: Package, root: Path, progress, cancel: Cancellation
 
 
 def install_gpu(root: Path, progress, cancel: Cancellation) -> None:
-    for package in GPU_PACKAGES: install_package(package,root,progress,cancel)
+    # Deliberately retain a rejecting compatibility entry point so older
+    # callers cannot silently trigger NVIDIA downloads.
+    raise RuntimeError('CUDA/NVIDIA downloads are disabled: MeetingSplit uses CPU only')
 
 
 def gpu_directories(root: Path) -> list[Path]:
@@ -220,11 +222,5 @@ _dll_dirs=set()
 
 
 def activate_gpu(root: Path) -> None:
-    """Per-process only; retain AddDllDirectory handles for all lazy native calls."""
-    if os.name != 'nt': return
-    root=validate_local_folder(root)
-    for folder in gpu_directories(root):
-        folder=validate_local_folder(folder)
-        if str(folder) not in _dll_dirs:
-            _dll_handles.append(os.add_dll_directory(str(folder)))
-            _dll_dirs.add(str(folder))
+    """Compatibility no-op. CPU-only MeetingSplit never loads CUDA DLLs."""
+    return None

@@ -14,6 +14,7 @@ REQUIRED_SOURCE_NOTICES = frozenset({
     "Qt-6.12.0-LGPL-3.0.txt",
     "GPL-3.0.txt",
     "FFmpeg-LGPL-2.1.txt",
+    "Chromium-140.0.7339.264-BSD-3-Clause.txt",
     "Tokenizers-0.23.3-Apache-2.0.txt",
     "Cython-3.3.0-Apache-2.0.txt",
     "Cython-3.3.0-Pyrex-COPYING.txt",

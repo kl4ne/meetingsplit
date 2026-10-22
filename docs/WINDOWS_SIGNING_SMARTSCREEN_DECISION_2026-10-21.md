@@ -1,3 +1,15 @@
+## Actual binary signature metadata verified on internal QA portable
+
+Independent inspection of exactly inventoried **211 Windows AMD64 PE binaries** found
+103 with embedded certificate-table data and 108 without. The development
+`MeetingSplit.exe` has **no PE certificate table**, confirming it is unsigned
+in this QA candidate. `Qt6WebEngineCore.dll`, `QtWebEngineProcess.exe` and
+`cudnn64_9.dll` have certificate-table data; we did NOT check that these
+signatures are cryptographically trusted or current.
+See `docs/INDEPENDENT_FROZEN_PE_SECURITY_METADATA_2026-10-21.json`.
+This finding changes no release authorization or user signing decision.
+
+---
 # MeetingSplit — Windows signing and SmartScreen: decision file (2026-10-21)
 
 **Planning only.** Version 0.8.6 QA, not publicly released. No

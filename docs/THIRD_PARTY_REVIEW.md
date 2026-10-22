@@ -1,3 +1,33 @@
+## Verified CTranslate2 DLL origin; NOT legal approval (2026-10-21)
+
+Source-only, low-cost Ubuntu GitHub Actions **#39698897754 passed 14 tests**
+and SHA-verified the official PyPI CTranslate2 4.6.2 CPython 3.11
+Windows wheel `ce7880fa5d2e1b36329998c711cb764c621a4d2a199b251b1ad02e770b641e91`.
+Its `ctranslate2/cudnn64_9.dll` (438,840 bytes) SHA-256
+`c07cc47f2fa4a566593c7af4aa7e57edf09a985a0fddd14cb8d6f456e252af05`
+matches the exact prior frozen package binary hash. Origin is
+**verified**; earlier paragraphs saying this binary's source is
+unknown are superseded. Exact native version, controlling NVIDIA EULA,
+notices and distribution approval remain unresolved. NVIDIA's
+cuDNN 9.1.1 supplement permits runtime .dll/.so distribution under
+additional conditions, which is NOT unconditional permission.
+https://docs.nvidia.com/deeplearning/cudnn/backend/v9.1.1/reference/eula.html
+
+Official Chromium 140 baseline BSD notice is now committed and SHA-pinned
+(`Chromium-140.0.7339.264-BSD-3-Clause.txt` SHA-256
+`368cca1106be99d39ecd32a38d8305585d802a475effb66380b91ffc9bcf709b`).
+It is not in the previous QA installer, and it does not cover the
+many additional third-party Chromium/WebEngine notices or LGPL
+corresponding-source rights. Qt WebEngine 6.140 source CHROMIUM_VERSION
+declares base 140.0.7339.264 patched through 155.0.8059.85; the
+specific frozen DLL still needs matching security provenance.
+
+New frozen notice-integrity code and the JS error-diagnostic fix also
+postdate the last built artifact. No additional full CI build was
+started merely for this documentation or small source changes.
+**Keep release blocked.**
+
+---
 ## Latest actual frozen media/installer package evidence (2026-10-21)
 
 The post-component-integrity Windows QA **#39695270843 succeeded**:

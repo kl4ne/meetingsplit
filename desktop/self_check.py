@@ -40,16 +40,8 @@ def run_checks() -> tuple[dict, int]:
         from faster_whisper import WhisperModel
         import ctranslate2
         record('whisper',True,f'Faster-Whisper present; CTranslate2 {ctranslate2.__version__}')
-        try:
-            from engine.transcription import _gpu_runtime_ready
-            ready,reason=_gpu_runtime_ready()
-            if not ready:
-                record('cuda',False,'CUDA libraries unavailable; CPU fallback enabled: '+reason[:130],False)
-            else:
-                formats=sorted(ctranslate2.get_supported_compute_types('cuda'))
-                record('cuda',bool(formats),'GPU compute types: '+', '.join(formats),False)
-        except Exception as e:
-            record('cuda',False,'CUDA unavailable; CPU fallback expected: '+str(e)[:120],False)
+        record('cpu_only',True,'CTranslate2 Whisper configured for CPU-only; no NVIDIA probes or GPU dependencies requested')
+        record('cuda',False,'Disabled by user-selected permanent CPU-only policy',False)
     except Exception as e:
         record('whisper',False,f'{type(e).__name__}: {e}'[:240])
         record('cuda',False,'Not tested because Faster-Whisper is unavailable',False)

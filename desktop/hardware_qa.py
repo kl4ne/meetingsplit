@@ -30,13 +30,13 @@ def main(root_path, output_path):
             if not (root/f'synthetic-meeting-{language}.wav').is_file():
                 raise ValueError('Required synthetic TTS fixture missing: '+language)
         model,device=load_whisper('medium',model_cache=root/'Modelos')
-        if device!='NVIDIA GPU': raise RuntimeError('Frozen GPU check entered CPU fallback')
+        if device!='CPU': raise RuntimeError('CPU-only acceptance entered an unexpected accelerator mode')
         for language in ('en','es'):
             audio=root/f'synthetic-meeting-{language}.wav'
             duration=probe(audio);start=time.monotonic()
             rows=transcribe_clip(model,Clip(1,0,duration,0,duration),audio,language=language)
-            if not rows: raise RuntimeError('Frozen GPU did not transcribe synthetic speech')
-            report['stages'].append({'stage':'cuda-speech','language':language,'device':device,
+            if not rows: raise RuntimeError('CPU Whisper did not transcribe synthetic speech')
+            report['stages'].append({'stage':'cpu-speech','language':language,'device':device,
                 'seconds':round(time.monotonic()-start,2),'rows':rows})
             save()
         model=None;gc.collect()

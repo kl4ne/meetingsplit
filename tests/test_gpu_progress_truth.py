@@ -1,105 +1,92 @@
-"""Verify factual GPU/CPU progress and persisted fallback evidence.
+"""Regression: MeetingSplit never activates GPU for Whisper or Ollama.
 
-No GPU/FFmpeg/Ollama/network used; mock WAV probing, segment export and model.
+Tests use synthetic paths/mocks: no GPU, audio, network, external services or Actions.
 """
 from __future__ import annotations
 import json
 from pathlib import Path
+from types import SimpleNamespace
+import sys
 
 import pytest
-from engine import job, transcription
+from engine import job, transcription, ollama
 
 
 @pytest.fixture
-def fake_audio(tmp_path, monkeypatch):
-    source = tmp_path / "synthetic.wav"
-    source.write_bytes(b"fake WAV payload, never fed to decoder")
-    monkeypatch.setattr(job, "validate_local_folder",
-                        lambda folder: Path(folder).resolve(strict=True))
-    monkeypatch.setattr(job, "probe", lambda src: 12)
-    monkeypatch.setattr(job, "detect_silences", lambda src, cancel: [])
-
-    def fake_export(src, output, clip, fmt, cancel):
-        output.write_bytes(b"synthetic dummy clip")
-        return {"duration": 12}
-    monkeypatch.setattr(job, "export_clip", fake_export)
-    monkeypatch.setattr(job, "transcribe_clip",
-                        lambda model, clip, path, language, cancel:
-                        [{"start": .4, "end": 1.2, "text": "Synthetic test", "part": 1}])
-    config = {
-        "file": str(source), "output": str(tmp_path), "action": "transcribe",
-        "format": "mp3", "minutes": 5, "overlap": 20,
-        "model": "medium", "input_language": "en", "report": "minutes",
-        "report_language": "en", "zip_output": False, "local_summary": False,
-    }
+def synthetic_work(tmp_path, monkeypatch):
+    src=tmp_path/'fake.wav'
+    src.write_bytes(b'dummy local file')
+    monkeypatch.setattr(job,'validate_local_folder',lambda path:Path(path).resolve(strict=True))
+    monkeypatch.setattr(job,'probe',lambda path:12)
+    monkeypatch.setattr(job,'detect_silences',lambda src,cancel:[])
+    monkeypatch.setattr(job,'export_clip',lambda src,out,clip,fmt,cancel:out.write_bytes(b'fake') or {'duration':12})
+    monkeypatch.setattr(job,'transcribe_clip',lambda model,clip,path,language,cancel:
+                        [{'start':.1,'end':1.2,'text':'Synthetic only','part':1}])
+    config={'file':str(src),'output':str(tmp_path),'action':'transcribe',
+            'format':'mp3','minutes':5,'overlap':20,'model':'medium',
+            'input_language':'en','report':'minutes','report_language':'en',
+            'zip_output':False,'local_summary':False}
     return config
 
 
-def test_gpu_mode_never_displays_cpu_warning(fake_audio, monkeypatch):
-    monkeypatch.setattr(job, "load_whisper",
-                        lambda *args, **kwargs: (object(), "NVIDIA GPU"))
-    messages = []
-    folder = job.run_job(fake_audio, lambda text, percent: messages.append(text))
-    result = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
-    assert result["status"] == "complete"
-    assert result["device"] == "NVIDIA GPU"
-    assert any("Aceleración NVIDIA GPU seleccionada" in s for s in messages)
-    assert not any("En CPU el primer fragmento" in s for s in messages)
-    assert "gpu_fallback" not in result
-
-
-def test_initial_cuda_fallback_records_actual_reason(fake_audio, monkeypatch):
-    def fake_gpu(model_name, *, on_fallback, **kwargs):
-        on_fallback("cudnn64_9.dll missing during medium probe")
-        return object(), "CPU"
-    monkeypatch.setattr(job, "load_whisper", fake_gpu)
-    messages = []
-    folder = job.run_job(fake_audio, lambda text, percent: messages.append(text))
-    result = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
-    assert result["status"] == "complete"
-    assert result["device"] == "CPU"
-    assert result["actual_model"] == "small"
-    assert result["gpu_fallback"]["stage"] == "model_initialization_or_probe"
-    assert "cudnn64_9.dll" in result["gpu_fallback"]["reason"]
-    assert any("En CPU el primer fragmento" in s for s in messages)
-    assert not any("Aceleración NVIDIA GPU seleccionada" in s for s in messages)
-
-
-def test_actual_load_whisper_fallback_callback_is_optional_and_compatible(monkeypatch):
-    from types import SimpleNamespace
-    import sys
-    monkeypatch.setattr(transcription, "_gpu_runtime_ready",
-                        lambda: (False, "nvcuda.dll unavailable"))
+def test_whisper_always_loads_cpu_small_even_with_nvidia_present(monkeypatch,tmp_path):
+    devices=[]
     class WhisperModel:
-        def __init__(self, *args, **kwargs):
-            pass
-    monkeypatch.setitem(sys.modules,"faster_whisper",
-                        SimpleNamespace(WhisperModel=WhisperModel))
-    reasons=[]
-    _model, device = transcription.load_whisper("medium",
-                                                 on_fallback=reasons.append)
-    assert device == "CPU"
-    assert reasons == ["nvcuda.dll unavailable"]
-    _model, device = transcription.load_whisper("medium")
-    assert device == "CPU"
+        def __init__(self,name,**kw):
+            devices.append((name,kw))
+    monkeypatch.setitem(sys.modules,'faster_whisper',SimpleNamespace(WhisperModel=WhisperModel))
+    def forbidden(*args,**kwargs):
+        raise AssertionError('GPU activity must never happen')
+    import desktop.components as components
+    import desktop.cuda_probe as cuda_probe
+    monkeypatch.setattr(components,'activate_gpu',forbidden)
+    monkeypatch.setattr(cuda_probe,'probe_cuda',forbidden)
+    monkeypatch.setattr(transcription,'_gpu_runtime_ready',forbidden)
+    status=[]
+    for requested in ('small','medium','large-v3'):
+        model,device=transcription.load_whisper(requested,
+                model_cache=tmp_path/'Modelos',on_status=status.append)
+        assert device=='CPU'
+        assert model is not None
+    assert [row[0] for row in devices]==['small']*3
+    assert all(row[1]['device']=='cpu' and row[1]['compute_type']=='int8'
+               for row in devices)
+    assert all('CPU' in line for line in status)
 
 
-def test_lazy_cuda_failure_records_stage_and_switches_progress_to_cpu(fake_audio, monkeypatch):
-    gpu=object()
-    cpu=object()
-    monkeypatch.setattr(job,"load_whisper",lambda *a,**kw:(gpu,"NVIDIA GPU"))
-    monkeypatch.setattr(job,"load_cpu_whisper",lambda *a,**kw:cpu)
-    def fake_transcribe(model, clip, path, language, cancel):
-        if model is gpu:
-            raise RuntimeError("CUDNN_STATUS_EXECUTION_FAILED on synthetic")
-        return [{"start":.2,"end":1.4,"text":"Recovered by CPU","part":1}]
-    monkeypatch.setattr(job,"transcribe_clip",fake_transcribe)
-    messages=[]
-    folder=job.run_job(fake_audio,lambda text,pct:messages.append(text))
-    result=json.loads((folder/"manifest.json").read_text(encoding="utf-8"))
-    assert result["device"]=="CPU"
-    assert result["status"]=="complete"
-    assert result["gpu_fallback"]["stage"]=="live_transcription"
-    assert "CUDNN_STATUS" in result["gpu_fallback"]["reason"]
-    assert any("Aceleración NVIDIA GPU seleccionada" in s for s in messages)
-    assert any("Reintentando con CPU" in s for s in messages)
+def test_job_manifest_cpu_only_and_actual_small(synthetic_work,monkeypatch):
+    monkeypatch.setattr(job,'load_whisper',lambda *args,**kw:(object(),'CPU'))
+    progress=[]
+    root=job.run_job(synthetic_work,lambda text,pct:progress.append(text))
+    doc=json.loads((root/'manifest.json').read_text(encoding='utf-8'))
+    assert doc['execution_policy']=='CPU_ONLY'
+    assert doc['device']=='CPU'
+    assert doc['model']=='medium'
+    assert doc['actual_model']=='small'
+    assert doc['status']=='complete'
+    assert any('con CPU' in line for line in progress)
+
+
+def test_job_rejects_non_cpu_engine(synthetic_work,monkeypatch):
+    monkeypatch.setattr(job,'load_whisper',lambda *args,**kw:(object(),'NVIDIA GPU'))
+    with pytest.raises(RuntimeError,match='CPU-only'):
+        job.run_job(synthetic_work,lambda text,pct:None)
+
+
+def test_ollama_api_request_forces_cpu_including_existing_service(monkeypatch):
+    import io
+    requests=[]
+    def fake_stream(endpoint,route,payload,cancel):
+        requests.append((endpoint,route,payload))
+        return io.BytesIO(b'{"message":{"content":"# Minute"},"done":true}\n')
+    monkeypatch.setattr(ollama,'_stream_open',fake_stream)
+    assert ollama.chat([{'role':'user','content':'synthetic'}],endpoint=ollama.DEFAULT_ENDPOINT)=='# Minute'
+    assert requests[0][2]['options']['num_gpu']==0
+    assert requests[0][0]==ollama.DEFAULT_ENDPOINT
+
+
+def test_legacy_gpu_installer_is_rejected(tmp_path):
+    from desktop.components import install_gpu
+    from engine.control import Cancellation
+    with pytest.raises(RuntimeError,match='disabled'):
+        install_gpu(tmp_path,lambda *_:None,Cancellation())

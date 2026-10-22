@@ -33,18 +33,17 @@ def test_windows_bus_fallback_accepts_nvme_disk(monkeypatch):
     assert _windows_bus_type('D:;echo hi') == ''  # input never injected into powershell
 
 
-def test_cudnn_cublas_missing_before_gpu_model_load_falls_back_to_cpu(monkeypatch):
-    events = []
+def test_no_gpu_detection_occurs_in_cpu_only_mode(monkeypatch):
+    events=[]
     class WhisperModel:
-        def __init__(self, *args, **kwargs):
+        def __init__(self,*args,**kwargs):
             events.append(kwargs['device'])
-    monkeypatch.setitem(sys.modules, 'faster_whisper', SimpleNamespace(WhisperModel=WhisperModel))
-    monkeypatch.setattr(transcription, '_gpu_runtime_ready', lambda: (False, 'cublas64_12.dll missing'))
-    model, device=transcription.load_whisper('small',on_status=events.append)
+    monkeypatch.setitem(sys.modules,'faster_whisper',SimpleNamespace(WhisperModel=WhisperModel))
+    monkeypatch.setattr(transcription,'_gpu_runtime_ready',
+                        lambda: (_ for _ in ()).throw(AssertionError('No CUDA checks allowed')))
+    model,device=transcription.load_whisper('small')
     assert isinstance(model,WhisperModel)
-    assert device == 'CPU' and events[-1] == 'cpu'
-    assert 'cublas64_12.dll' in events[0]
-    assert 'cuda' not in events  # No GPU construction attempted
+    assert device=='CPU' and events==['cpu']
 
 
 def test_cuda_fallback_predicate_only_matches_accelerator_errors():
@@ -87,4 +86,4 @@ def test_cpu_fallback_uses_small_for_medium_model(monkeypatch):
     assert constructed[0][0] == 'small'
     assert constructed[0][1]['compute_type'] == 'int8'
     assert 1 <= constructed[0][1]['cpu_threads'] <= 8
-    assert 'small' in reports[-1]
+    assert 'CPU' in reports[-1]

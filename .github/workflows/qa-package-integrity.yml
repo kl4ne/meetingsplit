@@ -1,6 +1,7 @@
 name: MeetingSplit v0.8.6 CPU-only frozen Windows QA
 
-# Single CPU-only successor build after a material runtime-policy change.
+# Final CPU-only successor after isolated Windows Qt QA #39723843027 PASSED 43 / skipped 5.
+# The prior full build #39723395202 failed before freezing due to six now-repaired tests.
 # This is NEVER a public Release; release gate MUST stay false.
 on:
   push:
@@ -42,6 +43,12 @@ jobs:
           python -m venv .venv
           .\.venv\Scripts\python.exe -m pip install -r requirements.txt
           .\.venv\Scripts\python.exe -m pip install --upgrade 'pip>=26.1.2'
+      - name: Reject CPU-only Qt regression before expensive PyAV source build
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          .\\.venv\\Scripts\\python.exe -m pytest -q tests/test_component_setup_reports.py tests/test_optional_dialog_qa.py tests/test_gpu_progress_truth.py
       - name: Prepare exact pinned LGPL FFmpeg and source-built PyAV
         shell: pwsh
         run: ./scripts/prepare_lgpl_media.ps1

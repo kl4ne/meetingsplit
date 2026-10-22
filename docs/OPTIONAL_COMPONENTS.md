@@ -1,34 +1,25 @@
-# Optional components / Componentes opcionales
+# Optional component — Ollama CPU / Componente opcional — Ollama CPU
 
-CPU transcription needs neither component. Both options are unchecked by default.
-La transcripción CPU no necesita estos componentes. Ambas opciones empiezan desmarcadas.
+**CPU-ONLY POLICY / POLÍTICA SOLO CPU (MeetingSplit 0.8.6 development branch)**
 
-NVIDIA: official cuBLAS 12.4.5.8, CUDA runtime/NVRTC 12.4.127 and cuDNN 9.1.1.17 archives. About 1.1 GiB download; several GiB expanded. These are application scoped libraries, not a driver or a full CUDA Toolkit. An existing compatible NVIDIA driver and Microsoft Visual C++ x64 runtime are required. Driver installation/restart is never automatic. Library loading alone is not proof of acceleration. Setup performs an isolated small-model inference test and saves its result locally; real speech and performance still require assessment.
+Transcription uses Faster-Whisper **small** on CPU (`device='cpu', compute_type='int8'`) even if the PC has NVIDIA graphics. No CUDA, cuDNN, NVIDIA driver, GPU test or GPU download is necessary or offered. Any earlier installation of CUDA libraries is **left untouched** in its original folder; MeetingSplit does not need or activate them.
 
-NVIDIA: archivos oficiales de cuBLAS, runtime CUDA/NVRTC y cuDNN. No instala controladores ni cambia el PATH. El informe CUDA distingue la prueba sintética de la aceptación con voz real.
+La transcripción funciona **siempre en CPU** con Whisper `small`, incluso en computadoras con NVIDIA. Ya no se ofrece la instalación de CUDA. Ninguna carpeta existente de CUDA se borra automáticamente. Si una configuración antigua solicita `medium` o `large-v3`, se procesa con `small` y el `manifest.json` registra el modelo solicitado y el modelo real.
 
-Licenses / Licencias NVIDIA (review before accepting / revisar antes de aceptar):
-https://docs.nvidia.com/cuda/eula/index.html
-https://docs.nvidia.com/deeplearning/cudnn/backend/v9.1.1/reference/eula.html
-Original vendor license and notice files are retained with each extracted archive. Downloading from NVIDIA is not a grant to redistribute arbitrary Toolkit files. MeetingSplit's base installer contains no NVIDIA archives.
+## Local minutes (optional) / Minutas locales (opcional)
 
-Ollama 0.40.6: optional standalone Windows x64 distribution, SHA-256 pinned to the official release asset. About 1.4 GiB download, plus qwen3:4b about 2.5 GB. Existing service on 127.0.0.1:11434 with this exact model is reused. Otherwise a separate, temporary server is started on 127.0.0.1:11435, storing models in the selected internal folder. A busy port fails safely. No service, login task, user environment or existing Ollama installation is changed. Remote/cloud model names are rejected. Original runtime notices are retained.
+Ollama 0.40.6 and qwen3:4b remain optional, with explicit download/license consent. All `/api/chat` requests set `options.num_gpu=0`, including when connecting to an existing local Ollama service. The MeetingSplit-managed Ollama process additionally sets `OLLAMA_LLM_LIBRARY=cpu` and hides NVIDIA/AMD adapters from the subprocess through `CUDA_VISIBLE_DEVICES=-1`, `HIP_VISIBLE_DEVICES=-1`, and `ROCR_VISIBLE_DEVICES=-1`. These settings apply only inside MeetingSplit's own process and requests; they do not alter the user's system or an independently running Ollama server.
 
-Ollama: detecta un servicio existente con qwen3:4b. Si falta, descarga el componente independiente y guarda los modelos en la carpeta interna elegida. No modifica otra instalación de Ollama. La descarga necesita Internet; las minutas se generan por loopback. Se prueba con texto ficticio, sin grabaciones personales.
+Ollama puede generar minutas sin NVIDIA; consume RAM y podría tardar más. En cada solicitud MeetingSplit exige `num_gpu=0` y su servidor propio usa la biblioteca de CPU. La transcripción de audio no requiere Ollama.
 
-Ollama is MIT licensed: https://github.com/ollama/ollama/blob/v0.40.6/LICENSE
-Its included native dependencies carry separate licenses/notices in the archive.
-qwen3:4b is Apache-2.0: https://ollama.com/library/qwen3:4b
-The exact model license returned by /api/show is saved as QWEN3_LICENSE.txt.
-The pinned qwen3:4b currently declares thinking-only operation: reasoning is received
-in its separate API field and discarded. Only the final answer is saved. Truncated
-generation is rejected. A failed optional minute keeps audio/transcript/subtitles
-and adds a visible MINUTA_NO_GENERADA.txt diagnostic to Results. Existing Ollama
-weights are reused only if their reported source path is verified internal/unsynced.
-Generation tests save a synthetic minutes example and model digest. They do not certify factual accuracy; review all names, dates and agreements.
+Ollama runtime archive ~1.4 GiB; qwen3:4b model roughly 2.5 GiB. Only the user-requested optional Ollama/model downloads may access the Internet. Audio, transcripts and summaries remain local and use loopback; vendor/cloud aliases are rejected. If Ollama fails, the audio and transcript remain and the result contains `MINUTA_NO_GENERADA.txt`.
 
-Free disk space / Espacio: at least 12 GiB for setup, preferably more for Whisper and meeting outputs. C: and D: must be verified internal drives. USB (including fixed USB SSDs), network and cloud folders are rejected. Incomplete downloads can be retried; completed verified components are kept. No component or model is removed when uninstalling the base app, because they are user data in the chosen folder. Delete that folder explicitly only when its contents are no longer needed.
+Ollama MIT license: https://github.com/ollama/ollama/blob/v0.40.6/LICENSE
+qwen3:4b model Apache-2.0: https://ollama.com/library/qwen3:4b
+The model license returned by `/api/show` is saved to `Componentes/QWEN3_LICENSE.txt`. Upstream vendor notices may carry additional third-party obligations.
 
-Cancel / Cancelar: downloads check cancellation between bounded reads (20-second stalled network timeout); model pulls show progress. A started model pull may leave reusable partial blobs. CPU remains available after failed/cancelled optional setup.
+The optional setup dialog requires user-selected internal C:/D: data folder and explicit license acceptance. USB, network and cloud-synced roots are rejected. No automatic administrator elevation, driver changes or system PATH edits. A failed attempt saves `Componentes/component-setup-report.json`; previously verified optional components and data are retained. At least 12 GiB free is required by setup while further room is recommended for CPU model caches/meeting outputs.
 
-Release remains on hold until GPU, Ollama, installer, regressions and licenses have all been evaluated. / La publicación sigue bloqueada hasta evaluar GPU, Ollama, instalador, regresiones y licencias.
+**CPU performance:** the first model download may take time; transcription of a multi-hour meeting can be substantially slower without GPU acceleration. Users may choose shorter recordings or run in segments. Do not promise real-time inference, equal GPU performance or unchanged accuracy. Test actual EN/ES natural speech before release.
+
+**Release status:** 0.8.6 source-only changes on `qa/release-evidence-20261021`; a new Windows binary has NOT yet been validated and is NOT released. Qt/Chromium and native LGPL/NVIDIA binary notice obligations still require review, even if NVIDIA execution is disabled. The public release gate remains blocked.

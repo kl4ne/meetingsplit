@@ -21,7 +21,7 @@ REQUIRED_SOURCE_NOTICES = frozenset({
 UNRESOLVED = (
     "Qt WebEngine/Chromium: matching binary version, complete third-party notices and LGPL source/relinking rights",
     "FFmpeg/PyAV: all linked native licenses, matching source/build instructions and LGPL obligations",
-    "CTranslate2 cuDNN: actual DLL version, origin, NVIDIA SDK runtime distribution conditions and attribution",
+    "CTranslate2 cuDNN: packaged bytes match official PyPI 4.6.2 wheel (run #39698897754); exact NVIDIA DLL version, governing SDK license and required notices/approval still outstanding",
     "Qt/PySide6: matching LGPL libraries, usable corresponding source, replacement/reverse-engineering rights",
     "Native vulnerability assessment and qualified license review of exact final build",
 )

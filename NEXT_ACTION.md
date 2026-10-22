@@ -1,3 +1,12 @@
+## LATEST LIVE SECOND-PC PROCESSING OBSERVATION — 2026-10-22
+
+- User's short real meeting on secondary Windows 11 with RTX 4060 Laptop had not finished; user BELIEVED it was using CPU. Investigation of **actual original packaged source** showed unconditional `En CPU el primer fragmento puede tardar varios minutos` progress message, even for `NVIDIA GPU`; **there is NO verified CPU fallback yet**. Check live `manifest.json` key `device` in that meeting's output folder (written during processing, safe to read); no need to upload personal audio or raw manifest.
+- Setup previously passed GPU `small` inference and Ollama local qwen3:4b; real selected `medium`/`large-v3` gets separately GPU-probed, may truly fall back; manifest `device=CPU` and `warnings` distinguish from merely misleading text.
+- QA-only isolated source fixes: `engine/job.py` truthfully shows GPU vs CPU in transcribe progress; persists initial model/probe CUDA fallback `gpu_fallback.stage=model_initialization_or_probe`, also lazy inference CUDA fallback `stage=live_transcription`; backward-compatible `on_fallback` optional callback in `engine/transcription.py`; `ui/app.js` translates the new bilingual progress; new synthetic-only tests `tests/test_gpu_progress_truth.py`. **No Windows QA executed or packaged yet**; `[skip ci]` and no new Actions minutes, current user-running app unchanged.
+- Diagnostic root detail and step instructions: `docs/SECOND_PC_GPU_STATUS_AMBIGUITY_2026-10-22.md`. Do not claim fix shipped. Continue after device manifest result or final processing outcome. Do not repeat large CUDA/Ollama downloads or restart actively progressing meeting.
+- Keep v0.8.6, release_allowed=false, QA draft PR #1, main/Integrity unchanged.
+
+---
 ## LATEST PHYSICAL SECOND-PC DIAGNOSTIC (2026-10-22)
 
 - User uploaded `MeetingSplit-Diagnostico-Compartible.json` from SECOND Windows 11 PC after describing an error/repeated Prepare button. Actual GPU listed: **NVIDIA RTX 4060 Laptop GPU** plus Intel UHD (not ASUS 4070).

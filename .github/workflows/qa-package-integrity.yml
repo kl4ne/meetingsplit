@@ -1,6 +1,6 @@
-name: MeetingSplit v0.8.6 isolated consolidated component-integrity QA
+name: MeetingSplit v0.8.6 CPU-only frozen Windows QA
 
-# One deliberately scoped test-build after the component integrity change.
+# Single CPU-only successor build after a material runtime-policy change.
 # This is NEVER a public Release; release gate MUST stay false.
 on:
   push:
@@ -54,6 +54,21 @@ jobs:
       - name: Verify actual disposable QA installer and external data preservation
         shell: pwsh
         run: ./qa/windows_installer_smoke.ps1
+      - name: Prove installed QA build stays CPU-only
+        shell: pwsh
+        run: |
+          $report = Get-Content 'work/installer-smoke/frozen-check.json' -Raw | ConvertFrom-Json
+          if (-not $report.packaged -or $report.checks.cpu_only.ok -ne $true) {
+            throw 'Frozen MeetingSplit did not report the CPU-only contract'
+          }
+          if ($report.checks.cuda.ok -ne $false) {
+            throw 'Frozen MeetingSplit must not enable CUDA'
+          }
+          $html = Get-Content 'dist/MeetingSplit/_internal/ui/index.html' -Raw
+          if (-not $html.Contains('MODELO DE VOZ (SOLO CPU)') -or $html.Contains('Preparar CUDA / Ollama opcionales')) {
+            throw 'Frozen HTML still offers NVIDIA CUDA setup'
+          }
+          Write-Host 'Frozen CPU policy and no-CUDA GUI passed.'
       - name: Assert last gate still BLOCKED
         shell: pwsh
         run: |

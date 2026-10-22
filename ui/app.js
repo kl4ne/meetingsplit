@@ -227,7 +227,7 @@ function renderResults(index){
   const container=el('result-files');
   container.textContent='';
   const allowed=new Set(['TRANSCRIPCION_COMPLETA.txt','TRANSCRIPCION_SUBTITULOS.srt',
-    'RESUMEN_Y_MINUTA_LOCAL.md','RESULTADOS_COMPLETOS.zip','INSTRUCCIONES_CHATGPT_GEMINI.txt']);
+    'MINUTA_NO_GENERADA.txt','RESUMEN_Y_MINUTA_LOCAL.md','RESULTADOS_COMPLETOS.zip','INSTRUCCIONES_CHATGPT_GEMINI.txt']);
   let items=[];
   try { items=JSON.parse(index); }catch(_){ return; }
   if(!Array.isArray(items))return;

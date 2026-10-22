@@ -17,7 +17,12 @@ function translate(text){
   // Native processing emits useful progress from Python. Translate without discarding counts.
   let m;
   if((m=/^Exportando audio (\d+) de (\d+)$/.exec(text)))return `Exporting audio ${m[1]} of ${m[2]}`;
-  if((m=/^Transcribiendo audio (\d+) de (\d+)$/.exec(text)))return `Transcribing audio ${m[1]} of ${m[2]}`;
+  if((m=/^Transcribiendo audio (\d+) de (\d+)(?:\.\s*(.*))?$/.exec(text))){
+    let suffix='';
+    if(m[3]==='Aceleración NVIDIA GPU seleccionada.')suffix=' NVIDIA GPU acceleration selected.';
+    else if(m[3]==='En CPU el primer fragmento puede tardar varios minutos.')suffix=' On CPU, the first segment may take several minutes.';
+    return `Transcribing audio ${m[1]} of ${m[2]}.`+suffix;
+  }
   if(text.startsWith('Error: '))return 'Error: '+translate(text.slice(7));
   if(text.startsWith('CUDA no disponible ('))return text.replace('CUDA no disponible (','CUDA unavailable (').replace('Usando CPU en modo seguro.','Using CPU in safe mode.');
   return text;

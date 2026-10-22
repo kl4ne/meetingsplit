@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 import sys
 import time
-from PySide6.QtCore import QObject, QThread, QSettings, Signal, Slot
+from PySide6.QtCore import QObject, QThread, QSettings, Signal, Slot, QUrl
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (QApplication, QDialog, QVBoxLayout, QLabel, QPushButton,
     QCheckBox, QFileDialog, QHBoxLayout, QTextEdit, QMessageBox)
 from desktop.storage import configure_data_root, validate_local_folder
@@ -12,13 +13,35 @@ from engine.control import Cancellation, JobCancelled
 
 
 class SetupWorker(QObject):
+    """Durable stage-by-stage report; retain errors after GUI status is replaced."""
+
     progress=Signal(str)
     completed=Signal(str)
     finished=Signal()
 
     def __init__(self, root, gpu, ollama, cancel):
-        super().__init__();self.root=root;self.gpu=gpu;self.ollama=ollama;self.cancel=cancel
+        super().__init__()
+        self.root=Path(root);self.gpu=gpu;self.ollama=ollama;self.cancel=cancel
         self.last_update=0
+        self.stage='initializing'
+        self.report_path=self.root/'Componentes'/'component-setup-report.json'
+        self.report={'schema':1,'status':'running','stage':self.stage,
+                     'requested':{'cuda':bool(gpu),'ollama':bool(ollama)},
+                     'release_allowed':False,
+                     'note':'A finished download is not proof that GPU or Ollama validation passed.'}
+
+    def save(self, status, detail=None):
+        self.report.update(status=status,stage=self.stage)
+        if detail is not None: self.report['detail']=str(detail)[:800]
+        self.report_path.parent.mkdir(parents=True,exist_ok=True)
+        temp=self.report_path.with_suffix('.partial')
+        temp.write_text(json.dumps(self.report,indent=2,ensure_ascii=False),encoding='utf-8')
+        temp.replace(self.report_path)
+
+    def step(self, name, message):
+        self.stage=name
+        self.save('running')
+        self.progress.emit(message)
 
     def update(self, message):
         if time.monotonic()-self.last_update>.25:
@@ -27,23 +50,45 @@ class SetupWorker(QObject):
     @Slot()
     def run(self):
         try:
+            self.step('cuda_download' if self.gpu else 'ollama_download',
+                      'Preparing verified optional components / Preparando componentes verificados')
             if self.gpu:
                 from desktop.components import install_gpu
                 from desktop.cuda_probe import probe_cuda
                 install_gpu(self.root,self.update,self.cancel)
-                self.progress.emit('CUDA: testing real inference / probando inferencia real (small)...')
+                self.step('cuda_inference','CUDA: testing real inference / probando inferencia real (small)...')
                 report=probe_cuda('small',self.root/'Modelos',cancel=self.cancel)
-                (self.root/'Componentes'/'cuda-validation.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
-                if not report.get('ok'): raise RuntimeError(report.get('error','CUDA test failed'))
+                (self.root/'Componentes'/'cuda-validation.json').write_text(
+                    json.dumps(report,indent=2),encoding='utf-8')
+                if not report.get('ok'):
+                    raise RuntimeError(report.get('error','CUDA test failed'))
+                self.report['cuda_validation_ok']=True
+                self.save('running')
             if self.ollama:
                 from engine.ollama import setup_ollama
+                self.step('ollama_download_and_test',
+                          'Ollama: preparing runtime/model and test / preparando modelo y prueba')
                 setup_ollama(self.root,self.update,self.cancel)
-            self.completed.emit('Components prepared. Review the local test reports. / Componentes preparados. Revisa los informes de prueba locales.')
+                self.report['ollama_validation_ok']=True
+            self.step('complete','Component validation complete / Validación completada')
+            self.save('success')
+            self.completed.emit('Components prepared. Report: Componentes/component-setup-report.json / Componentes preparados. Informe guardado.')
         except JobCancelled:
-            self.completed.emit('Cancelled. Verified completed components kept. / Cancelado. Se conservaron los componentes completos verificados.')
+            self.save_failure('cancelled','Setup cancelled by user / Cancelado por el usuario')
+            self.completed.emit('Cancelled. See Componentes/component-setup-report.json / Cancelado. Revisa el informe.')
         except Exception as exc:
-            self.completed.emit('Setup incomplete / Configuración incompleta: '+str(exc))
-        finally: self.finished.emit()
+            self.save_failure('failed',exc)
+            self.completed.emit('Setup incomplete at '+self.stage+': '+str(exc)[:400]+
+                                ' / Informe: Componentes/component-setup-report.json')
+        finally:
+            self.finished.emit()
+
+    def save_failure(self, status, detail):
+        try:
+            self.save(status, detail)
+        except OSError as save_error:
+            self.progress.emit('Could not save diagnostic report / No se pudo guardar el informe: '+
+                               str(save_error)[:200])
 
 
 class ComponentDialog(QDialog):
@@ -80,6 +125,10 @@ class ComponentDialog(QDialog):
         self.prepare=QPushButton(self.tr('Prepare selected components','Preparar componentes seleccionados'))
         self.prepare.clicked.connect(self.start);buttons.addWidget(self.prepare)
         self.close_button=QPushButton(self.tr('Close','Cerrar'));self.close_button.clicked.connect(self.close_or_cancel);buttons.addWidget(self.close_button)
+        self.open_report_button=QPushButton(self.tr('Open setup report','Abrir informe de instalación'))
+        self.open_report_button.clicked.connect(self.open_report)
+        layout.addWidget(self.open_report_button)
+
 
     def tr(self, en, es): return es if self.language=='es' else en
 
@@ -106,6 +155,19 @@ class ComponentDialog(QDialog):
         self.thread.finished.connect(self.thread.deleteLater);self.thread.finished.connect(self.finished_setup)
         for widget in (self.choose,self.gpu,self.ollama,self.terms,self.prepare): widget.setEnabled(False)
         self.close_button.setText(self.tr('Cancel','Cancelar'));self.thread.start()
+
+    def open_report(self):
+        if not self.root:
+            QMessageBox.information(self,'MeetingSplit',
+                self.tr('Choose the component folder first.','Primero selecciona la carpeta de componentes.'))
+            return
+        report=Path(self.root)/'Componentes'/'component-setup-report.json'
+        if not report.is_file():
+            QMessageBox.information(self,'MeetingSplit',
+                self.tr('No report exists for this component attempt yet. Check existing CUDA/Ollama individual reports under Componentes. The previous app version did not create a summary.',
+                        'Todavía no existe informe general de este intento. Revisa los informes individuales de CUDA/Ollama dentro de Componentes. La versión anterior no generaba resumen.'))
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(report)))
 
     def finished_setup(self):
         self.thread=None;self.worker=None

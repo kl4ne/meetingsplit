@@ -22,7 +22,8 @@ def copies(tmp_path):
 def test_all_original_notices_hash_and_release_remains_blocked():
     result = check_original_notices(SOURCE)
     assert result["notice_sha256_verified"]
-    assert result["count"] >= 7
+    assert result["count"] >= 8
+    assert any(x["file"] == "Chromium-140.0.7339.264-BSD-3-Clause.txt" for x in result["files"])
     assert result["release_allowed"] is False
     assert result["license_review_complete"] is False
     assert result["security_review_complete"] is False

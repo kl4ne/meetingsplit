@@ -107,7 +107,11 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         if do_transcribe:
             task.check()
             model,device=load_whisper(x['model'],model_cache=base/'Modelos',
-                                       on_status=lambda message:progress(message,15),cancel=task)
+                                       on_status=lambda message:progress(message,15),cancel=task,
+                                       on_fallback=lambda reason: manifest.update(gpu_fallback={
+                                           'stage':'model_initialization_or_probe',
+                                           'reason':str(reason)[:300],
+                                           'requested_model':x['model']}))
             manifest['device']=device
             if device == 'CPU':
                 manifest['actual_model'] = 'small' if x['model'] in ('medium', 'large-v3') else x['model']
@@ -126,8 +130,11 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                     export_clip(src,file,clip,'mp3',cancel=task)
                 try:
                     task.check()
-                    progress(f'Transcribiendo audio {index+1} de {len(clips)}. En CPU el primer fragmento puede tardar varios minutos; el tiempo transcurrido se muestra en pantalla.',
-                             int(49+39*index/len(clips)))
+                    progress(
+                        (f'Transcribiendo audio {index+1} de {len(clips)}.'
+                         + (' En CPU el primer fragmento puede tardar varios minutos.'
+                            if device == 'CPU' else ' Aceleración NVIDIA GPU seleccionada.')),
+                        int(49+39*index/len(clips)))
                     try:
                         part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
                     except Exception as exc:
@@ -142,6 +149,10 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                         manifest['warnings'].append(
                             'GPU no disponible durante la inferencia; transcripción continuó por CPU. '
                             + str(exc)[:180])
+                        manifest['gpu_fallback'] = {
+                            'stage':'live_transcription',
+                            'requested_model':x['model'],
+                            'reason':str(exc)[:300]}
                         model = None
                         gc.collect()
                         cpu_model = 'small' if x['model'] in ('medium','large-v3') else x['model']

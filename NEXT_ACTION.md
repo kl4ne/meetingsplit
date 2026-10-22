@@ -1,3 +1,12 @@
+## NEXT USER HANDOFF — SECONDARY WIN11 PHYSICAL QA (2026-10-21)
+
+**NEXT REAL DEPENDENCY IS USER'S SECOND WINDOWS 11 PC.** They confirmed they have one. A verified kit has been prepared in this chat; exact checksum `41f5b1b041e78d66f2fe5a0244a96148ed74eb11c929c07852ace4d404dd57d4`; refer to `docs/SECONDARY_PHYSICAL_WIN11_QA_HANDOFF_2026-10-21.md` for precise steps, artifact hashes, privacy safeguards and scripts. The kit is not in GitHub and no secondary physical-PC tests have run yet.
+
+Owner actions: download historic **internal-only** installer from https://github.com/kl4ne/meetingsplit/actions/runs/39695270843/artifacts/12391430920; leave ZIP unopened, rename it to `MeetingSplit-QA-installer-artifact.zip` and place beside the extracted 8KB kit; click `01-COMPROBAR-PC.cmd` on the second PC as non-admin. If it prints PREFLIGHT PASSED, click `02-PRUEBAS-GUIADAS.cmd` and follow the staged prompts; return only `qa-summary-shareable.json` (no raw Windows Inno logs). This version of QA tests pre-copy GUI cancel, clean install, self-check, EN/ES views and uninstall/data preservation. It does not download GPU/Ollama or do mid-copy cancellation.
+
+Do not remotely install anything, claim passed physical results, or repeat full Windows/PyAV builds. Final source branch postdates historical internal binary; legal release hold and ASUS GPU/real speech remain pending. After user's results, prepare the separate mid-copy/live optional-download experiment tailored to available GPU/disk hardware, with user vendor-license consent and data isolation.
+
+---
 ## CURRENT HANDOFF (2026-10-21) — no remaining automatic build loops
 
 Last verified QA: #39695270843 102 passed/2 skipped (on older source snapshot); #39698897754 **14 passed** and official-wheel cuDNN matches frozen SHA; all 685 actual frozen portable files and 211 AMD64 PE headers independently examined with **zero hash/header discrepancies**. Both new reports are under `docs/INDEPENDENT_FROZEN_*`. Complete GitHub Actions have **not** been repeated.

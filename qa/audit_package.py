@@ -17,6 +17,7 @@ print('Package contains no blocked unused Qt modules. Full native license review
 # evidence gate, not a declaration of complete third-party compliance.
 import re
 from native_inventory import classify_ffmpeg
+from vendor_legal_manifest import check_frozen_notices
 forbidden=re.compile(r'(?:^|[-_])(?:lib)?(?:x264|x265|xvid(?:core)?|xavs2)(?:[-_.]|$)',re.I)
 problem=[str(p.relative_to(root)) for p in root.rglob('*') if p.is_file() and p.suffix.lower() in ('.dll','.pyd','.exe') and forbidden.search(p.name)]
 if problem:
@@ -26,3 +27,8 @@ report=classify_ffmpeg(build_log.read_text(encoding='utf-8') if build_log.is_fil
 if not report['configuration_found'] or any(flag in report['flags'] for flag in ('--enable-gpl','--enable-nonfree','--enable-libx264','--enable-libx265','--enable-libxvid')):
     raise SystemExit('FFmpeg configuration is not confirmed LGPL-only: '+str(report))
 print('No GPL/native codec indicators found. LGPL obligations and human review remain open.')
+
+# Check actual PyInstaller-distributed bytes, not just original repository files.
+# This intentionally DOES NOT certify Qt/Chromium/cuDNN legal compliance.
+verified_notices=check_frozen_notices(root)
+print(f"Frozen original notices SHA-256 verified: {verified_notices['count']} files; manual legal approval still REQUIRED.")

@@ -56,7 +56,7 @@ def load_cpu_whisper(model_name: str='medium', *, model_cache:Path|None=None):
                         cpu_threads=min(8, os.cpu_count() or 4), **_model_options(model_cache))
 
 
-def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_status:Callable[[str],None]=lambda _:None, cancel:Cancellation|None=None):
+def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_status:Callable[[str],None]=lambda _:None, cancel:Cancellation|None=None, on_fallback:Callable[[str],None]|None=None):
     if model_cache is not None:
         from desktop.components import activate_gpu
         activate_gpu(Path(model_cache).parent)
@@ -82,6 +82,10 @@ def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_sta
             if not is_cuda_runtime_error(exc):
                 raise
             reason = str(exc)[:130]
+    # Expose the initial GPU-to-CPU cause to the caller for persisted job evidence.
+    # Old consumers stay compatible and no private data is sent to a server.
+    if on_fallback is not None:
+        on_fallback(str(reason)[:300])
     on_status(f'GPU CUDA 12 no disponible ({reason}). Se utilizará CPU con modelo small (más rápido, precisión posiblemente menor).')
     cpu_model = 'small' if model_name in ('medium','large-v3') else model_name
     return load_cpu_whisper(cpu_model, model_cache=model_cache), 'CPU'

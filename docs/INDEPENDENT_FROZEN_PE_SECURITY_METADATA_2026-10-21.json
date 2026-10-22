@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "project": "MeetingSplit",
+  "version": "0.8.6",
+  "frozen_candidate_commit": "90238d621160e05097e7b72c3a1c26b18b4a31cd",
+  "portable_artifact_id": 12390996760,
+  "scope": "Independent PE header and certificate directory analysis of the SHA256-validated Windows portable QA files, not a malware scan, signature verification, or CVE clearance",
+  "native_file_count": 211,
+  "pe_headers_examined": 211,
+  "machine": "IMAGE_FILE_MACHINE_AMD64",
+  "architecture_count": {
+    "x64": 211
+  },
+  "certificate_table_present": 103,
+  "certificate_table_absent": 108,
+  "malformed_or_non_pe": 0,
+  "selected": [
+    {
+      "path": "MeetingSplit.exe",
+      "sha256": "4428d4b91775c680cb91bce815bf2f9d761e6833d5a252f5b95319d58b9e2570",
+      "certificate_table_present": false
+    },
+    {
+      "path": "_internal/PySide6/Qt6WebEngineCore.dll",
+      "sha256": "54488cfc8fea4057377302cec5a1fb1100fb4bc4231cd7e60f43e4fcff28e89e",
+      "certificate_table_present": true,
+      "certificate_size_bytes": 12088
+    },
+    {
+      "path": "_internal/PySide6/QtWebEngineProcess.exe",
+      "sha256": "91560b137a26e89df4a148479aa830a915870a5b1b3c46715b2c13a7ba21388b",
+      "certificate_table_present": true,
+      "certificate_size_bytes": 12088
+    },
+    {
+      "path": "_internal/ctranslate2/cudnn64_9.dll",
+      "sha256": "c07cc47f2fa4a566593c7af4aa7e57edf09a985a0fddd14cb8d6f456e252af05",
+      "certificate_table_present": true,
+      "certificate_size_bytes": 10296
+    }
+  ],
+  "authenticode_signature_verified": false,
+  "chain_trust_verified": false,
+  "native_vulnerability_review_complete": false,
+  "legal_review_complete": false,
+  "release_allowed": false,
+  "caveat": "Certificate directory presence does not itself establish signing trust or absence of malicious code. MeetingSplit.exe having no certificate directory means the internal development QA launcher is unsigned."
+}

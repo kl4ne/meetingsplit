@@ -1,3 +1,14 @@
+## LATEST PHYSICAL SECOND-PC DIAGNOSTIC (2026-10-22)
+
+- User uploaded `MeetingSplit-Diagnostico-Compartible.json` from SECOND Windows 11 PC after describing an error/repeated Prepare button. Actual GPU listed: **NVIDIA RTX 4060 Laptop GPU** plus Intel UHD (not ASUS 4070).
+- CUDA four packages and Ollama 0.40.6 each have present folders and **schema-2** receipts. **Receipt presence is not a freshly rehashed manifest.**
+- **CUDA validation `ok=true`, `device=cuda`** (synthetic silence inference only).
+- **Ollama validation `ok=true`, `status=complete`, `model=qwen3:4b`**. Both dedicated reports are present.
+- The original transient GUI error's specific text/stage remains unobserved. Original shipped GUI lacks a generic report, hence `last_gui_attempt=null` and `setup_report_exists=false` are explained by the OLD candidate. New report persistence code is only on QA branch and has not been rebuilt/tested; it did not produce the user's result.
+- **No further download/reinstall is warranted now**. Next physical action: short end-to-end dummy English/Spanish speech GUI meeting and generated local minutes check, ideally without uploading any personal recordings. This requires user at PC. Real 1–3h and target ASUS 4070, full legal and UI GUI cancel remain blocked.
+- Complete evidence in `docs/SECONDARY_PC_CUDA_OLLAMA_DIAGNOSTIC_SUCCESS_2026-10-22.md`. No Actions minutes spent; no main merge; 0.8.6 release gate remains FALSE.
+
+---
 ## NEW USER-OBSERVED PHYSICAL TEST FAILURE — 2026-10-21
 
 - User on SECOND physical Windows 11 machine reported optional component failure after selecting CUDA+Ollama, repeatedly showing “Prepare selected components” upon retry, and no expected QA report. **Exact error, GPU and which install stage failed UNKNOWN; do not guess or mark either vendor runtime working.**

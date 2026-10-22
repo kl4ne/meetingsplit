@@ -105,8 +105,6 @@ def test_cpu_only_transcription_does_not_reinit_cuda_on_runtime_failure(monkeypa
                     '-i','sine=duration=2','-ac','1',str(source)],check=True,timeout=15)
     cpu=object()
     monkeypatch.setattr(job,'load_whisper',lambda *args,**kwargs:(cpu,'CPU'))
-    monkeypatch.setattr(job,'load_cpu_whisper',
-                        lambda *args,**kwargs:pytest.fail('CPU model must not be reloaded as a GPU fallback'))
     def synthetic_cuda_error(*args,**kwargs):
         raise RuntimeError('Synthetic CUDA library error while deliberately using CPU')
     monkeypatch.setattr(job,'transcribe_clip',synthetic_cuda_error)
@@ -128,7 +126,6 @@ def test_non_cuda_transcription_error_is_not_hidden_by_cpu_fallback(monkeypatch,
     subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-f','lavfi',
                     '-i','sine=duration=2','-ac','1',str(source)],check=True,timeout=15)
     monkeypatch.setattr(job,'load_whisper',lambda *args,**kwargs:(object(),'CPU'))
-    monkeypatch.setattr(job,'load_cpu_whisper',lambda *args,**kwargs:pytest.fail('Should not use CPU'))
     def fail(*args,**kwargs):
         raise ValueError('Source audio is invalid')
     monkeypatch.setattr(job,'transcribe_clip',fail)

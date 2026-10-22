@@ -328,7 +328,7 @@
             <label><span class="field-label">FRAGMENTOS MÁXIMOS</span><select id="minutes"><option value="5">5 minutos</option><option value="10">10 minutos</option><option value="15">15 minutos</option><option value="20">20 minutos</option></select></label>
             <label><span class="field-label">SOLAPAMIENTO</span><select id="overlap"><option value="20">20 segundos</option><option value="10">10 segundos</option><option value="30">30 segundos</option></select></label>
             <label><span class="field-label">FORMATO DE SALIDA</span><select id="format"><option value="mp3">MP3 · Compacto</option><option value="m4a">M4A · AAC</option><option value="wav">WAV · Sin comprimir</option></select></label>
-            <label><span class="field-label">MODELO DE VOZ</span><select id="model"><option value="small">Small · Económico</option><option value="medium" selected>Medium · Equilibrado</option><option value="large-v3">Large-v3 · Alta precisión</option></select></label>
+            <label><span class="field-label">MODELO DE VOZ (SOLO CPU)</span><select id="model"><option value="small" selected>Small · CPU recomendado</option></select></label>
           </div></div>
           <div class="surface-card settings-card"><div class="card-caption">MINUTAS E INTELIGENCIA ARTIFICIAL <span>02</span></div><div class="fields">
             <label><span class="field-label">PLATAFORMA DE PREFERENCIA</span><select id="provider"><option value="chatgpt">ChatGPT</option><option value="gemini">Gemini</option></select></label>
@@ -336,8 +336,8 @@
             <label><span class="field-label">TIPO DE DOCUMENTO</span><select id="report"><option value="both">Resumen + minuta</option><option value="summary">Solo resumen</option><option value="minutes">Solo minuta</option></select></label>
             <label><span class="field-label">IDIOMA DEL DOCUMENTO</span><select id="report-language"><option value="es">Español</option><option value="en">Inglés</option><option value="both">Español e inglés</option></select></label>
           </div><div class="ai-notice" id="provider-hint"><span class="info-symbol">i</span><span>Los resultados se preparan para utilizarlos en tu plataforma preferida.</span></div>
-            <label class="checkbox-row"><input type="checkbox" id="local-summary"><span><b>Minuta automática local con Ollama</b><small>Opcional. Necesita Ollama y qwen3:4b instalados.</small></span></label>
-            <button type="button" class="text-button" id="setup-components">Preparar CUDA / Ollama opcionales</button>
+            <label class="checkbox-row"><input type="checkbox" id="local-summary"><span><b>Minuta automática local con Ollama</b><small>Opcional. Ollama y qwen3:4b funcionan solo con CPU; puede tardar más.</small></span></label>
+            <button type="button" class="text-button" id="setup-components">Preparar Ollama CPU (opcional)</button>
             <label class="checkbox-row"><input type="checkbox" id="zip-output" checked><span><b>Exportar un ZIP con resultados</b><small>Incluye los archivos generados.</small></span></label>
           </div>
         </div><div class="settings-footer"><span>Las suscripciones de ChatGPT/Gemini no equivalen a acceso API automático.</span><button type="button" class="gold-button" data-go="process">CONTINUAR AL ESTUDIO <span>↗</span></button></div>
@@ -361,7 +361,7 @@
 <script>// MeetingSplit v0.8.6 — UI translations. Spanish originals are the keys; English is the initial UI locale.
 // This UI language preference does NOT change meeting audio language or report language.
 window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
-  "Preparar CUDA / Ollama opcionales": "Set up optional CUDA / Ollama",
+  "Preparar Ollama CPU (opcional)": "Set up Ollama CPU (optional)",
   "MeetingSplit · Estudio privado de reuniones": "MeetingSplit · Private Meeting Studio",
   "ESTUDIO": "STUDIO",
   "Inicio": "Home",
@@ -457,7 +457,7 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "Español e inglés": "Spanish and English",
   "Los resultados se preparan para utilizarlos en tu plataforma preferida.": "Results are prepared for use in your preferred platform.",
   "Minuta automática local con Ollama": "Local automatic meeting minutes with Ollama",
-  "Opcional. Necesita Ollama y qwen3:4b instalados.": "Optional. Requires Ollama and qwen3:4b installed.",
+  "Opcional. Ollama y qwen3:4b funcionan solo con CPU; puede tardar más.": "Optional. Ollama and qwen3:4b run on CPU only; generation may be slower.",
   "Exportar un ZIP con resultados": "Export results as ZIP",
   "Incluye los archivos generados.": "Includes generated files.",
   "Las suscripciones de ChatGPT/Gemini no equivalen a acceso API automático.": "ChatGPT/Gemini subscriptions do not automatically provide API access.",
@@ -522,6 +522,8 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "Analizando silencios sin cargar todo el audio en RAM": "Analyzing silences without loading all audio into RAM",
   "Preparando aceleración NVIDIA (CUDA)...": "Preparing NVIDIA acceleration (CUDA)...",
   "Preparando minuta local con Ollama": "Preparing local meeting minutes with Ollama",
+  "MODELO DE VOZ (SOLO CPU)": "SPEECH MODEL (CPU ONLY)",
+  "Small · CPU recomendado": "Small · Recommended for CPU",
   "Creando paquete ZIP de resultados": "Creating results ZIP package",
   "Resultados terminados. Ya puedes abrirlos.": "Results are complete. You can open them now.",
   "Falta faster-whisper. Ejecuta instalar.bat para instalar las dependencias.": "Faster-Whisper is missing. Run instalar.bat to install the dependencies.",
@@ -549,7 +551,12 @@ function translate(text){
   // Native processing emits useful progress from Python. Translate without discarding counts.
   let m;
   if((m=/^Exportando audio (\d+) de (\d+)$/.exec(text)))return `Exporting audio ${m[1]} of ${m[2]}`;
-  if((m=/^Transcribiendo audio (\d+) de (\d+)$/.exec(text)))return `Transcribing audio ${m[1]} of ${m[2]}`;
+  if((m=/^Transcribiendo audio (\d+) de (\d+)(?:\.\s*(.*))?$/.exec(text))){
+    let suffix='';
+    if(m[3]==='Aceleración NVIDIA GPU seleccionada.')suffix=' NVIDIA GPU acceleration selected.';
+    else if(m[3]==='En CPU el primer fragmento puede tardar varios minutos.')suffix=' On CPU, the first segment may take several minutes.';
+    return `Transcribing audio ${m[1]} of ${m[2]}.`+suffix;
+  }
   if(text.startsWith('Error: '))return 'Error: '+translate(text.slice(7));
   if(text.startsWith('CUDA no disponible ('))return text.replace('CUDA no disponible (','CUDA unavailable (').replace('Usando CPU en modo seguro.','Using CPU in safe mode.');
   return text;
@@ -759,7 +766,7 @@ function renderResults(index){
   const container=el('result-files');
   container.textContent='';
   const allowed=new Set(['TRANSCRIPCION_COMPLETA.txt','TRANSCRIPCION_SUBTITULOS.srt',
-    'RESUMEN_Y_MINUTA_LOCAL.md','RESULTADOS_COMPLETOS.zip','INSTRUCCIONES_CHATGPT_GEMINI.txt']);
+    'MINUTA_NO_GENERADA.txt','RESUMEN_Y_MINUTA_LOCAL.md','RESULTADOS_COMPLETOS.zip','INSTRUCCIONES_CHATGPT_GEMINI.txt']);
   let items=[];
   try { items=JSON.parse(index); }catch(_){ return; }
   if(!Array.isArray(items))return;

@@ -50,7 +50,7 @@ def test_export_transcript_srt_zip_integration(monkeypatch,tmp_path,fail_optiona
        '-f','lavfi','-i','sine=frequency=760:duration=6',
        '-filter_complex','[0:a]aresample=16000[a];[1:a]atrim=duration=1.5[b];[2:a]aresample=16000[c];[a][b][c]concat=n=3:v=0:a=1[d]',
        '-map','[d]','-c:a','pcm_s16le',str(source)],check=True,timeout=20)
-    monkeypatch.setattr(job,'load_whisper',lambda *args,**kwargs:(object(),'CPU de prueba'))
+    monkeypatch.setattr(job,'load_whisper',lambda *args,**kwargs:(object(),'CPU'))
     def fake_transcribe(model,clip,path,*,language,cancel):
         return [{'start':0.2,'end':1.2,'text':'Hola, welcome.','part':clip.number}]
     monkeypatch.setattr(job,'transcribe_clip',fake_transcribe)

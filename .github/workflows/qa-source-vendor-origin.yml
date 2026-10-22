@@ -1,0 +1,45 @@
+name: MeetingSplit legal gate source + cuDNN wheel-origin audit
+
+# One cheap Ubuntu source audit: no Qt installation, Windows runner,
+# FFmpeg build, PyInstaller, installer, CUDA download or vendor GPU.
+on:
+  push:
+    branches: [qa/release-evidence-20261021]
+    paths:
+      - '.github/workflows/qa-source-vendor-origin.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run only changed-scope notice/UI/provenance regressions
+        run: |
+          python -m pip install --disable-pip-version-check pytest==9.1.1
+          python -m pytest -q tests/test_vendor_legal_manifest.py tests/test_local_minutes_error_visible.py tests/test_ct2_vendor_origin.py tests/test_third_party_notice_sources.py
+          node --check ui/app.js
+      - name: Fetch official CPython 3.11 Windows wheel without installing it
+        run: |
+          mkdir -p work/native-origin
+          python -m pip download --disable-pip-version-check --no-deps --only-binary=:all: --implementation cp --python-version 3.11 --abi cp311 --platform win_amd64 --dest work/native-origin ctranslate2==4.6.2
+      - name: Compare exact official wheel and embedded cuDNN bytes to native report
+        run: |
+          python qa/check_ct2_vendor_origin.py --wheel work/native-origin/ctranslate2-4.6.2-cp311-cp311-win_amd64.whl --report work/native-origin/provenance.json
+      - name: Verify release gate still blocked
+        run: |
+          python -c "from qa.check_release_gate import main; assert main() == 2"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: MeetingSplit-ct2-vendor-origin-report-${{ github.sha }}
+          path: work/native-origin/provenance.json
+          if-no-files-found: warn
+          retention-days: 14

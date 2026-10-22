@@ -1,3 +1,13 @@
+## NEW USER-OBSERVED PHYSICAL TEST FAILURE — 2026-10-21
+
+- User on SECOND physical Windows 11 machine reported optional component failure after selecting CUDA+Ollama, repeatedly showing “Prepare selected components” upon retry, and no expected QA report. **Exact error, GPU and which install stage failed UNKNOWN; do not guess or mark either vendor runtime working.**
+- Diagnosed source: original frozen 0.8.6 Qt `desktop/component_setup.py` only displayed failure in a QLabel, then re-enabled Prepare; no general persistent result. CUDA GPU inference runs BEFORE Ollama setup, so CUDA failure can prevent Ollama's report from existing. Dedicated physical installer QA `qa-summary-shareable.json` is ONLY produced by `02-PRUEBAS-GUIADAS.cmd`, not by the GUI's Prepare button.
+- Created user-downloadable read-only diagnostic `MeetingSplit-Diagnostico-Opcionales-Win11.zip` SHA256 `ff4047ecef106ccdb033673b74d929ab84b412ec3c2c8ae33c507e097374115f`, showing GPU model, presence of vendor receipts, `cuda-validation.json`, `ollama-validation.json` status and redacted error (if any). User must choose their existing MeetingSplit DATA folder and return ONLY `MeetingSplit-Diagnostico-Compartible.json`. The ZIP is a conversation artifact, not checked into GitHub.
+- Patched ONLY isolated QA branch `desktop/component_setup.py`: durable atomic `Componentes/component-setup-report.json` stage/result (including failure/cancel), human-readable message and Qt Open Report button. Added `tests/test_component_setup_reports.py`. **New source NOT built nor Windows-tested**; it is NOT on the second PC's current installer. DO NOT claim issue fully fixed until user diagnostic, targeted tests and package validation.
+- Existing official QT license notice source/earlier 685/685 sha and native 211 still good for OLD candidate; no further GitHub Actions minutes used.
+- Detailed checkpoint `docs/SECONDARY_PC_OPTIONAL_SETUP_FAILURE_2026-10-21.md`. Await diagnostic rather than repeat installation/downloads. Preserve data, receipts and test machine; no deletion, no driver/system/path changes. Release `0.8.6`, `release_allowed=false`, main/Integrity unchanged.
+
+---
 ## ACTIVE CHECKPOINT — SECOND PHYSICAL WINDOWS 11 QA KIT READY (2026-10-21)
 
 - User CONFIRMED access to a second physical Windows 11 computer. No remote access to it is available and **no test has actually run on that machine yet**. Do not claim physical installer results or ASUS acceptance.

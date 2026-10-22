@@ -75,6 +75,14 @@ class SetupWorker(QObject):
         finally:
             self.finished.emit()
 
+    def save_failure(self, status, detail):
+        """The failure path must persist even when a vendor operation raises."""
+        try:
+            self.save(status,detail)
+        except OSError as exc:
+            self.progress.emit('No se pudo guardar el informe / Could not save report: '+str(exc)[:200])
+
+
 class ComponentDialog(QDialog):
     def __init__(self, root='', language='en', parent=None):
         super().__init__(parent)
@@ -155,7 +163,7 @@ class ComponentDialog(QDialog):
     def finished_setup(self):
         self.thread=None;self.worker=None
         self.close_button.setText(self.tr('Close','Cerrar'))
-        for widget in (self.choose,self.gpu,self.ollama,self.terms,self.prepare): widget.setEnabled(True)
+        for widget in (self.choose,self.ollama,self.terms,self.prepare): widget.setEnabled(True)
 
     def close_or_cancel(self):
         if self.thread:

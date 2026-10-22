@@ -121,20 +121,21 @@ def test_optional_installer_does_not_bundle_large_runtime_or_opt_in_silently():
     assert sum(p.size for p in components.GPU_PACKAGES)>1024**3
 
 
-def test_gpu_probe_failure_preserves_cpu_fallback(monkeypatch,tmp_path):
+def test_cpu_only_whisper_never_runs_gpu_probe(monkeypatch,tmp_path):
     from engine import transcription
     from types import SimpleNamespace
     import sys
-    constructed=[]
+    calls=[]
     class WhisperModel:
-        def __init__(self,*args,**kwargs): constructed.append(kwargs['device'])
+        def __init__(self,name,**kwargs):
+            calls.append((name,kwargs['device']))
     monkeypatch.setitem(sys.modules,'faster_whisper',SimpleNamespace(WhisperModel=WhisperModel))
-    monkeypatch.setattr(components,'activate_gpu',lambda _:None)
-    monkeypatch.setattr(transcription,'_gpu_runtime_ready',lambda:(True,''))
-    monkeypatch.setattr(transcription.sys,'platform','win32')
-    monkeypatch.setattr('desktop.cuda_probe.probe_cuda',lambda *args,**kwargs:{'ok':False,'error':'native exit'})
+    def forbidden(*args,**kwargs): raise AssertionError('CUDA must never be initialized')
+    monkeypatch.setattr(components,'activate_gpu',forbidden)
+    monkeypatch.setattr('desktop.cuda_probe.probe_cuda',forbidden)
     _,device=transcription.load_whisper('medium',model_cache=tmp_path/'Modelos')
-    assert device=='CPU' and constructed==['cpu']
+    assert device=='CPU'
+    assert calls==[('small','cpu')]
 
 
 def test_custom_onedrive_root_cannot_receive_components(tmp_path,monkeypatch):

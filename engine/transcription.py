@@ -1,4 +1,4 @@
-"""Optional locally executed Faster-Whisper; never contacts ChatGPT or Gemini."""
+"""CPU-only Faster-Whisper; no CUDA initialization or remote transcription."""
 from __future__ import annotations
 from pathlib import Path
 import os
@@ -56,43 +56,30 @@ def load_cpu_whisper(model_name: str='medium', *, model_cache:Path|None=None):
                         cpu_threads=min(8, os.cpu_count() or 4), **_model_options(model_cache))
 
 
-def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_status:Callable[[str],None]=lambda _:None, cancel:Cancellation|None=None):
-    if model_cache is not None:
-        from desktop.components import activate_gpu
-        activate_gpu(Path(model_cache).parent)
-    try:
-        from faster_whisper import WhisperModel
-    except ImportError as err:
-        raise RuntimeError('Falta faster-whisper. Ejecuta instalar.bat para instalar las dependencias.') from err
-    ready, reason = _gpu_runtime_ready()
-    if ready and sys.platform == 'win32' and model_cache is not None:
-        # cuDNN lazily initializes on inference and may abort the native process.
-        # Probe in a disposable child so a missing dependency cannot kill the UI.
-        from desktop.cuda_probe import probe_cuda
-        on_status('Comprobando inferencia CUDA en proceso aislado...')
-        report=probe_cuda(model_name,Path(model_cache),cancel=cancel)
-        ready=report.get('ok',False)
-        reason=report.get('error','CUDA probe failed')
-    if ready:
-        try:
-            on_status('Preparando aceleración NVIDIA (CUDA)...')
-            return WhisperModel(model_name, device='cuda', compute_type='int8_float16',
-                                **_model_options(model_cache)), 'NVIDIA GPU'
-        except Exception as exc:
-            if not is_cuda_runtime_error(exc):
-                raise
-            reason = str(exc)[:130]
-    on_status(f'GPU CUDA 12 no disponible ({reason}). Se utilizará CPU con modelo small (más rápido, precisión posiblemente menor).')
-    cpu_model = 'small' if model_name in ('medium','large-v3') else model_name
-    return load_cpu_whisper(cpu_model, model_cache=model_cache), 'CPU'
+def load_whisper(model_name: str='small', *, model_cache:Path|None=None,
+                 on_status:Callable[[str],None]=lambda _:None,
+                 cancel:Cancellation|None=None,
+                 on_fallback:Callable[[str],None]|None=None):
+    """CPU-only policy: never detect/initialize CUDA, even on an NVIDIA PC.
 
+    Retain the former signature for compatibility with internal call sites.
+    Medium/large-v3 requests from older saved UI state use CPU-small, avoiding
+    lengthy high-memory CPU inference while preserving the chosen model in
+    the job's 'model' and the actual model in 'actual_model'.
+    """
+    if cancel: cancel.check()
+    cpu_model = 'small' if model_name in ('medium','large-v3') else model_name
+    on_status('Modo CPU permanente. Preparando Whisper '+cpu_model+' (sin NVIDIA/CUDA).')
+    model=load_cpu_whisper(cpu_model,model_cache=model_cache)
+    if cancel: cancel.check()
+    return model,'CPU'
 
 def transcribe_clip(model, clip: Clip, path: Path, *, language: str='auto', cancel: Cancellation|None=None) -> list[dict]:
     kwargs={
         'beam_size':5,'vad_filter':False,'word_timestamps':True,
         'condition_on_previous_text':False,'task':'transcribe',
     }
-    # CPU fallback is slower: make progress practical without increasing RAM.
+    # Native CTranslate2 CPU device: keep decoding bounded on ordinary laptops.
     if getattr(getattr(model, 'model', None), 'device', None) == 'cpu':
         kwargs['beam_size'] = 2
         kwargs['word_timestamps'] = False

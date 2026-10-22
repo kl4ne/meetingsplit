@@ -35,7 +35,7 @@ if errorlevel 1 exit /b 1
  --add-data "ui;ui" ^
  --add-data "docs;docs" --add-data "LICENSE;." ^
  --add-data "build\legal;legal" ^
- --hidden-import desktop.component_setup --hidden-import desktop.cuda_probe ^
+ --hidden-import desktop.component_setup ^
  --add-binary "bin\ffmpeg.exe;bin" --add-binary "bin\ffprobe.exe;bin" ^
  --add-binary "bin\*.dll;bin" ^
  --collect-all faster_whisper --collect-all ctranslate2 --collect-all PySide6.QtWebEngineWidgets ^
@@ -79,5 +79,5 @@ if exist "%ISCC%" (
 )
 echo.
 echo EXITO: compilacion y prueba basica del EXE completadas en este equipo.
-echo NOTA: faltan las pruebas con audio real y NVIDIA en tu ASUS.
+echo NOTA: faltan las pruebas con voz real y Ollama en modo CPU, licencias y aceptacion final.
 exit /b 0

@@ -22,7 +22,7 @@ def main():
     parser.add_argument('--root',type=Path,required=True)
     parser.add_argument('--model',choices=('small','medium'),default='small')
     parser.add_argument('--cpu',action='store_true')
-    parser.add_argument('--missing-gpu',action='store_true',help='Separate process with no application GPU component folder')
+    parser.add_argument('--missing-gpu',action='store_true',help='Legacy option: runs CPU-only; never initializes GPU')
     args=parser.parse_args()
     root=validate_local_folder(args.root)
     if args.missing_gpu:
@@ -35,7 +35,7 @@ def main():
         model=load_cpu_whisper(args.model,model_cache=root/'Modelos');device='CPU'
     else:
         model,device=load_whisper(args.model,model_cache=root/'Modelos',on_status=lambda m:print(m,flush=True))
-        if device!='NVIDIA GPU': raise RuntimeError('GPU acceptance failed: fell back to CPU')
+        if device!='CPU': raise RuntimeError('CPU-only policy violated')
     results={'device':device,'model':args.model,'input':'Windows TTS synthetic meetings only','tests':[]}
     for language in ('en','es'):
         audio=root/f'synthetic-meeting-{language}.wav'
@@ -45,7 +45,7 @@ def main():
         row={'language':language,'audio_seconds':duration,
              'inference_seconds':round(time.monotonic()-start,2),'segments':rows}
         results['tests'].append(row);print(json.dumps(row,ensure_ascii=False),flush=True)
-    filename=('missing-gpu-cpu' if args.missing_gpu else 'cpu' if args.cpu else 'gpu')+'-speech-'+args.model+'.json'
+    filename=('missing-gpu-cpu' if args.missing_gpu else 'cpu')+'-speech-'+args.model+'.json'
     (root/filename).write_text(json.dumps(results,indent=2,ensure_ascii=False),encoding='utf-8')
     model=None;gc.collect()
 

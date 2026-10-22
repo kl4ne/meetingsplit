@@ -1,3 +1,128 @@
+## ACTIVE CPU-ONLY CHECKPOINT — user overrode every earlier GPU requirement (2026-10-22)
+
+- **Owner's final hardware decision:** `olvida esto de usar la nvidia. usemos siempre el cpu`. Do NOT continue CUDA setup, NVIDIA RTX 4060 spouse laptop or RTX 4070 ASUS GPU acceptance. Second PC is not needed for this issue.
+- **CPU-only source implementation** now on isolated branch: `engine/transcription.py` never initializes GPU and uses `WhisperModel(...device='cpu',compute_type='int8')`; CPU-small effective for any old medium/large-v3 selection; `engine/job.py` enforces exact CPU device, writes `execution_policy='CPU_ONLY'`, `actual_model`, and truthful CPU progress. `engine/ollama.py` sends `options.num_gpu=0` on EVERY chat request, incl. existing local service; managed process CPU library `OLLAMA_LLM_LIBRARY=cpu` and GPU masked in own environment.
+- Native GUI UI/in-app setup/installer now ONLY offer optional Ollama CPU; CUDA opt-in removed, direct legacy `install_gpu()` raises, old GPU library activation no-op, CLI `--cuda-probe` disabled. UI standalone preview rebuilt exactly; no visual font changes. Existing downloaded user files and applications untouched. CTranslate2's upstream DLL bytes may remain inside package until separately audited; they are never initialized by app.
+- `qa/release_gate.json` replaced obsolete ASUS GPU tasks with **uncompleted** CPU-only speech, CPU-only Ollama, long-meeting, final frozen acceptance, installer and legal requirements, `release_allowed=false`. v0.8.6 and draft PR #1 retained; main and Integrity unchanged.
+- **Lightweight Ubuntu Actions #39723186879 SUCCESS (17 passed / 5 skipped)** with code compile, JS syntax and blocked gate. This job intentionally did NOT install or freeze any Windows binaries.
+- **ONE necessary internal Windows frozen QA #39723395202** started at commit `1351b8e53f0498136bd74fa0c13a06e367dd1fe4`, currently completing pinned LGPL FFmpeg+PyAV source build; MUST wait for final conclusion to assert successful EXE/setup. Workflow includes Qt/PyInstaller, scoped Windows actual smoke and checks `frozen-check.json` `checks.cpu_only.ok=true`, `checks.cuda.ok=false`, and packaged HTML without CUDA button. NO PUBLIC RELEASE authorization.
+- Work documented `docs/CPU_ONLY_OWNER_DECISION_2026-10-22.md`; PR #1 description superseded older GPU goals.
+- Next: inspect final Windows QA run #39723395202 result/logs; only if passed save exact artifact IDs/digests and offer INTERNAL evaluation version (not signed public release); don't retry builds for no reason. If failed, fix precise root cause and rerun only justified scope. CPU 1–3h accuracy/performance, vendor licensing and interactive installer cancellation still pending.
+- No further requests for spouse's laptop. Do not claim changes are installed on ASUS; source-only until Windows binary is built and owner installs chosen candidate later.
+
+---
+## LATEST LIVE SECOND-PC PROCESSING OBSERVATION — 2026-10-22
+
+- User's short real meeting on secondary Windows 11 with RTX 4060 Laptop had not finished; user BELIEVED it was using CPU. Investigation of **actual original packaged source** showed unconditional `En CPU el primer fragmento puede tardar varios minutos` progress message, even for `NVIDIA GPU`; **there is NO verified CPU fallback yet**. Check live `manifest.json` key `device` in that meeting's output folder (written during processing, safe to read); no need to upload personal audio or raw manifest.
+- Setup previously passed GPU `small` inference and Ollama local qwen3:4b; real selected `medium`/`large-v3` gets separately GPU-probed, may truly fall back; manifest `device=CPU` and `warnings` distinguish from merely misleading text.
+- QA-only isolated source fixes: `engine/job.py` truthfully shows GPU vs CPU in transcribe progress; persists initial model/probe CUDA fallback `gpu_fallback.stage=model_initialization_or_probe`, also lazy inference CUDA fallback `stage=live_transcription`; backward-compatible `on_fallback` optional callback in `engine/transcription.py`; `ui/app.js` translates the new bilingual progress; new synthetic-only tests `tests/test_gpu_progress_truth.py`. **No Windows QA executed or packaged yet**; `[skip ci]` and no new Actions minutes, current user-running app unchanged.
+- Diagnostic root detail and step instructions: `docs/SECOND_PC_GPU_STATUS_AMBIGUITY_2026-10-22.md`. Do not claim fix shipped. Continue after device manifest result or final processing outcome. Do not repeat large CUDA/Ollama downloads or restart actively progressing meeting.
+- Keep v0.8.6, release_allowed=false, QA draft PR #1, main/Integrity unchanged.
+
+---
+## LATEST PHYSICAL SECOND-PC DIAGNOSTIC (2026-10-22)
+
+- User uploaded `MeetingSplit-Diagnostico-Compartible.json` from SECOND Windows 11 PC after describing an error/repeated Prepare button. Actual GPU listed: **NVIDIA RTX 4060 Laptop GPU** plus Intel UHD (not ASUS 4070).
+- CUDA four packages and Ollama 0.40.6 each have present folders and **schema-2** receipts. **Receipt presence is not a freshly rehashed manifest.**
+- **CUDA validation `ok=true`, `device=cuda`** (synthetic silence inference only).
+- **Ollama validation `ok=true`, `status=complete`, `model=qwen3:4b`**. Both dedicated reports are present.
+- The original transient GUI error's specific text/stage remains unobserved. Original shipped GUI lacks a generic report, hence `last_gui_attempt=null` and `setup_report_exists=false` are explained by the OLD candidate. New report persistence code is only on QA branch and has not been rebuilt/tested; it did not produce the user's result.
+- **No further download/reinstall is warranted now**. Next physical action: short end-to-end dummy English/Spanish speech GUI meeting and generated local minutes check, ideally without uploading any personal recordings. This requires user at PC. Real 1–3h and target ASUS 4070, full legal and UI GUI cancel remain blocked.
+- Complete evidence in `docs/SECONDARY_PC_CUDA_OLLAMA_DIAGNOSTIC_SUCCESS_2026-10-22.md`. No Actions minutes spent; no main merge; 0.8.6 release gate remains FALSE.
+
+---
+## NEW USER-OBSERVED PHYSICAL TEST FAILURE — 2026-10-21
+
+- User on SECOND physical Windows 11 machine reported optional component failure after selecting CUDA+Ollama, repeatedly showing “Prepare selected components” upon retry, and no expected QA report. **Exact error, GPU and which install stage failed UNKNOWN; do not guess or mark either vendor runtime working.**
+- Diagnosed source: original frozen 0.8.6 Qt `desktop/component_setup.py` only displayed failure in a QLabel, then re-enabled Prepare; no general persistent result. CUDA GPU inference runs BEFORE Ollama setup, so CUDA failure can prevent Ollama's report from existing. Dedicated physical installer QA `qa-summary-shareable.json` is ONLY produced by `02-PRUEBAS-GUIADAS.cmd`, not by the GUI's Prepare button.
+- Created user-downloadable read-only diagnostic `MeetingSplit-Diagnostico-Opcionales-Win11.zip` SHA256 `ff4047ecef106ccdb033673b74d929ab84b412ec3c2c8ae33c507e097374115f`, showing GPU model, presence of vendor receipts, `cuda-validation.json`, `ollama-validation.json` status and redacted error (if any). User must choose their existing MeetingSplit DATA folder and return ONLY `MeetingSplit-Diagnostico-Compartible.json`. The ZIP is a conversation artifact, not checked into GitHub.
+- Patched ONLY isolated QA branch `desktop/component_setup.py`: durable atomic `Componentes/component-setup-report.json` stage/result (including failure/cancel), human-readable message and Qt Open Report button. Added `tests/test_component_setup_reports.py`. **New source NOT built nor Windows-tested**; it is NOT on the second PC's current installer. DO NOT claim issue fully fixed until user diagnostic, targeted tests and package validation.
+- Existing official QT license notice source/earlier 685/685 sha and native 211 still good for OLD candidate; no further GitHub Actions minutes used.
+- Detailed checkpoint `docs/SECONDARY_PC_OPTIONAL_SETUP_FAILURE_2026-10-21.md`. Await diagnostic rather than repeat installation/downloads. Preserve data, receipts and test machine; no deletion, no driver/system/path changes. Release `0.8.6`, `release_allowed=false`, main/Integrity unchanged.
+
+---
+## NEXT USER HANDOFF — SECONDARY WIN11 PHYSICAL QA (2026-10-21)
+
+**NEXT REAL DEPENDENCY IS USER'S SECOND WINDOWS 11 PC.** They confirmed they have one. A verified kit has been prepared in this chat; exact checksum `41f5b1b041e78d66f2fe5a0244a96148ed74eb11c929c07852ace4d404dd57d4`; refer to `docs/SECONDARY_PHYSICAL_WIN11_QA_HANDOFF_2026-10-21.md` for precise steps, artifact hashes, privacy safeguards and scripts. The kit is not in GitHub and no secondary physical-PC tests have run yet.
+
+Owner actions: download historic **internal-only** installer from https://github.com/kl4ne/meetingsplit/actions/runs/39695270843/artifacts/12391430920; leave ZIP unopened, rename it to `MeetingSplit-QA-installer-artifact.zip` and place beside the extracted 8KB kit; click `01-COMPROBAR-PC.cmd` on the second PC as non-admin. If it prints PREFLIGHT PASSED, click `02-PRUEBAS-GUIADAS.cmd` and follow the staged prompts; return only `qa-summary-shareable.json` (no raw Windows Inno logs). This version of QA tests pre-copy GUI cancel, clean install, self-check, EN/ES views and uninstall/data preservation. It does not download GPU/Ollama or do mid-copy cancellation.
+
+Do not remotely install anything, claim passed physical results, or repeat full Windows/PyAV builds. Final source branch postdates historical internal binary; legal release hold and ASUS GPU/real speech remain pending. After user's results, prepare the separate mid-copy/live optional-download experiment tailored to available GPU/disk hardware, with user vendor-license consent and data isolation.
+
+---
+## CURRENT HANDOFF (2026-10-21) — no remaining automatic build loops
+
+Last verified QA: #39695270843 102 passed/2 skipped (on older source snapshot); #39698897754 **14 passed** and official-wheel cuDNN matches frozen SHA; all 685 actual frozen portable files and 211 AMD64 PE headers independently examined with **zero hash/header discrepancies**. Both new reports are under `docs/INDEPENDENT_FROZEN_*`. Complete GitHub Actions have **not** been repeated.
+
+NOW REQUIRES EXTERNAL ENVIRONMENT OR REVIEW:
+1. A GUI-capable **throwaway Windows 11 VM** (not hosted headless Actions, not owner's production ASUS) for interactive Inno cancel (before and mid-copy) and real optional CUDA/Ollama downloads: interruptions, retry, disk shortage. Existing hosted attempt lacked a desktop; cannot certify it on session-0 CI.
+2. Exact final-app test on **ASUS RTX 4070** with owner cooperation, natural bilingual/mixed audio and 1–3h GPU/Ollama; do not automatically install/reformat or upload audio. Follow `docs/FINAL_RELEASE_ACCEPTANCE_PLAN_2026-10-21.md`.
+3. Complete matching **Qt WebEngine/Chromium** third-party notices, Qt and FFmpeg corresponding-source/LGPL user rights, NVIDIA exact SDK EULA applicability and native vulnerability / legally qualified sign-off. The official cuDNN runtime DLL redistribution permission is conditional; the shipped DLL origin has now been proven, not the right to redistribute the entire app.
+4. Decide public publisher identity and signing subscription/certificate only with owner's explicit permission. Current development MeetingSplit.exe is unsigned; Microsoft says EV no longer bypasses first-run SmartScreen warnings.
+5. Only after all these prerequisites are addressed, perform **one** final QA build and Windows hardware acceptance including all post-#39695270843 code/license changes, then owner-authorized PR merge/public Release. Keep release gate false meanwhile.
+
+---
+## CURRENT NEXT ACTION AFTER VERIFIED CTRANSLATE2 ORIGIN — 2026-10-21
+
+1. DO NOT repeat last successful frozen build #39695270843 or source-only Ubuntu test #39698897754. Wheel/DLL provenance MATCH is proven in `docs/CT2_CUDNN_ORIGIN_VERIFIED_2026-10-21.json`; 14 passed in a cheap Ubuntu source job and public release is still blocked. No expensive Windows job was used this continuation.
+2. Upstream 6.140.0 `CHROMIUM_VERSION` and baseline Chromium BSD-3-Clause license were added with a pinned SHA notice. **Full Chromium third-party attribution, actual Qt binary version/signatures and LGPL source/replacement instructions remain pending**. New build must contain all 8 pinned source notices, but cannot be considered legally cleared solely by them.
+3. Finish matching NVIDIA binary version/EULA/attribution and FFmpeg/PyAV LGPL source/provenance + native vulnerability/qualified legal review. The cuDNN SDK EULA generally allows runtime DLL redistribution subject to stated requirements; exact applicability not yet signed off.
+4. GUI-capable disposable Windows acceptance (pre-install and in-progress installer cancellation, real interrupted optional CUDA/Ollama downloads, recovery), not the same headless Actions runner. Test program is `docs/FINAL_RELEASE_ACCEPTANCE_PLAN_2026-10-21.md`.
+5. Only after material license/source work and GUI environment access: single final development build with `qa/collect_licenses.py` + `qa/audit_package.py` pinned notices, ASUS exact-version RTX 4070 / Ollama mixed natural speech & 1–3h acceptance. Preserve data and do not upload user recordings.
+6. Windows signing / SmartScreen decision: `docs/WINDOWS_SIGNING_SMARTSCREEN_DECISION_2026-10-21.md`; publisher/fees require owner approval. No Release, no main change, no Integrity change, version 0.8.6, `release_allowed=false`.
+
+---
+## LATEST NEXT_ACTION — post successful frozen QA #39695270843 (2026-10-21)
+
+DO NOT REBUILD the already-passed pinned package merely to reconfirm success.
+- Windows full internal QA #39695270843 **PASSED: 102 tests, 2 skipped**, FFmpeg/PyAV, frozen EXE, native audit, clean/reinstall/uninstall/data retained. Reports artifact #12390712114 verified (SHA-256 `0a2af630e25772402c332f38b771ab151b1aafd5eaba98b199913cf67db52376`), 685 frozen files/211 native; installer QA artifact #12391430920; portable #12390996760. No release.
+- Windows notices SHA receipt run #39696118269 **PASSED**. Tokenizers/Cython/Pyrex notices were committed *after* `90238d6` QA snapshot; they are NOT inside that package and require future final distribution validation.
+
+Outstanding actions, without repeating the passed builds:
+1. Complete the exact LGPL/Qt WebEngine/Chromium matching source/third-party notices, signed-off native security and bundled CTranslate2 cuDNN licensing, including newly added Tokenizers/Cython/Pyrex notices in the eventual final package. Do not represent upstream web links or QA hashes as legal clearance.
+2. Test actual interactive Inno cancellation in GUI-capable disposable Windows: GitHub Actions #39694379638 was INCONCLUSIVE because desktop windows were not visible. Test real optional CUDA/Ollama interruptions, retries, disk exhaustion and occupied-port recovery on isolated environment; source simulations already passed.
+3. Only when ready to validate exact final build on ASUS: NVIDIA Whisper and Qwen3 4B minutes with natural EN/ES/mixed speech, long runtime memory/thermals, and five views at enlarged fonts. Preserve working user installation; no unsolicited install.
+4. After material source/notices/runtime changes and all gates closed, run one final consolidated installer acceptance. Version remains 0.8.6 until authorization; draft PR #1 remains open; `release_allowed=false`. No Release and no Integrity modifications.
+
+---
+## Live operations handoff — 2026-10-21
+
+1. Check isolated internal package workflow **#39695270843** on commit `90238d6`. Before chat handoff it was still running at PyInstaller/frozen tests, with pinned FFmpeg/PyAV build already successful. Inspect its final job steps, tests, smoke artifacts; do not declare success until actual completion. No Release is authorized.
+2. The source-only native notice SHA-256 workflow **#39696118269 PASSED (1 test)**. Added original 0.23.3 tokenizers and 3.3.0 Cython license/COPYING notices; their docs post-date the QA binary snapshot.
+3. Keep draft PR #1 open, no merge, and release gate false. No repeat of already completed 26 Windows source tests or old successful builds without material changes.
+4. Interactive installer cancel remains unverified on headless GitHub runner; complete on isolated GUI-capable disposable Windows. Real optional-vendor failure/retry and final ASUS exact binary natural-meeting/GPU/Ollama and third-party native legal approval remain pending.
+
+---
+## ACTIVE NEXT ACTIONS — 2026-10-21 — after Windows QA run #39694809814
+
+Already passed; do not repeat without material changes:
+- Pinned LGPL source-built FFmpeg/PyAV & MP3/M4A/WAV frozen installer QA #39599798144 (82 pass/2 skip).
+- Real isolated 0.8.5 -> 0.8.6 upgrade #39598790616.
+- Main source Windows tests-only #39602465892 (84 pass/2 skip).
+- New isolated source Qt-dialog cancel/disk-full/retry and extracted-file hash QA #39694809814 (**26 passed**; no hardware/vendor download).
+- Existing final frozen package includes Qt WebEngine/Chromium and bundled CTranslate2 cudnn64_9.dll; read exact legal evidence matrix.
+
+Remaining true blockers in priority order:
+1. Independent legal/native-security audit of frozen package, including Qt WebEngine's Chromium 140-era third-party notices, exact source/build receipts/replacement rights, FFmpeg LGPLv3 dependencies, and provenance/redistribution rights for bundled CTranslate2 cudnn64_9.dll; see `docs/REDISTRIBUTION_EVIDENCE_MATRIX_2026-10-21.md`. Obtain full corresponding sources and notices, not just links; do not mark compliance approved without qualified review.
+2. **Interactive** Windows installer cancel and interrupted real CUDA/Ollama component download/retry/full-disk using a GUI-capable throwaway Windows desktop, not GitHub's headless host. Exact pinned installer #12346625631 was downloaded/hash verified in #39694379638 but interactive window was unavailable, so this was inconclusive. Do not ask for screenshots or operate on the owner's working installation.
+3. Validate this QA branch's new extracted-file receipt behavior in a final *packaged* test app and then on actual ASUS without losing prior optional components. CPU, D:, UI EN/ES, GPU and Ollama behaviors already approved elsewhere must not regress.
+4. Actual ASUS (RTX 4070) exact full combined 0.8.6 build: GPU Whisper, Ollama Qwen EN/ES/mixed natural speech minutes, 1–3h resource/memory/thermal assessment, large typography views. Earlier synthetic tests are not this acceptance.
+5. Separate signing/SmartScreen and identity disclosure consent decision, if needed for public shipping.
+
+No new version, no definitive user installer, no GitHub Release. Keep `qa/release_gate.json` `release_allowed=false`. Do not change Integrity. Handoff is `qa/release-evidence-20261021`.
+
+---
+## ACTIVE NEXT ACTIONS — 2026-10-21, QA release-evidence branch
+
+1. **Do not repeat resolved work:** #39598629560 hash failed because the source URL was `latest/n9.0` while expecting a dated 8.1.3 digest; the dated build and pinned PyAV succeeded in #39599798144. #39598790616 authentic upgrade PASSED. Main tests-only #39602465892 PASSED. Do not rerun these without material changes.
+2. Finish exact Qt 6.12/WebEngine 6.12.0.140 Chromium third-party notices and source/BOM obligations, FFmpeg/PyAV LGPLv3 corresponding source/relinking evidence, and native CTranslate2 bundled `cudnn64_9.dll` NVIDIA licensing/provenance. See `docs/QA_NATIVE_EVIDENCE_AUDIT_2026-10-21.json`. External legal review still needed.
+3. Run real Windows isolated interactive-cancel tests and optional CUDA/Ollama interrupted download, retry, full-disk and occupied-port matrix; simulation-only unit tests do not count as installer UI acceptance. Protect ASUS installation and its data.
+4. On the ASUS, verify the exact consolidated pinned installer with GPU/Whisper + Ollama and natural EN/ES/mixed speech, sustained duration/resource behavior; one-hour synthetic predecessor is not three-hour realistic acceptance.
+5. Keep `qa/release_gate.json` false and 0.8.6. No Release, no definitive installer, no unreviewed source/license substitutions, no Integrity changes. QA evidence checker was tested locally (6 focused cases); no additional Windows run was ordered.
+
+Checkpoint branch: `qa/release-evidence-20261021`, based on main `c292ad5d`. Previous `qa/consolidated-20261021` was not rewritten.
+
+---
 ## Next action after successful pinned main tests-only CI
 
 1. Assemble exact Qt WebEngine/Chromium and bundled cuDNN third-party

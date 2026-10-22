@@ -12,6 +12,9 @@ def test_self_check_never_requires_online_services():
     assert report['offline'] is True
     assert report['version']=='0.8.6'
     assert {'qt_webengine','ffmpeg','ffprobe','whisper','cuda'} <= set(report['checks'])
+    assert 'cpu_only' in report['checks']
+    assert report['checks']['cuda']['ok'] is False
+    assert 'policy' in report['checks']['cuda']['detail']
     assert all(isinstance(row['ok'],bool) for row in report['checks'].values())
     assert all(not row['required'] for key,row in report['checks'].items() if key in ('cuda','platform'))
     assert code in (0,2)

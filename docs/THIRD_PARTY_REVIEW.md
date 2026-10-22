@@ -1,3 +1,107 @@
+## Verified CTranslate2 DLL origin; NOT legal approval (2026-10-21)
+
+Source-only, low-cost Ubuntu GitHub Actions **#39698897754 passed 14 tests**
+and SHA-verified the official PyPI CTranslate2 4.6.2 CPython 3.11
+Windows wheel `ce7880fa5d2e1b36329998c711cb764c621a4d2a199b251b1ad02e770b641e91`.
+Its `ctranslate2/cudnn64_9.dll` (438,840 bytes) SHA-256
+`c07cc47f2fa4a566593c7af4aa7e57edf09a985a0fddd14cb8d6f456e252af05`
+matches the exact prior frozen package binary hash. Origin is
+**verified**; earlier paragraphs saying this binary's source is
+unknown are superseded. Exact native version, controlling NVIDIA EULA,
+notices and distribution approval remain unresolved. NVIDIA's
+cuDNN 9.1.1 supplement permits runtime .dll/.so distribution under
+additional conditions, which is NOT unconditional permission.
+https://docs.nvidia.com/deeplearning/cudnn/backend/v9.1.1/reference/eula.html
+
+Official Chromium 140 baseline BSD notice is now committed and SHA-pinned
+(`Chromium-140.0.7339.264-BSD-3-Clause.txt` SHA-256
+`368cca1106be99d39ecd32a38d8305585d802a475effb66380b91ffc9bcf709b`).
+It is not in the previous QA installer, and it does not cover the
+many additional third-party Chromium/WebEngine notices or LGPL
+corresponding-source rights. Qt WebEngine 6.140 source CHROMIUM_VERSION
+declares base 140.0.7339.264 patched through 155.0.8059.85; the
+specific frozen DLL still needs matching security provenance.
+
+New frozen notice-integrity code and the JS error-diagnostic fix also
+postdate the last built artifact. No additional full CI build was
+started merely for this documentation or small source changes.
+**Keep release blocked.**
+
+---
+## Latest actual frozen media/installer package evidence (2026-10-21)
+
+The post-component-integrity Windows QA **#39695270843 succeeded**:
+102 tests passed, 2 skipped; exact pinned LGPL FFmpeg/PyAV; frozen
+EXE; audio media tests; silent installer clean/reinstall/uninstall with
+external data preservation. SHA-256 checked report ZIP
+`0a2af630e25772402c332f38b771ab151b1aafd5eaba98b199913cf67db52376`
+contains **685 files / 211 native** inventory and 118 matched
+legal-file SHA receipts. It does not contain native executable bytes
+or legal sign-off. Exact sources/notices and compiled Chromium, bundled
+CTranslate2 cuDNN rights, and other native licensing/security still open.
+
+Tokenizers 0.23.3, Cython 3.3.0 and Pyrex original notices and SHA
+source receipts were added *after* frozen candidate commit `90238d6`,
+so they are NOT proven to be in this package. Follow
+`docs/REDISTRIBUTION_EVIDENCE_MATRIX_2026-10-21.md`.
+A Windows runner without an interactive desktop cannot satisfy actual
+cancellation QA. Maintain `release_allowed=false`.
+
+---
+## Final QA/source status (2026-10-21, no legal sign-off)
+
+The pinned LGPL Windows build/upgrade have PASSED their recorded tests.
+Further QA on the isolated branch #39694809814 PASSED 26 mock-vendor Windows
+Qt cancellation/retry and extracted-component hash validations. No final
+base installer rebuild has been made after these QA-only component security
+changes. A hosted Actions attempt at authentic interactive Inno Setup
+cancellation #39694379638 could not access a visible desktop and is
+**INCONCLUSIVE**. It MUST NOT count as the cancel/retry release gate.
+
+For exact components, binary SHA receipts, source and notice work items
+see `docs/REDISTRIBUTION_EVIDENCE_MATRIX_2026-10-21.md`. The original
+proprietary/freeware license already includes an LGPL library-rights carve-out,
+but license review, native vulnerabilities, Chromium notices and NVIDIA bundled
+cuDNN distribution rights remain unresolved. A QA pass cannot flip
+`release_allowed=false` to true.
+
+---
+## Native evidence cross-check — 2026-10-21 (release STILL blocked)
+
+An independent read of the existing pinned LGPL QA report archive from run
+#39599798144, digest `428a5540b90ef049ccd0eb24b51cd082bc4507a457a94feb43fbb53288df1db3`,
+matched all 680 inventoried file records, 211 native flags, aggregate sizes,
+embedded legal-file hashes and FFmpeg source receipts. It does not contain
+full frozen EXE/DLL bytes and therefore cannot independently authenticate
+each native hash; do not call this an executable-level attestation.
+
+Exact frozen Qt WebEngine binary `_internal/PySide6/Qt6WebEngineCore.dll`
+(SHA-256 `54488cfc8fea4057377302cec5a1fb1100fb4bc4231cd7e60f43e4fcff28e89e`)
+is present, but inventory contains no named Chromium third-party notice file.
+Qt's official 6.12 materials state that Qt WebEngine includes Chromium and
+license compliance/acknowledgments for its third-party parts are necessary:
+https://doc.qt.io/qt-6/licenses-used-in-qt.html
+https://doc.qt.io/qtforpython-6.11/overviews/qtwebengine-licensing.html
+Vendor SPDX SBOM and exact component-specific notices still need collection
+and checking against the *included* binary, not merely a link.
+
+Exact frozen `_internal/ctranslate2/cudnn64_9.dll`
+(SHA-256 `c07cc47f2fa4a566593c7af4aa7e57edf09a985a0fddd14cb8d6f456e252af05`)
+is present. The CTranslate2 project's MIT statement alone does not resolve
+NVIDIA cuDNN DLL redistribution permissions. Determine its binary version,
+origin and vendor terms before public distribution. Avoid modifying the
+working optional CUDA installer until these facts have been verified.
+
+The pinned FFmpeg build is LGPL/shared but uses `--enable-version3`,
+so the actual LGPLv3 / third-party codec obligations, corresponding source,
+modified-library replacement instructions and notices require verification.
+Source/build receipt hashes are evidence, not completion of these duties.
+
+The new isolated audit (`qa/verify_release_evidence.py`) rejects altered
+receipt hashes or GPL-native names; its report and six local regression checks
+do not close the legal or vulnerability gates. NO release authorization.
+
+---
 ## 2026-10-21 — exact pinned QA package: remaining legal evidence
 
 The latest pinned LGPL FFmpeg + source-built PyAV Windows QA succeeded

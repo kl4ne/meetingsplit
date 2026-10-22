@@ -18,5 +18,25 @@
     "file": "FFmpeg-LGPL-2.1.txt",
     "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
     "source": "https://raw.githubusercontent.com/FFmpeg/FFmpeg/n8.0/COPYING.LGPLv2.1"
+  },
+  {
+    "file": "Tokenizers-0.23.3-Apache-2.0.txt",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "source": "https://raw.githubusercontent.com/huggingface/tokenizers/v0.23.3/LICENSE"
+  },
+  {
+    "file": "Cython-3.3.0-Apache-2.0.txt",
+    "sha256": "9568a2b155e66ac3e0ba1fd80b52b827b9460e6cf6f233125e7cbca8e206ddc3",
+    "source": "https://raw.githubusercontent.com/cython/cython/3.3.0/LICENSE.txt"
+  },
+  {
+    "file": "Cython-3.3.0-Pyrex-COPYING.txt",
+    "sha256": "e1eb1c49a8508e8173dac30157e4a6439a44ad8846194746c424fbc3fc2b95d7",
+    "source": "https://raw.githubusercontent.com/cython/cython/3.3.0/COPYING.txt"
+  },
+  {
+    "file": "Chromium-140.0.7339.264-BSD-3-Clause.txt",
+    "sha256": "368cca1106be99d39ecd32a38d8305585d802a475effb66380b91ffc9bcf709b",
+    "source": "https://raw.githubusercontent.com/chromium/chromium/140.0.7339.264/LICENSE"
   }
 ]

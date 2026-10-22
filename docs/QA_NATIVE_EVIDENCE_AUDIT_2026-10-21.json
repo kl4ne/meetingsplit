@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "version": "0.8.6",
+  "source_qa_run": 39599798144,
+  "upgrade_run": 39598790616,
+  "source_main_ci_run": 39602465892,
+  "report_archive_sha256": "428a5540b90ef049ccd0eb24b51cd082bc4507a457a94feb43fbb53288df1db3",
+  "evidence_integrity_ok": true,
+  "binary_bytes_verified": false,
+  "file_count": 680,
+  "native_file_count": 211,
+  "package_bytes_claimed_by_manifest": 1158981253,
+  "ffmpeg_archive_sha256_from_receipt": "453a30a5019676e805a85d4845e3aad31234dfed4ae0ea2b1d4e97254dc44b0a",
+  "pyav_source_sha256_from_receipt": "dd2ce779fa0b5f5889a6d9e00fbbbc39f58e247e52d31044272648fe16ff1dbf",
+  "qt_webengine_present": true,
+  "chromium_notice_files_detected": [],
+  "ctranslate2_bundled_cudnn": [
+    {
+      "path": "_internal/ctranslate2/cudnn64_9.dll",
+      "sha256": "c07cc47f2fa4a566593c7af4aa7e57edf09a985a0fddd14cb8d6f456e252af05"
+    }
+  ],
+  "smoke_clean_reinstall_uninstall": true,
+  "upgrade_085_to_086": "verified separately in GitHub Actions 39598790616",
+  "manual_gaps": [
+    "The report archive contains no frozen executable bytes, so native binary SHA-256 entries cannot independently be rehashed from this report.",
+    "Qt WebEngine/Chromium third-party notice file missing from the frozen-package inventory.",
+    "Bundled CTranslate2 cudnn64_9.dll requires exact NVIDIA redistribution provenance/permissions.",
+    "Corresponding source and LGPL replacement/relinking support for the exact shipped Qt, FFmpeg and PyAV native binaries requires verification.",
+    "Live interactive cancellation and optional CUDA/Ollama network/disk-full/retry acceptance remains outstanding.",
+    "Final ASUS exact-package GPU/Ollama/natural EN/ES meeting acceptance and native vulnerability/legal review remain outstanding."
+  ],
+  "license_review_complete": false,
+  "security_review_complete": false,
+  "release_allowed": false
+}

@@ -27,13 +27,13 @@ config={'file':str(source),'output':str(root),'action':'both','format':'mp3',
 start=time.monotonic()
 result=run_job(config,lambda message,pct:print(f'{pct}% {message}',flush=True))
 manifest=json.loads((result/'manifest.json').read_text(encoding='utf-8'))
-assert manifest['status']=='complete' and manifest['device']=='NVIDIA GPU'
+assert manifest['status']=='complete' and manifest['device']=='CPU'
 assert len(manifest['exports'])==len(manifest['clips'])>=6
 assert manifest['transcription_segments']>100
 assert (result/'RESULTADOS_COMPLETOS.zip').is_file()
 summary={'synthetic_input_seconds':3600,'elapsed_seconds':round(time.monotonic()-start,2),
     'device':manifest['device'],'model':'medium','clips':len(manifest['clips']),
     'segments':manifest['transcription_segments'],'zip':True,'status':manifest['status'],
-    'limits':'Repeated synthetic TTS workload; not a natural meeting accuracy benchmark'}
+    'limits':'Repeated synthetic TTS workload; CPU test can be slow and is not a natural meeting accuracy benchmark'}
 (root/'long-synthetic-qa.json').write_text(json.dumps(summary,indent=2),encoding='utf-8')
 print(json.dumps(summary),flush=True)

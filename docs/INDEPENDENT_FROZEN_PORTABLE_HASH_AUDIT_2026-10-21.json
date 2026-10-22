@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "project": "MeetingSplit",
+  "version": "0.8.6",
+  "audit_date": "2026-10-21",
+  "source_internal_frozen_qa_run": 39695270843,
+  "frozen_source_commit": "90238d621160e05097e7b72c3a1c26b18b4a31cd",
+  "portable_artifact_id": 12390996760,
+  "portable_artifact_zip_sha256": "b0c2c678e311c19dcd0a9565474bf417e62a4b71cdbf00a83e8758037bfb0b3b",
+  "hash_matches_github_artifact_metadata": true,
+  "method": "Independently downloaded official GitHub portable artifact and earlier QA reports ZIP; inspected nested portable archive, normalized Windows backslash directory entries and streamed SHA256 of every actual file; compared to build/native-inventory.json included with QA reports.",
+  "expected_file_count": 685,
+  "actual_file_count": 685,
+  "expected_native_binary_count": 211,
+  "actual_native_binary_count": 211,
+  "uncompressed_bytes_hashed": 1159013662,
+  "unexpected_files": [],
+  "missing_or_mismatched_files": [],
+  "duplicate_paths": [],
+  "all_files_match_sha256": true,
+  "scope_limitations": [
+    "Verifies recorded hashes and exact binary bytes, not third-party source provenance, AV signatures, vulnerability absence, copyright notices or legal distribution rights",
+    "Portable build snapshot predates later UI and vendor license receipt changes",
+    "No ASUS GPU/Ollama physical device test or Windows interactive wizard test was performed"
+  ],
+  "native_security_review_complete": false,
+  "license_review_complete": false,
+  "release_allowed": false
+}

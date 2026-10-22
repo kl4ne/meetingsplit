@@ -1,3 +1,11 @@
+## Latest result — 2026-10-21 (supersedes historical pending paragraphs)
+
+- Failed SHA run #39598629560 was caused by a stale `latest/ffmpeg-n9.0` download URL with a fixed 8.1.3 expected digest (commit `7183257`). The later dated BtbN 8.1.3 URL kept the exact SHA validation; no hash gate was removed.
+- Run #39599256740 reached tests and failed on the NumPy array-peak assertion, subsequently corrected. Pinned FFmpeg / source-built PyAV Windows package #39599798144 succeeded (82 passed, 2 skipped), MP3/M4A/WAV output/decode and frozen installer smoke. The authentic v0.8.5->0.8.6 upgrade #39598790616 succeeded.
+- Integration into main took place before this evidence QA; main tests-only #39602465892 passed (84 passed, 2 skipped). This is not public distribution clearance. Preserve the pinned assets, hashes and fail-closed GPL checks.
+- Exact native evidence and remaining Qt WebEngine/Chromium, cuDNN, source/relinking issues: `docs/QA_NATIVE_EVIDENCE_AUDIT_2026-10-21.json`. Release stays blocked, version 0.8.6.
+
+---
 # Development QA: LGPL-only FFmpeg and PyAV attempt
 
 This is an isolated experiment. The existing public 0.8.6 release hold applies.

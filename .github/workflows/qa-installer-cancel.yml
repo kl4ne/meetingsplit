@@ -1,0 +1,54 @@
+name: MeetingSplit isolated interactive installer cancellation QA
+
+on:
+  push:
+    branches: [qa/release-evidence-20261021]
+    paths:
+      - '.github/workflows/qa-installer-cancel.yml'
+      - 'qa/windows_interactive_cancel.ps1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: meeting-qa-installer-cancel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cancel-only:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download exact already-passed pinned LGPL QA installer
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force dist,work/installer-cancel-artifact | Out-Null
+          $headers = @{ Authorization = ('Bearer ' + $env:GH_TOKEN); Accept='application/vnd.github+json'; 'X-GitHub-Api-Version'='2022-11-28' }
+          $archive = 'work/installer-cancel-artifact/artifact.zip'
+          Invoke-WebRequest -Uri 'https://api.github.com/repos/kl4ne/meetingsplit/actions/artifacts/12346625631/zip' -Headers $headers -OutFile $archive -MaximumRedirection 8
+          $actual = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          $expected = '89f9d8208115f734749430e6bd3df8c0ba283432fc53b6c169ad6787378bfce2'
+          if ($actual -ne $expected) { throw "QA artifact ZIP differs from archived GitHub SHA-256: $actual" }
+          Expand-Archive -LiteralPath $archive -DestinationPath 'work/installer-cancel-artifact/unpacked' -Force
+          $setup = Get-ChildItem 'work/installer-cancel-artifact/unpacked' -Recurse -File -Filter 'MeetingSplit_Setup_v0.8.6.exe' | Select-Object -First 1
+          if (-not $setup) { throw 'Expected QA installer executable missing' }
+          Copy-Item -LiteralPath $setup.FullName -Destination 'dist/MeetingSplit_Setup_v0.8.6.exe'
+      - name: Actual interactive Inno Setup wizard cancellation on disposable runner
+        shell: pwsh
+        run: ./qa/windows_interactive_cancel.ps1
+      - name: Retain narrowly scoped QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-interactive-cancel-evidence-${{ github.sha }}
+          path: |
+            work/interactive-cancel-qa/interactive-cancel.json
+            work/interactive-cancel-qa/installer.log
+          if-no-files-found: warn
+          retention-days: 14

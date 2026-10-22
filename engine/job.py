@@ -10,8 +10,7 @@ from .control import Cancellation, JobCancelled
 from .output import format_srt, pack_result
 from .planning import plan_clips
 from .summarize import instructions, summarize_local
-from .transcription import (format_transcript, load_whisper, load_cpu_whisper,
-                            is_cuda_runtime_error, transcribe_clip)
+from .transcription import format_transcript, load_whisper, transcribe_clip
 from desktop.storage import validate_local_folder
 
 ALLOWED={'.mp3','.m4a','.wav','.aac','.ogg','.flac','.mp4','.wma','.opus'}
@@ -34,7 +33,7 @@ def _validate(config: dict) -> dict:
     fmt=config.get('format','mp3')
     minutes=int(config.get('minutes',10))
     overlap=int(config.get('overlap',20))
-    model=config.get('model','medium')
+    model=config.get('model','small')
     audio_language=config.get('input_language','auto')
     report=config.get('report','both')
     language=config.get('report_language','es')
@@ -69,6 +68,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         'created':datetime.now().isoformat(), 'status':'started',
         'mode':x['action'],'max_export_seconds':x['minutes']*60,
         'overlap_seconds':x['overlap'],'model':x['model'],
+        'execution_policy':'CPU_ONLY',
         'AI_provider':config.get('provider','chatgpt'),
         'subscription':config.get('plan','paid'),
         'privacy':'Archivo original no modificado. Procesamiento en disco local.',
@@ -108,10 +108,12 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             task.check()
             model,device=load_whisper(x['model'],model_cache=base/'Modelos',
                                        on_status=lambda message:progress(message,15),cancel=task)
-            manifest['device']=device
-            if device == 'CPU':
-                manifest['actual_model'] = 'small' if x['model'] in ('medium', 'large-v3') else x['model']
-                manifest['warnings'].append('Modo CPU: modelo small para acelerar el procesamiento; revisa la precisión.')
+            # Explicit CPU policy even when an NVIDIA adapter is installed.
+            if device!='CPU': raise RuntimeError('CPU-only transcription policy was violated')
+            manifest['device']='CPU'
+            manifest['actual_model']='small' if x['model'] in ('medium','large-v3') else x['model']
+            if manifest['actual_model']!=x['model']:
+                manifest['warnings'].append('Modo CPU: se utilizó modelo small en lugar del modelo solicitado para reducir tiempo y memoria.')
             _write_json(folder/'manifest.json',manifest)
         for index,clip in enumerate(clips):
             task.check()
@@ -126,34 +128,9 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                     export_clip(src,file,clip,'mp3',cancel=task)
                 try:
                     task.check()
-                    progress(f'Transcribiendo audio {index+1} de {len(clips)}. En CPU el primer fragmento puede tardar varios minutos; el tiempo transcurrido se muestra en pantalla.',
+                    progress(f'Transcribiendo audio {index+1} de {len(clips)} con CPU; el primer fragmento puede tardar varios minutos.',
                              int(49+39*index/len(clips)))
-                    try:
-                        part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
-                    except Exception as exc:
-                        # The first real CUDA call can occur while iterating the
-                        # lazy Whisper generator, AFTER successful model creation.
-                        # Retry only the current clip on CPU, never duplicate rows.
-                        if device != 'NVIDIA GPU' or not is_cuda_runtime_error(exc):
-                            raise
-                        task.check()
-                        progress('Fallo de bibliotecas NVIDIA/CUDA. Reintentando el audio por CPU.',
-                                 int(49+39*index/len(clips)))
-                        manifest['warnings'].append(
-                            'GPU no disponible durante la inferencia; transcripción continuó por CPU. '
-                            + str(exc)[:180])
-                        model = None
-                        gc.collect()
-                        cpu_model = 'small' if x['model'] in ('medium','large-v3') else x['model']
-                        progress('Reintentando con CPU y modelo '+cpu_model+'. Puede tardar varios minutos por fragmento.',
-                                 int(49+39*index/len(clips)))
-                        model = load_cpu_whisper(cpu_model,model_cache=base/'Modelos')
-                        manifest['actual_model'] = cpu_model
-                        device = 'CPU'
-                        manifest['device'] = device
-                        _write_json(folder/'manifest.json',manifest)
-                        task.check()
-                        part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
+                    part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
                     lines.extend(part)
                     (folder/f'transcripcion_parte_{clip.number:02}.txt').write_text(
                         format_transcript(part),encoding='utf-8')
@@ -168,7 +145,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             (folder/'TRANSCRIPCION_SUBTITULOS.srt').write_text(format_srt(lines),encoding='utf-8')
             _write_json(folder/'TRANSCRIPCION_MARCAS_TIEMPO.json',{'segments':lines})
             if config.get('local_summary',False):
-                # Release Whisper VRAM before asking Qwen to load on an 8 GB GPU.
+                # Release Whisper RAM before optional CPU-only Qwen generation.
                 model=None
                 gc.collect()
                 task.check()

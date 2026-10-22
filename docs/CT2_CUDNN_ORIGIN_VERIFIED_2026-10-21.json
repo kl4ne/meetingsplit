@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "project": "MeetingSplit",
+  "version": "0.8.6",
+  "verified_on": "2026-10-21",
+  "verification_scope": "Official PyPI ctranslate2 4.6.2 CPython 3.11 Windows amd64 wheel and its embedded cudnn64_9.dll match the frozen internal QA inventory by SHA256",
+  "qa_run": {
+    "id": 39698897754,
+    "url": "https://github.com/kl4ne/meetingsplit/actions/runs/39698897754",
+    "conclusion": "success",
+    "source_commit": "fb27a2264aabad6823cef6ac1a3e2c141e0bb15f",
+    "source_tests_passed": 14,
+    "artifact_id": 12391304966,
+    "artifact_zip_sha256": "0c95d2b23462a89cffbeb368ed3427613c46b1c6b91443175ee37fc24ac3886f"
+  },
+  "pypi": {
+    "project_version": "ctranslate2==4.6.2",
+    "wheel": "ctranslate2-4.6.2-cp311-cp311-win_amd64.whl",
+    "sha256": "ce7880fa5d2e1b36329998c711cb764c621a4d2a199b251b1ad02e770b641e91",
+    "reference": "https://pypi.org/project/ctranslate2/4.6.2/"
+  },
+  "runtime": {
+    "wheel_path": "ctranslate2/cudnn64_9.dll",
+    "candidate_path": "_internal/ctranslate2/cudnn64_9.dll",
+    "bytes": 438840,
+    "sha256": "c07cc47f2fa4a566593c7af4aa7e57edf09a985a0fddd14cb8d6f456e252af05",
+    "matches_official_wheel": true
+  },
+  "nvidia_license": {
+    "source": "https://docs.nvidia.com/deeplearning/cudnn/backend/v9.1.1/reference/eula.html",
+    "finding": "cuDNN supplement permits distribution of runtime DLL/SO under license conditions; exact governing version, EULA applicability, full notices and redistribution signoff outstanding",
+    "exact_binary_version_verified": false,
+    "legal_approval": false
+  },
+  "release_allowed": false
+}

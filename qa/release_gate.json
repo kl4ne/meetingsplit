@@ -1,14 +1,14 @@
 {
   "release_allowed": false,
-  "version_policy": "Keep 0.8.6; development checkpoints only; no Release or user installation request",
+  "version_policy": "0.8.6 CPU-only development; never publish without explicit owner acceptance and full legal/security checks",
   "required": {
-    "asus_gpu_real_speech": true,
-    "frozen_app_gpu_and_ollama_on_asus": true,
-    "long_synthetic_workload": true,
-    "cpu_split_transcription_regression": true,
-    "ollama_real_generation_and_failure_paths": true,
+    "cpu_only_whisper_en_es_real_speech": false,
+    "cpu_only_ollama_local_minutes": false,
+    "cpu_only_long_meeting_endurance": false,
+    "cpu_only_final_frozen_app_acceptance": false,
+    "cpu_split_transcription_regression": false,
     "installer_clean_upgrade_cancel_uninstall": false,
-    "five_screens_en_es_large_typography": true,
+    "five_screens_en_es_large_typography": false,
     "third_party_license_and_security_review": false
   }
 }

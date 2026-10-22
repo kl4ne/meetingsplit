@@ -120,6 +120,51 @@ def extract_verified(archive: Path, dest: Path, cancel: Cancellation) -> None:
                     cancel.check(); dst.write(chunk)
 
 
+def component_file_manifest(stage: Path, cancel: Cancellation) -> list[dict]:
+    """Record verified extracted bytes, not just the hash of the download ZIP."""
+    records = []
+    for path in sorted(stage.rglob('*')):
+        cancel.check()
+        if path.is_symlink():
+            raise ValueError('Unexpected component symlink after extraction')
+        if path.is_file():
+            records.append({'path': path.relative_to(stage).as_posix(),
+                            'bytes': path.stat().st_size, 'sha256': digest(path,cancel)})
+    if not records:
+        raise ValueError('Optional component archive extracted no files')
+    return records
+
+
+def verify_component_file_manifest(target: Path, files: list[dict], cancel: Cancellation) -> None:
+    """Fail closed for version-2 receipts, retaining legacy pre-existing installs."""
+    if not isinstance(files, list) or not files:
+        raise ValueError('Component file manifest is unavailable')
+    seen = set()
+    for row in files:
+        if not isinstance(row, dict):
+            raise ValueError('Component receipt includes an invalid file entry')
+        name = row.get('path')
+        if not isinstance(name, str) or not name or '\\' in name or ':' in name or name.startswith('/'):
+            raise ValueError('Unsafe component receipt path')
+        parts = PurePosixPath(name).parts
+        if any(x in ('.','..') for x in parts) or name == 'meetingsplit-receipt.json' or name.casefold() in seen:
+            raise ValueError('Invalid or duplicate component manifest path')
+        seen.add(name.casefold())
+        path = target.joinpath(*parts)
+        cancel.check()
+        if not path.is_file() or path.is_symlink() or path.stat().st_size != row.get('bytes'):
+            raise ValueError('Previously installed component files changed: '+name)
+        if digest(path,cancel) != row.get('sha256'):
+            raise ValueError('Previously installed component hash differs: '+name)
+    for path in target.rglob('*'):
+        cancel.check()
+        if path.is_symlink():
+            raise ValueError('Previously installed component includes a symlink')
+        if path.is_file() and path.suffix.casefold() in ('.exe','.dll','.pyd'):
+            if path.relative_to(target).as_posix().casefold() not in seen:
+                raise ValueError('Unrecognized native executable in installed component')
+
+
 def install_package(package: Package, root: Path, progress, cancel: Cancellation) -> Path:
     root = validate_local_folder(root)
     components = root/'Componentes'
@@ -129,7 +174,16 @@ def install_package(package: Package, root: Path, progress, cancel: Cancellation
     receipt = target/'meetingsplit-receipt.json'
     if receipt.is_file():
         data=json.loads(receipt.read_text(encoding='utf-8'))
-        if data.get('sha256') == package.sha256: return target
+        if (data.get('name') == package.name and data.get('url') == package.url
+                and data.get('size') == package.size and data.get('sha256') == package.sha256):
+            if data.get('schema') == 2:
+                verify_component_file_manifest(target,data.get('files'),cancel)
+            else:
+                # Older on-disk installations are not silently deleted or
+                # replaced: they lack extracted-file hashes. Preserve them
+                # while indicating the limited historic receipt assurance.
+                progress(f'{package.name}: existing legacy install retained; native file hashes unavailable')
+            return target
     if target.exists(): raise ValueError('Incomplete component; choose another folder or repair: '+package.name)
     if shutil.disk_usage(root).free < package.size+5*1024**3:
         raise OSError('At least the download size plus 5 GiB free is required')
@@ -137,9 +191,10 @@ def install_package(package: Package, root: Path, progress, cancel: Cancellation
     staging=Path(tempfile.mkdtemp(prefix='.stage-',dir=components))
     try:
         extract_verified(archive,staging,cancel)
+        files = component_file_manifest(staging,cancel)
         (staging/'meetingsplit-receipt.json').write_text(json.dumps({
-            'name':package.name,'url':package.url,'sha256':package.sha256,
-            'size':package.size},indent=2),encoding='utf-8')
+            'schema':2,'name':package.name,'url':package.url,'sha256':package.sha256,
+            'size':package.size,'files':files},indent=2),encoding='utf-8')
         cancel.check()
         staging.rename(target)
     finally:
@@ -149,7 +204,9 @@ def install_package(package: Package, root: Path, progress, cancel: Cancellation
 
 
 def install_gpu(root: Path, progress, cancel: Cancellation) -> None:
-    for package in GPU_PACKAGES: install_package(package,root,progress,cancel)
+    # Deliberately retain a rejecting compatibility entry point so older
+    # callers cannot silently trigger NVIDIA downloads.
+    raise RuntimeError('CUDA/NVIDIA downloads are disabled: MeetingSplit uses CPU only')
 
 
 def gpu_directories(root: Path) -> list[Path]:
@@ -165,11 +222,5 @@ _dll_dirs=set()
 
 
 def activate_gpu(root: Path) -> None:
-    """Per-process only; retain AddDllDirectory handles for all lazy native calls."""
-    if os.name != 'nt': return
-    root=validate_local_folder(root)
-    for folder in gpu_directories(root):
-        folder=validate_local_folder(folder)
-        if str(folder) not in _dll_dirs:
-            _dll_handles.append(os.add_dll_directory(str(folder)))
-            _dll_dirs.add(str(folder))
+    """Compatibility no-op. CPU-only MeetingSplit never loads CUDA DLLs."""
+    return None

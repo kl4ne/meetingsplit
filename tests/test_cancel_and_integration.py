@@ -50,7 +50,7 @@ def test_export_transcript_srt_zip_integration(monkeypatch,tmp_path,fail_optiona
        '-f','lavfi','-i','sine=frequency=760:duration=6',
        '-filter_complex','[0:a]aresample=16000[a];[1:a]atrim=duration=1.5[b];[2:a]aresample=16000[c];[a][b][c]concat=n=3:v=0:a=1[d]',
        '-map','[d]','-c:a','pcm_s16le',str(source)],check=True,timeout=20)
-    monkeypatch.setattr(job,'load_whisper',lambda *args,**kwargs:(object(),'CPU de prueba'))
+    monkeypatch.setattr(job,'load_whisper',lambda *args,**kwargs:(object(),'CPU'))
     def fake_transcribe(model,clip,path,*,language,cancel):
         return [{'start':0.2,'end':1.2,'text':'Hola, welcome.','part':clip.number}]
     monkeypatch.setattr(job,'transcribe_clip',fake_transcribe)
@@ -98,37 +98,25 @@ def test_cancelled_job_records_status(monkeypatch,tmp_path):
 
 
 @pytest.mark.skipif(not shutil.which('ffmpeg') or not shutil.which('ffprobe'), reason='requires FFmpeg')
-def test_lazy_cuda_dll_failure_retries_current_clip_using_cpu(monkeypatch,tmp_path):
+def test_cpu_only_transcription_does_not_reinit_cuda_on_runtime_failure(monkeypatch,tmp_path):
     import engine.job as job
-    source = tmp_path / 'gpu_fallback.wav'
+    source=tmp_path/'cpu_only.wav'
     subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-f','lavfi',
-                    '-i','sine=duration=6','-ac','1',str(source)],check=True,timeout=15)
-    gpu=object(); cpu=object()
-    monkeypatch.setattr(job,'load_whisper',lambda *args,**kwargs:(gpu,'NVIDIA GPU'))
-    monkeypatch.setattr(job,'load_cpu_whisper',lambda *args,**kwargs:cpu)
-    calls=[]
-    def fake_transcribe(model,clip,path,*,language,cancel):
-        calls.append(model)
-        if model is gpu:
-            # CTranslate2 returns a generator: failure can occur only on iteration.
-            def lazy_failure():
-                yield from ()
-                raise RuntimeError('Library cublas64_12.dll is not found or cannot be loaded')
-            return list(lazy_failure())
-        return [{'start':.2,'end':1.1,'text':'Continuó por CPU.','part':clip.number}]
-    monkeypatch.setattr(job,'transcribe_clip',fake_transcribe)
-    conf={'file':str(source),'output':str(tmp_path),'action':'both','format':'mp3',
-          'minutes':5,'overlap':20,'model':'small','input_language':'auto',
-          'report':'both','report_language':'both','zip_output':False,'local_summary':False}
-    messages=[]
-    result=run_job(conf,lambda text,pct:messages.append(text))
-    manifest=json.loads((result/'manifest.json').read_text(encoding='utf-8'))
-    assert manifest['status']=='complete'
-    assert manifest['device']=='CPU'
-    assert calls==[gpu,cpu]
-    assert manifest['transcription_segments']==1
-    assert 'Continuó por CPU.' in (result/'TRANSCRIPCION_COMPLETA.txt').read_text(encoding='utf-8')
-    assert any('Reintentando' in message for message in messages)
+                    '-i','sine=duration=2','-ac','1',str(source)],check=True,timeout=15)
+    cpu=object()
+    monkeypatch.setattr(job,'load_whisper',lambda *args,**kwargs:(cpu,'CPU'))
+    def synthetic_cuda_error(*args,**kwargs):
+        raise RuntimeError('Synthetic CUDA library error while deliberately using CPU')
+    monkeypatch.setattr(job,'transcribe_clip',synthetic_cuda_error)
+    config={'file':str(source),'output':str(tmp_path),'action':'both',
+            'format':'mp3','minutes':5,'model':'small','overlap':20,'zip_output':False}
+    with pytest.raises(RuntimeError,match='Synthetic CUDA'):
+        job.run_job(config,lambda *args:None)
+    project=next(tmp_path.glob('MeetingSplit-*'))
+    state=json.loads((project/'manifest.json').read_text())
+    assert state['device']=='CPU'
+    assert state['execution_policy']=='CPU_ONLY'
+    assert state['status']=='failed'
 
 
 @pytest.mark.skipif(not shutil.which('ffmpeg') or not shutil.which('ffprobe'), reason='requires FFmpeg')
@@ -137,8 +125,7 @@ def test_non_cuda_transcription_error_is_not_hidden_by_cpu_fallback(monkeypatch,
     source=tmp_path/'invalid_audio_handling.wav'
     subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-f','lavfi',
                     '-i','sine=duration=2','-ac','1',str(source)],check=True,timeout=15)
-    monkeypatch.setattr(job,'load_whisper',lambda *args,**kwargs:(object(),'NVIDIA GPU'))
-    monkeypatch.setattr(job,'load_cpu_whisper',lambda *args,**kwargs:pytest.fail('Should not use CPU'))
+    monkeypatch.setattr(job,'load_whisper',lambda *args,**kwargs:(object(),'CPU'))
     def fail(*args,**kwargs):
         raise ValueError('Source audio is invalid')
     monkeypatch.setattr(job,'transcribe_clip',fail)

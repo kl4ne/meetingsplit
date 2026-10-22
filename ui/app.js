@@ -17,7 +17,12 @@ function translate(text){
   // Native processing emits useful progress from Python. Translate without discarding counts.
   let m;
   if((m=/^Exportando audio (\d+) de (\d+)$/.exec(text)))return `Exporting audio ${m[1]} of ${m[2]}`;
-  if((m=/^Transcribiendo audio (\d+) de (\d+)$/.exec(text)))return `Transcribing audio ${m[1]} of ${m[2]}`;
+  if((m=/^Transcribiendo audio (\d+) de (\d+)(?:\.\s*(.*))?$/.exec(text))){
+    let suffix='';
+    if(m[3]==='Aceleración NVIDIA GPU seleccionada.')suffix=' NVIDIA GPU acceleration selected.';
+    else if(m[3]==='En CPU el primer fragmento puede tardar varios minutos.')suffix=' On CPU, the first segment may take several minutes.';
+    return `Transcribing audio ${m[1]} of ${m[2]}.`+suffix;
+  }
   if(text.startsWith('Error: '))return 'Error: '+translate(text.slice(7));
   if(text.startsWith('CUDA no disponible ('))return text.replace('CUDA no disponible (','CUDA unavailable (').replace('Usando CPU en modo seguro.','Using CPU in safe mode.');
   return text;
@@ -227,7 +232,7 @@ function renderResults(index){
   const container=el('result-files');
   container.textContent='';
   const allowed=new Set(['TRANSCRIPCION_COMPLETA.txt','TRANSCRIPCION_SUBTITULOS.srt',
-    'RESUMEN_Y_MINUTA_LOCAL.md','RESULTADOS_COMPLETOS.zip','INSTRUCCIONES_CHATGPT_GEMINI.txt']);
+    'MINUTA_NO_GENERADA.txt','RESUMEN_Y_MINUTA_LOCAL.md','RESULTADOS_COMPLETOS.zip','INSTRUCCIONES_CHATGPT_GEMINI.txt']);
   let items=[];
   try { items=JSON.parse(index); }catch(_){ return; }
   if(!Array.isArray(items))return;

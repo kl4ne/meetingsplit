@@ -1,7 +1,7 @@
 // MeetingSplit v0.8.6 — UI translations. Spanish originals are the keys; English is the initial UI locale.
 // This UI language preference does NOT change meeting audio language or report language.
 window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
-  "Preparar CUDA / Ollama opcionales": "Set up optional CUDA / Ollama",
+  "Preparar Ollama CPU (opcional)": "Set up Ollama CPU (optional)",
   "MeetingSplit · Estudio privado de reuniones": "MeetingSplit · Private Meeting Studio",
   "ESTUDIO": "STUDIO",
   "Inicio": "Home",
@@ -97,7 +97,7 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "Español e inglés": "Spanish and English",
   "Los resultados se preparan para utilizarlos en tu plataforma preferida.": "Results are prepared for use in your preferred platform.",
   "Minuta automática local con Ollama": "Local automatic meeting minutes with Ollama",
-  "Opcional. Necesita Ollama y qwen3:4b instalados.": "Optional. Requires Ollama and qwen3:4b installed.",
+  "Opcional. Ollama y qwen3:4b funcionan solo con CPU; puede tardar más.": "Optional. Ollama and qwen3:4b run on CPU only; generation may be slower.",
   "Exportar un ZIP con resultados": "Export results as ZIP",
   "Incluye los archivos generados.": "Includes generated files.",
   "Las suscripciones de ChatGPT/Gemini no equivalen a acceso API automático.": "ChatGPT/Gemini subscriptions do not automatically provide API access.",
@@ -162,6 +162,8 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "Analizando silencios sin cargar todo el audio en RAM": "Analyzing silences without loading all audio into RAM",
   "Preparando aceleración NVIDIA (CUDA)...": "Preparing NVIDIA acceleration (CUDA)...",
   "Preparando minuta local con Ollama": "Preparing local meeting minutes with Ollama",
+  "MODELO DE VOZ (SOLO CPU)": "SPEECH MODEL (CPU ONLY)",
+  "Small · CPU recomendado": "Small · Recommended for CPU",
   "Creando paquete ZIP de resultados": "Creating results ZIP package",
   "Resultados terminados. Ya puedes abrirlos.": "Results are complete. You can open them now.",
   "Falta faster-whisper. Ejecuta instalar.bat para instalar las dependencias.": "Faster-Whisper is missing. Run instalar.bat to install the dependencies.",

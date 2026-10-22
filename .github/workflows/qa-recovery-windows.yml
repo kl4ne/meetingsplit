@@ -1,0 +1,71 @@
+name: MeetingSplit CPU-only Qt and receipt focused QA
+
+on:
+  push:
+    branches: [qa/release-evidence-20261021]
+    paths:
+      - '.github/workflows/qa-recovery-windows.yml'
+      - 'qa/verify_release_evidence.py'
+      - 'tests/test_release_evidence.py'
+      - 'tests/test_optional_dialog_qa.py'
+      - 'tests/test_vendor_retry_qa.py'
+      - 'tests/test_component_integrity_receipts.py'
+      - 'desktop/component_setup.py'
+      - 'desktop/components.py'
+      - 'engine/ollama.py'
+  workflow_dispatch:
+
+concurrency:
+  group: meeting-qa-recovery-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-windows:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: 'x64'
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Prepare isolated test dependencies (no installer)
+        shell: pwsh
+        run: |
+          python -m pip install -r requirements.txt
+      - name: Run affected QA regressions only
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QTWEBENGINE_CHROMIUM_FLAGS: --disable-gpu
+        run: |
+          python -m pytest -q tests/test_optional_dialog_qa.py tests/test_component_setup_reports.py tests/test_gpu_progress_truth.py tests/test_cancel_and_integration.py tests/test_runtime_recovery.py tests/test_vendor_retry_qa.py tests/test_component_integrity_receipts.py tests/test_release_evidence.py tests/test_preinstaller_failures.py tests/test_ollama_setup_receipt.py
+      - name: Prove release remains blocked
+        shell: pwsh
+        run: |
+          python -c "from qa.check_release_gate import main; assert main() == 2, 'Release gate must fail closed'"
+          if ((Get-Content qa/release_gate.json -Raw | ConvertFrom-Json).release_allowed -ne $false) { throw 'Release unexpectedly allowed' }
+      - name: Record QA non-release policy
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force work/recovery-qa | Out-Null
+          @{
+            run = "$env:GITHUB_RUN_ID"
+            commit = "$env:GITHUB_SHA"
+            scoped = 'Qt dialog with fake vendor I/O; interrupted download retry; evidence integrity'
+            actual_installer_tested = $false
+            live_vendor_downloads_tested = $false
+            release_allowed = $false
+          } | ConvertTo-Json | Set-Content work/recovery-qa/scope.json -Encoding UTF8
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: MeetingSplit-optional-qa-record-${{ github.sha }}
+          path: work/recovery-qa/scope.json
+          if-no-files-found: warn
+          retention-days: 14

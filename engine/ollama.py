@@ -1,4 +1,4 @@
-"""Fixed local endpoints; no proxies, redirects, remote models or implicit downloads."""
+"""CPU-only local Ollama with fixed loopback endpoints and no cloud models."""
 from __future__ import annotations
 import json
 from contextlib import contextmanager
@@ -118,7 +118,8 @@ def chat(messages, endpoint=DEFAULT_ENDPOINT, model=MODEL, cancel=None, progress
     # Reserve enough generation/context budget for both reasoning and final text.
     payload={'model':MODEL,'messages':[dict(m) for m in messages],'stream':True,'think':True,
              'keep_alive':0,'truncate':False,'options':{'temperature':0.6,'num_ctx':16384,
-                'num_predict':8192,'repeat_penalty':1.1}}
+                'num_predict':8192,'repeat_penalty':1.1,
+                'num_gpu':0}}  # Explicit CPU offload=0 even if reusing external Ollama.
     for record in stream_json(endpoint,'/api/chat',payload,control,lambda _:None,timeout):
         text=record.get('message',{}).get('content','')
         thinking_chars+=len(record.get('message',{}).get('thinking',''))
@@ -173,7 +174,11 @@ class LocalService:
         env=os.environ.copy()
         env.update(OLLAMA_HOST='127.0.0.1:11435',OLLAMA_MODELS=str(model_dir),
                    OLLAMA_NO_CLOUD='1',OLLAMA_MAX_LOADED_MODELS='1',OLLAMA_NUM_PARALLEL='1',
-                   OLLAMA_CONTEXT_LENGTH='8192')
+                   OLLAMA_CONTEXT_LENGTH='8192',
+                   # Managed server: do not enumerate, initialize or use any GPU.
+                   # Per-request num_gpu=0 is also enforced for reused localhost Ollama.
+                   OLLAMA_LLM_LIBRARY='cpu',CUDA_VISIBLE_DEVICES='-1',
+                   HIP_VISIBLE_DEVICES='-1',ROCR_VISIBLE_DEVICES='-1')
         self.endpoint=MANAGED_ENDPOINT
         self.log=(self.root/'Componentes'/'ollama-server.log').open('ab')
         try:

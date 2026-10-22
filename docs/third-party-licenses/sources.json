@@ -33,5 +33,10 @@
     "file": "Cython-3.3.0-Pyrex-COPYING.txt",
     "sha256": "e1eb1c49a8508e8173dac30157e4a6439a44ad8846194746c424fbc3fc2b95d7",
     "source": "https://raw.githubusercontent.com/cython/cython/3.3.0/COPYING.txt"
+  },
+  {
+    "file": "Chromium-140.0.7339.264-BSD-3-Clause.txt",
+    "sha256": "368cca1106be99d39ecd32a38d8305585d802a475effb66380b91ffc9bcf709b",
+    "source": "https://raw.githubusercontent.com/chromium/chromium/140.0.7339.264/LICENSE"
   }
 ]

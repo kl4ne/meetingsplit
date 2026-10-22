@@ -1,3 +1,15 @@
+## CURRENT HANDOFF (2026-10-21) — no remaining automatic build loops
+
+Last verified QA: #39695270843 102 passed/2 skipped (on older source snapshot); #39698897754 **14 passed** and official-wheel cuDNN matches frozen SHA; all 685 actual frozen portable files and 211 AMD64 PE headers independently examined with **zero hash/header discrepancies**. Both new reports are under `docs/INDEPENDENT_FROZEN_*`. Complete GitHub Actions have **not** been repeated.
+
+NOW REQUIRES EXTERNAL ENVIRONMENT OR REVIEW:
+1. A GUI-capable **throwaway Windows 11 VM** (not hosted headless Actions, not owner's production ASUS) for interactive Inno cancel (before and mid-copy) and real optional CUDA/Ollama downloads: interruptions, retry, disk shortage. Existing hosted attempt lacked a desktop; cannot certify it on session-0 CI.
+2. Exact final-app test on **ASUS RTX 4070** with owner cooperation, natural bilingual/mixed audio and 1–3h GPU/Ollama; do not automatically install/reformat or upload audio. Follow `docs/FINAL_RELEASE_ACCEPTANCE_PLAN_2026-10-21.md`.
+3. Complete matching **Qt WebEngine/Chromium** third-party notices, Qt and FFmpeg corresponding-source/LGPL user rights, NVIDIA exact SDK EULA applicability and native vulnerability / legally qualified sign-off. The official cuDNN runtime DLL redistribution permission is conditional; the shipped DLL origin has now been proven, not the right to redistribute the entire app.
+4. Decide public publisher identity and signing subscription/certificate only with owner's explicit permission. Current development MeetingSplit.exe is unsigned; Microsoft says EV no longer bypasses first-run SmartScreen warnings.
+5. Only after all these prerequisites are addressed, perform **one** final QA build and Windows hardware acceptance including all post-#39695270843 code/license changes, then owner-authorized PR merge/public Release. Keep release gate false meanwhile.
+
+---
 ## CURRENT NEXT ACTION AFTER VERIFIED CTRANSLATE2 ORIGIN — 2026-10-21
 
 1. DO NOT repeat last successful frozen build #39695270843 or source-only Ubuntu test #39698897754. Wheel/DLL provenance MATCH is proven in `docs/CT2_CUDNN_ORIGIN_VERIFIED_2026-10-21.json`; 14 passed in a cheap Ubuntu source job and public release is still blocked. No expensive Windows job was used this continuation.

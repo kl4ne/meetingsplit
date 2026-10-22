@@ -28,7 +28,8 @@ class SetupWorker(QObject):
         self.report={'schema':1,'status':'running','stage':self.stage,
                      'requested':{'cuda':bool(gpu),'ollama':bool(ollama)},
                      'release_allowed':False,
-                     'note':'A finished download is not proof that GPU or Ollama validation passed.'}
+                     'execution_policy':'CPU_ONLY',
+                     'note':'CUDA is disabled; Ollama model download is not proof of CPU minutes success.'}
 
     def save(self, status, detail=None):
         self.report.update(status=status,stage=self.stage)
@@ -50,29 +51,20 @@ class SetupWorker(QObject):
     @Slot()
     def run(self):
         try:
-            self.step('cuda_download' if self.gpu else 'ollama_download',
-                      'Preparing verified optional components / Preparando componentes verificados')
             if self.gpu:
-                from desktop.components import install_gpu
-                from desktop.cuda_probe import probe_cuda
-                install_gpu(self.root,self.update,self.cancel)
-                self.step('cuda_inference','CUDA: testing real inference / probando inferencia real (small)...')
-                report=probe_cuda('small',self.root/'Modelos',cancel=self.cancel)
-                (self.root/'Componentes'/'cuda-validation.json').write_text(
-                    json.dumps(report,indent=2),encoding='utf-8')
-                if not report.get('ok'):
-                    raise RuntimeError(report.get('error','CUDA test failed'))
-                self.report['cuda_validation_ok']=True
-                self.save('running')
-            if self.ollama:
-                from engine.ollama import setup_ollama
-                self.step('ollama_download_and_test',
-                          'Ollama: preparing runtime/model and test / preparando modelo y prueba')
-                setup_ollama(self.root,self.update,self.cancel)
-                self.report['ollama_validation_ok']=True
-            self.step('complete','Component validation complete / Validación completada')
+                # Fail closed if an obsolete caller tries to request CUDA.
+                self.step('cuda_disabled','NVIDIA/CUDA is disabled. CPU only / NVIDIA/CUDA desactivado. Solo CPU')
+                raise ValueError('CPU-only policy prohibits optional NVIDIA/CUDA installation')
+            if not self.ollama:
+                raise ValueError('No optional component selected; CPU transcription needs no installation')
+            from engine.ollama import setup_ollama
+            self.step('ollama_download_and_test',
+                      'Ollama CPU: preparing model / preparando modelo en CPU')
+            setup_ollama(self.root,self.update,self.cancel)
+            self.report['ollama_validation_ok']=True
+            self.step('complete','Ollama CPU validation complete / Validación Ollama CPU completada')
             self.save('success')
-            self.completed.emit('Components prepared. Report: Componentes/component-setup-report.json / Componentes preparados. Informe guardado.')
+            self.completed.emit('Ollama CPU prepared. Report: Componentes/component-setup-report.json / Ollama CPU preparado. Informe guardado.')
         except JobCancelled:
             self.save_failure('cancelled','Setup cancelled by user / Cancelado por el usuario')
             self.completed.emit('Cancelled. See Componentes/component-setup-report.json / Cancelado. Revisa el informe.')
@@ -83,33 +75,24 @@ class SetupWorker(QObject):
         finally:
             self.finished.emit()
 
-    def save_failure(self, status, detail):
-        try:
-            self.save(status, detail)
-        except OSError as save_error:
-            self.progress.emit('Could not save diagnostic report / No se pudo guardar el informe: '+
-                               str(save_error)[:200])
-
-
 class ComponentDialog(QDialog):
     def __init__(self, root='', language='en', parent=None):
         super().__init__(parent)
         self.language=language;self.root=root;self.thread=None;self.worker=None;self.control=None
-        self.setWindowTitle('MeetingSplit — '+self.tr('Optional components','Componentes opcionales'))
+        self.setWindowTitle('MeetingSplit — '+self.tr('Optional Ollama CPU','Ollama CPU opcional'))
         self.resize(760,640)
         self.setStyleSheet('QWidget { font-size: 18px; } QPushButton { padding: 9px; }')
         layout=QVBoxLayout(self)
         intro=QLabel(self.tr(
-            'Optional downloads for this PC. Choose an internal folder on C: or D:.\nUSB and cloud folders remain blocked. CPU transcription remains available.',
-            'Descargas opcionales para este equipo. Escoge una carpeta interna en C: o D:.\nUSB y nube siguen bloqueados. La transcripción CPU sigue disponible.'))
+            'CPU-only MeetingSplit. Whisper needs no NVIDIA download. Only Ollama CPU minutes are optional. Choose an internal C: or D: folder; USB/cloud folders are blocked.',
+            'MeetingSplit solo CPU. Whisper no necesita descargar NVIDIA. Solo las minutas con Ollama CPU son opcionales. Elige C: o D: internos, sin USB ni nube.'))
         intro.setWordWrap(True);layout.addWidget(intro)
         self.folder=QLabel(root or self.tr('Choose a local folder','Selecciona una carpeta local'))
         self.folder.setWordWrap(True);layout.addWidget(self.folder)
         self.choose=QPushButton(self.tr('Choose folder…','Elegir carpeta…'));self.choose.clicked.connect(self.pick);layout.addWidget(self.choose)
-        self.gpu=QCheckBox(self.tr('NVIDIA CUDA 12 + cuDNN 9 (~1.1 GiB download)','NVIDIA CUDA 12 + cuDNN 9 (~1.1 GiB de descarga)'))
         self.ollama=QCheckBox(self.tr('Ollama + qwen3:4b (~4 GiB download if missing)','Ollama + qwen3:4b (~4 GiB de descarga si faltan)'))
-        layout.addWidget(self.gpu);layout.addWidget(self.ollama)
-        self.terms=QCheckBox(self.tr('I accept the selected vendor licenses and optional downloads.','Acepto las licencias y descargas opcionales seleccionadas.'))
+        layout.addWidget(self.ollama)
+        self.terms=QCheckBox(self.tr('I accept the Ollama/model licenses and the optional downloads.','Acepto las licencias de Ollama/modelo y las descargas opcionales.'))
         self.terms.setChecked(False)
         notices=QTextEdit();notices.setReadOnly(True)
         notice_path=Path(getattr(sys,'_MEIPASS',Path(__file__).resolve().parents[1]))/'docs'/'OPTIONAL_COMPONENTS.md'
@@ -140,7 +123,7 @@ class ComponentDialog(QDialog):
 
     def start(self):
         if self.thread: return
-        if not self.root or not self.terms.isChecked() or not (self.gpu.isChecked() or self.ollama.isChecked()) or not self.notices_present:
+        if not self.root or not self.terms.isChecked() or not self.ollama.isChecked() or not self.notices_present:
             self.status.setText(self.tr('Choose a folder, components and accept their licenses first.','Selecciona carpeta, componentes y acepta sus licencias.'));return
         try:
             root=validate_local_folder(Path(self.root))
@@ -148,12 +131,12 @@ class ComponentDialog(QDialog):
             if shutil.disk_usage(root).free<12*1024**3: raise OSError(self.tr('At least 12 GiB free is required.','Se necesitan al menos 12 GiB libres.'))
         except Exception as exc: self.status.setText(str(exc));return
         self.control=Cancellation();self.thread=QThread(self)
-        self.worker=SetupWorker(root,self.gpu.isChecked(),self.ollama.isChecked(),self.control)
+        self.worker=SetupWorker(root,False,self.ollama.isChecked(),self.control)
         self.worker.moveToThread(self.thread);self.thread.started.connect(self.worker.run)
         self.worker.progress.connect(self.status.setText);self.worker.completed.connect(self.status.setText)
         self.worker.finished.connect(self.thread.quit);self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater);self.thread.finished.connect(self.finished_setup)
-        for widget in (self.choose,self.gpu,self.ollama,self.terms,self.prepare): widget.setEnabled(False)
+        for widget in (self.choose,self.ollama,self.terms,self.prepare): widget.setEnabled(False)
         self.close_button.setText(self.tr('Cancel','Cancelar'));self.thread.start()
 
     def open_report(self):
@@ -164,8 +147,8 @@ class ComponentDialog(QDialog):
         report=Path(self.root)/'Componentes'/'component-setup-report.json'
         if not report.is_file():
             QMessageBox.information(self,'MeetingSplit',
-                self.tr('No report exists for this component attempt yet. Check existing CUDA/Ollama individual reports under Componentes. The previous app version did not create a summary.',
-                        'Todavía no existe informe general de este intento. Revisa los informes individuales de CUDA/Ollama dentro de Componentes. La versión anterior no generaba resumen.'))
+                self.tr('No report exists for this attempt. Check prior Ollama receipts in Componentes. The previous app version did not create a summary.',
+                        'Todavía no existe informe general de este intento. Revisa los informes de Ollama dentro de Componentes. La versión anterior no generaba resumen.'))
             return
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(report)))
 

@@ -10,9 +10,7 @@ if __name__ == '__main__':
         pos=sys.argv.index('--hardware-qa')
         raise SystemExit(hardware_main(*sys.argv[pos+1:pos+3]))
     if '--cuda-probe' in sys.argv:
-        from desktop.cuda_probe import child
-        pos=sys.argv.index('--cuda-probe')
-        raise SystemExit(child(*sys.argv[pos+1:pos+4]))
+        raise SystemExit('CUDA probe disabled. This CPU-only build never initializes NVIDIA GPU.')
     if '--configure-components' in sys.argv:
         from desktop.component_setup import main as component_main
         raise SystemExit(component_main())

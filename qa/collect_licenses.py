@@ -3,6 +3,7 @@
 This inventory aids review; it does not certify GPL/LGPL redistribution compliance.
 """
 import importlib.metadata as metadata
+from vendor_legal_manifest import check_original_notices
 import json
 from pathlib import Path
 import shutil
@@ -34,6 +35,11 @@ def main():
         if binary.is_file():
             result=subprocess.run([str(binary),'-version'],capture_output=True,text=True,timeout=15)
             (target/(app+'-build.txt')).write_text(result.stdout+result.stderr,encoding='utf-8')
+    # Source-version-matched original notices are part of the packaged distribution,
+    # not simply links in README. Abort internal QA builds if any hash is stale.
+    pinned = check_original_notices(ROOT/'docs'/'third-party-licenses')
+    (target/'PINNED_UPSTREAM_NOTICE_RECEIPTS.json').write_text(
+        json.dumps(pinned,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
     (target/'DEPENDENCY_INVENTORY.json').write_text(json.dumps(inventory,indent=2),encoding='utf-8')
     shutil.copyfile(ROOT/'docs'/'THIRD_PARTY_REVIEW.md',target/'THIRD_PARTY_REVIEW.md')
     # Preserve exact media provenance and verified archive hashes alongside

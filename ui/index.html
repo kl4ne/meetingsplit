@@ -75,7 +75,7 @@
             <label><span class="field-label">FRAGMENTOS MÁXIMOS</span><select id="minutes"><option value="5">5 minutos</option><option value="10">10 minutos</option><option value="15">15 minutos</option><option value="20">20 minutos</option></select></label>
             <label><span class="field-label">SOLAPAMIENTO</span><select id="overlap"><option value="20">20 segundos</option><option value="10">10 segundos</option><option value="30">30 segundos</option></select></label>
             <label><span class="field-label">FORMATO DE SALIDA</span><select id="format"><option value="mp3">MP3 · Compacto</option><option value="m4a">M4A · AAC</option><option value="wav">WAV · Sin comprimir</option></select></label>
-            <label><span class="field-label">MODELO DE VOZ</span><select id="model"><option value="small">Small · Económico</option><option value="medium" selected>Medium · Equilibrado</option><option value="large-v3">Large-v3 · Alta precisión</option></select></label>
+            <label><span class="field-label">MODELO DE VOZ (SOLO CPU)</span><select id="model"><option value="small" selected>Small · CPU recomendado</option></select></label>
           </div></div>
           <div class="surface-card settings-card"><div class="card-caption">MINUTAS E INTELIGENCIA ARTIFICIAL <span>02</span></div><div class="fields">
             <label><span class="field-label">PLATAFORMA DE PREFERENCIA</span><select id="provider"><option value="chatgpt">ChatGPT</option><option value="gemini">Gemini</option></select></label>
@@ -83,8 +83,8 @@
             <label><span class="field-label">TIPO DE DOCUMENTO</span><select id="report"><option value="both">Resumen + minuta</option><option value="summary">Solo resumen</option><option value="minutes">Solo minuta</option></select></label>
             <label><span class="field-label">IDIOMA DEL DOCUMENTO</span><select id="report-language"><option value="es">Español</option><option value="en">Inglés</option><option value="both">Español e inglés</option></select></label>
           </div><div class="ai-notice" id="provider-hint"><span class="info-symbol">i</span><span>Los resultados se preparan para utilizarlos en tu plataforma preferida.</span></div>
-            <label class="checkbox-row"><input type="checkbox" id="local-summary"><span><b>Minuta automática local con Ollama</b><small>Opcional. Necesita Ollama y qwen3:4b instalados.</small></span></label>
-            <button type="button" class="text-button" id="setup-components">Preparar CUDA / Ollama opcionales</button>
+            <label class="checkbox-row"><input type="checkbox" id="local-summary"><span><b>Minuta automática local con Ollama</b><small>Opcional. Ollama y qwen3:4b funcionan solo con CPU; puede tardar más.</small></span></label>
+            <button type="button" class="text-button" id="setup-components">Preparar Ollama CPU (opcional)</button>
             <label class="checkbox-row"><input type="checkbox" id="zip-output" checked><span><b>Exportar un ZIP con resultados</b><small>Incluye los archivos generados.</small></span></label>
           </div>
         </div><div class="settings-footer"><span>Las suscripciones de ChatGPT/Gemini no equivalen a acceso API automático.</span><button type="button" class="gold-button" data-go="process">CONTINUAR AL ESTUDIO <span>↗</span></button></div>

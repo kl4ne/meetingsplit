@@ -410,6 +410,8 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
                     # Optional AI must not hide the successfully completed audio,
                     # transcript and subtitles from the Results page.
                     manifest['summary_status']='failed'
+                    for key in ('summary_evidence','summary_evidence_items','summary_empty_source_blocks','summary_review_required'):
+                        manifest.pop(key,None)
                     warning='La minuta local no se generó; audio y transcripción conservados. / Local minutes failed; audio and transcript preserved.\n'+str(exc)[:500]
                     manifest['warnings'].append(warning)
                     _write_text(folder/'MINUTA_NO_GENERADA.txt',warning)

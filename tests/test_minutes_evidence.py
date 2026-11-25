@@ -31,7 +31,7 @@ def test_bilingual_report_preserves_literal_evidence_and_review_warning():
     report=render_minutes(items,'both','both')
     assert '# Minuta de reunión' in report and '# Meeting minutes' in report
     assert 'Ana' in report and 'Friday' in report and '[00:00:01]' in report
-    assert 'Review' in report and 'revisión' in report
+    assert 'review required' in report and 'revisión' in report
     assert items[0]['sources'][0]['quote']=='Ana will send the draft on Friday.'
 
 def test_retry_then_emit_verified_sidecar(monkeypatch):
@@ -72,3 +72,26 @@ def test_empty_extraction_warns_not_proof_of_no_discussion(monkeypatch):
     monkeypatch.setattr(summarize,'ollama_chat',lambda *a,**k:payload())
     report=summarize.summarize_local(SOURCE,'minutes','en','qwen3:4b')
     assert 'does not establish' in report
+
+
+def test_two_distinct_tasks_using_same_quote_are_not_dropped(monkeypatch):
+    source='[00:00:01] Ana will send the draft and the invoice on Friday.'
+    quote='Ana will send the draft and the invoice on Friday.'
+    first=record(sources=[{'id':1,'quote':quote}])
+    second=record(sources=[{'id':1,'quote':quote}],text_en='Send the invoice',text_es='Enviar la factura')
+    monkeypatch.setattr(summarize,'ollama_chat',lambda *a,**k:payload(first,second))
+    sidecar={}
+    report=summarize.summarize_local(source,'both','both','qwen3:4b',evidence_sink=sidecar.update)
+    assert len(sidecar['items'])==2
+    assert 'Send the draft' in report and 'Send the invoice' in report
+
+def test_duplicate_json_keys_are_rejected():
+    with pytest.raises(ValueError):
+        validate_items('{"items":[],"items":[]}',list(source_blocks(SOURCE))[0],'both')
+
+def test_empty_blocks_reported_in_sidecar_and_markdown(monkeypatch):
+    monkeypatch.setattr(summarize,'ollama_chat',lambda *a,**k:payload())
+    sidecar={}
+    report=summarize.summarize_local(SOURCE,'minutes','en','qwen3:4b',evidence_sink=sidecar.update)
+    assert sidecar['empty_block_ids']==[1]
+    assert 'Sections with no extracted items' in report

@@ -15,6 +15,7 @@ _LOCALES = {
         'review':'AI-generated draft. Source quotations were checked mechanically. Verify classifications, translations, dates, responsibilities and completeness against the recording.',
         'empty':'No items extracted; this does not establish that nothing was discussed. Review the transcript.',
         'heading':'AI interpretation — review required',
+        'coverage':'Sections with no extracted items (review these sections in the transcript)',
     },
     'es': {
         'summary':'Resumen ejecutivo','minutes':'Minuta de reunión',
@@ -25,6 +26,7 @@ _LOCALES = {
         'review':'Borrador generado por IA. Las citas se comprobaron mecánicamente. Verifica clasificaciones, traducciones, fechas, responsables y exhaustividad contra la grabación.',
         'empty':'No se extrajeron elementos; esto no demuestra que no se discutiera nada. Revisa la transcripción.',
         'heading':'Interpretación de IA — requiere revisión',
+        'coverage':'Secciones sin elementos extraídos (revisa estas secciones en la transcripción)',
     },
 }
 
@@ -82,8 +84,16 @@ def _literal(value, quotes):
     return value
 
 
+def _unique_keys(pairs):
+    result={}
+    for key,value in pairs:
+        if key in result: raise ValueError('Duplicate evidence JSON key')
+        result[key]=value
+    return result
+
+
 def validate_items(raw: str, rows: list[dict], language: str) -> list[dict]:
-    try: document=json.loads(raw)
+    try: document=json.loads(raw,object_pairs_hook=_unique_keys)
     except (TypeError,ValueError) as exc: raise ValueError('Invalid evidence JSON') from exc
     if not isinstance(document,dict) or set(document)!={'items'} or not isinstance(document['items'],list) or len(document['items'])>100:
         raise ValueError('Invalid evidence item collection')
@@ -119,12 +129,14 @@ def _markdown(value):
     return re.sub(r'([\\\x60*_{}\[\]()<>#+.!|&~-])',r'\\\1',value)
 
 
-def render_minutes(items: list[dict], mode: str, language: str) -> str:
+def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=()) -> str:
     documents=[]
     for lang in ('es','en') if language=='both' else (language,):
         loc=_LOCALES[lang]
         title=loc['summary'] if mode=='summary' else loc['minutes']
         lines=['# '+title,'','**'+loc['review']+'**','']
+        if empty_blocks:
+            lines+=['**'+loc['coverage']+':** '+', '.join(map(str,empty_blocks)),'']
         if not items:
             lines.append(loc['empty'])
         if mode=='both' and items:

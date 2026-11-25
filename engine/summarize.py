@@ -57,7 +57,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     if mode not in ('summary','minutes','both') or language not in ('es','en','both'):
         raise ValueError('Invalid report mode or language')
     blocks=list(source_blocks(transcript))
-    items=[];seen=set();empty=0
+    items=[];seen=set();empty=[]
     for number,rows in enumerate(blocks,1):
         if cancel: cancel.check()
         progress(f'Analizando evidencias / Checking evidence: {number}/{len(blocks)}')
@@ -73,15 +73,16 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                     raise RuntimeError(f'Invalid source evidence in section {number}; review transcript') from exc
                 messages=extraction_prompt(rows,language)+[
                     {'role':'user','content':'The last response failed mechanical validation. Regenerate JSON using only exact source quotations and IDs, null for missing owner or date.'}]
-        if not extracted: empty+=1
+        if not extracted: empty.append(number)
         for item in extracted:
             # Deduplicate identical evidence only; do not merge distinct obligations.
-            key=(item['category'],tuple((s['source_id'],s['quote']) for s in item['sources']),item['owner'],item['due'])
+            key=(item['category'],tuple((s['source_id'],s['quote']) for s in item['sources']),item['owner'],item['due'],
+                 item.get('text_es'),item.get('text_en'))
             if key not in seen:
                 seen.add(key);items.append(item)
     if cancel: cancel.check()
-    report=render_minutes(items,mode,language)
+    report=render_minutes(items,mode,language,empty)
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
-                       'source_blocks':len(blocks),'empty_blocks':empty,'items':items})
+                       'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,'items':items})
     return report

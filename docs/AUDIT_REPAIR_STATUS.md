@@ -71,3 +71,16 @@ records source citations and review-required status; classifications, summaries,
 translations and completeness are still AI interpretations, not verified facts.
 Empty extraction is not proof that nothing was discussed. Real Qwen EN/ES and
 long-meeting accuracy/performance acceptance are required; unit tests use mocks.
+
+## CI evidence and next acceptance
+
+Run #45555606107 at 228163d: engine 101 passed / 2 skipped; browser 11
+passed; dependency-audit SUCCESS (No known vulnerabilities found in scanned
+Python environment). Both jobs passed. This is historical evidence for that
+commit, not the newer minutes changes. No installer packaging.
+
+Expose the evidence sidecar in Results, show IDs of empty extraction blocks,
+reject duplicate JSON keys, and retain distinct interpretations of a shared
+quotation. Add a synthetic bilingual local-only acceptance rubric in
+qa/minutes_acceptance.py (requires existing Ollama/Qwen on verified Windows
+storage). No hardware evaluation has been performed by this checkpoint.

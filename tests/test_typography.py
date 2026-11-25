@@ -15,7 +15,7 @@ def test_typography_increased_on_all_pages_and_controls():
     assert 'font-size:16px' in stylesheet  # prev 12px body/controls
     assert 'font-size:15px' in stylesheet  # prev 11px secondary text
     assert 'font-size:14px' in stylesheet  # prev 10px captions
-    assert 'v0.8.8' in page
+    assert 'v0.8.9' in page
     assert '#start-job' in stylesheet  # progress button still styled
     assert '#developer-name' in stylesheet
     for name in ('home', 'import', 'settings', 'process', 'results'):

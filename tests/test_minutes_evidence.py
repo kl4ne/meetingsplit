@@ -44,7 +44,7 @@ def test_retry_then_emit_verified_sidecar(monkeypatch):
     assert len(calls)==2 and all(c['json_output'] for c in calls)
     assert sidecar['review_required'] is True
     assert sidecar['verification']=='literal_source_match_only'
-    assert len(sidecar['items'])==1 and 'Invented' not in result
+    assert {item['owner'] for item in sidecar['items']}=={'Ana','Luis'} and 'Invented' not in result
 
 def test_invalid_evidence_twice_does_not_emit_report(monkeypatch):
     monkeypatch.setattr(summarize,'ollama_chat',lambda *a,**k:payload(record(due='Wednesday')))
@@ -70,7 +70,7 @@ def test_cancel_before_call(monkeypatch):
 
 def test_empty_extraction_warns_not_proof_of_no_discussion(monkeypatch):
     monkeypatch.setattr(summarize,'ollama_chat',lambda *a,**k:payload())
-    report=summarize.summarize_local(SOURCE,'minutes','en','qwen3:4b')
+    report=summarize.summarize_local('[00:00:01] The discussion continued.','minutes','en','qwen3:4b')
     assert 'does not establish' in report
 
 

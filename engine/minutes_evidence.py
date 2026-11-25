@@ -255,6 +255,128 @@ def validate_items(raw: str, rows: list[dict], language: str, *, source_only_on_
     return result
 
 
+# Recognize only direct statements. Indirect speech and ambiguous references still
+# need model extraction and review; a proposal is never itself proof of approval.
+_DIRECT_DECISION = re.compile(
+    r'^(?:(?:confirmed agreement|acuerdo confirmado)\s*:|'
+    r'(?:the (?:\w+ ){0,4}(?:board|committee|council|team|group)|we)\s+(?:approved|agreed to)\b|'
+    r'(?:the|this)\s+[^.!?]+?\s+(?:was|is)\s+approved\b|'
+    r'se\s+(?:aprobó|acordó)\b|(?:aprobamos|acordamos)\b|'
+    r'(?:el|la)\s+(?:\w+\s+){0,3}(?:junta|comité|consejo|equipo)\s+(?:aprobó|acordó)\b)',
+    re.IGNORECASE,
+)
+_PROPOSAL_REFERENCE = re.compile(
+    r'^(?:this (?:proposal|recommendation) (?:is|was) approved|'
+    r'se aprobó (?:esta|esa) propuesta|(?:esta|esa) propuesta (?:queda|fue) aprobada)[.!]?$', re.IGNORECASE,
+)
+_TASK_DEADLINE = re.compile(
+    r'^(?:the deadline for this task is|el plazo de esta tarea es|la fecha límite de esta tarea es)\s+'
+    r'(?P<date>[^.!?;]+)[.!]?$', re.IGNORECASE,
+)
+_DATE = r'(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|lunes|martes|miércoles|jueves|viernes|sábado|domingo|\d{4}-\d{2}-\d{2})'
+_INLINE_DEADLINE = re.compile(r'\b(?:by|on|before|para(?: el)?|el|antes del)\s+(?P<date>'+_DATE+r')\s*[.!]?$', re.IGNORECASE)
+_UNSAFE_STATEMENT = re.compile(
+    r'\b(?:reportedly|allegedly|supuestamente|according to|según|but|pero|said that|dijo que|'
+    r'consider|considerar|discuss|discutir|pending|pendiente)\b|[;\"“”]', re.IGNORECASE,
+)
+
+
+def explicit_source_items(rows, language):
+    """Extract direct source statements and narrowly link adjacent explicit references.
+
+    Traversal is independent of model windows and their accepted output. A reference
+    must name the preceding statement's type and be close to it in the transcript.
+    """
+    languages=('es','en') if language=='both' else (language,)
+    items=[]
+    previous=None
+
+    def create(category, sources, owner=None, due=None):
+        return {'category':category,'sources':sources,'owner':owner,'due':due,
+                **{'text_'+lang:' '.join(source['quote'] for source in sources) for lang in languages}}
+
+    def seconds(stamp):
+        hour,minute,second=map(int,stamp.split(':'))
+        return hour*3600+minute*60+second
+
+    for row in rows:
+        for sentence in _SENTENCE_BREAK.split(row['text']):
+            quote=sentence.strip()
+            if not quote:
+                continue
+            source={'source_id':row['id'],'timestamp':row['timestamp'],'quote':quote}
+            close=previous and 0<=seconds(source['timestamp'])-seconds(previous['sources'][-1]['timestamp'])<=45
+            prior=previous if close else None
+            previous=None
+            # Quoted or hypothetical speech cannot create confirmed evidence.
+            if _UNCERTAIN.search(quote) or _UNSAFE_STATEMENT.search(quote):
+                continue
+            if _PROPOSAL_REFERENCE.fullmatch(quote):
+                if prior and prior['category']=='proposal':
+                    items[-1]=create('decision',[*prior['sources'],source])
+                continue
+            labelled_due=_TASK_DEADLINE.fullmatch(quote)
+            if labelled_due:
+                deadline=labelled_due['date'].strip()
+                if prior and prior['category']=='action' and not prior['due'] and re.fullmatch(_DATE,deadline,re.IGNORECASE):
+                    items[-1]=create('action',[*prior['sources'],source],prior['owner'],deadline)
+                continue
+            actor=_COMMITMENT.match(quote)
+            if actor and actor['actor'].split()[0].casefold() not in _NON_PERSONAL_SUBJECTS and not _PROPOSAL.search(quote):
+                predicate=quote[len(actor['actor']):].strip().casefold()
+                # Future tense alone does not establish responsibility for a task.
+                if not predicate.startswith(('will ', 'va a ')) or _INLINE_DEADLINE.search(quote):
+                    date=_INLINE_DEADLINE.search(quote)
+                    previous=create('action',[source],actor['actor'],date['date'] if date else None)
+            elif _DIRECT_DECISION.match(quote) and not _PROPOSAL.search(quote):
+                previous=create('decision',[source])
+            elif _PROPOSAL.search(quote) and not _AGREEMENT.search(quote):
+                previous=create('proposal',[source])
+            elif _BUDGET_FACT.match(quote) and _AMOUNT.search(quote) and not _PROPOSAL.search(quote):
+                previous=create('topic',[source])
+            if previous:
+                items.append(previous)
+    return items
+
+
+def reconcile_source_items(items, explicit):
+    """Keep detailed model records when they cover a single exact source event."""
+    covered=set()
+    retained=[]
+    by_id={}
+    for index,item in enumerate(explicit):
+        for source in item['sources']:
+            by_id.setdefault(source['source_id'],[]).append((index,source['quote']))
+    for item in items:
+        matches=[
+            {index for index,quote in by_id.get(source['source_id'],())
+             if source['quote'] in quote or quote in source['quote']}
+            for source in item['sources']
+        ]
+        matched=set().union(*matches)
+        if not matched:
+            retained.append(item)
+            continue
+        if len(matched)!=1 or not all(matches):
+            # Do not retain a second interpretation of an explicit event mixed
+            # with another event or with unrelated background citations.
+            continue
+        index=next(iter(matched))
+        source_item=explicit[index]
+        if item['category'] != source_item['category'] or len(source_item['sources'])>1:
+            continue
+        if source_item['owner'] and item['owner']!=source_item['owner']:
+            continue
+        if source_item['due'] and (not item['due'] or source_item['due'].casefold() not in item['due'].casefold()):
+            continue
+        if any(amount.group() not in {m.group() for ref in item['sources'] for m in _AMOUNT.finditer(ref['quote'])}
+               for ref in source_item['sources'] for amount in _AMOUNT.finditer(ref['quote'])):
+            continue
+        covered.add(index)
+        retained.append(item)
+    return retained+[item for index,item in enumerate(explicit) if index not in covered]
+
+
 def find_coverage_gaps(rows, items):
     """Flag uncited lexical candidates for review without asserting their meaning."""
     refs={}

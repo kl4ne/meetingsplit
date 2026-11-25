@@ -46,9 +46,9 @@ def choose_boundaries(duration: float, silence_ranges: list[tuple[float, float]]
         nxt = min(candidates)[1] if candidates else min(ideal, cursor + max_seconds)
         if nxt <= cursor + 1:
             nxt = min(cursor + target_seconds, duration)
-        cuts.append(round(nxt, 3))
+        cuts.append(nxt)
         cursor = nxt
-    cuts.append(round(duration, 3))
+    cuts.append(duration)
     return cuts
 
 

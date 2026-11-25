@@ -19,6 +19,10 @@ DEFAULT_ENDPOINT = 'http://127.0.0.1:11434'
 MANAGED_ENDPOINT = 'http://127.0.0.1:11435'
 
 
+class OutputLimitError(RuntimeError):
+    """Ollama stopped at its generation limit before providing a finished answer."""
+
+
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
         raise ValueError('Ollama redirects are not permitted')
@@ -112,16 +116,13 @@ def chat(messages, endpoint=DEFAULT_ENDPOINT, model=MODEL, cancel=None, progress
     if model!=MODEL: raise ValueError('Only the local qwen3:4b model is supported')
     control=cancel or Cancellation()
     chunks=[]; total=0; done=False; last_update=0; thinking_chars=0
-    # The current official qwen3:4b reports thinking.values=[true]. Requesting
-    # false is then coerced to its default and leaks reasoning into content on
-    # some runtimes. Enable the separate thinking channel and discard that field.
-    # Reserve enough generation/context budget for both reasoning and final text.
-    payload={'model':MODEL,'messages':[dict(m) for m in messages],'stream':True,'think':True,
-             'keep_alive':0,'truncate':False,'options':{'temperature':0.6,'num_ctx':16384,
-                'num_predict':8192,'repeat_penalty':1.1}}
+    # Structured extraction needs the completion budget for evidence, not reasoning.
+    payload={'model':MODEL,'messages':[dict(m) for m in messages],'stream':True,
+             'think':not json_output,'keep_alive':0,'truncate':False,
+             'options':{'temperature':0.6,'num_ctx':16384,'num_predict':8192,'repeat_penalty':1.1}}
     if json_output:
-        payload['format']='json'
-        payload['options']['temperature']=0.2
+        payload['format']=json_output if isinstance(json_output,dict) else 'json'
+        payload['options']['temperature']=0
     for record in stream_json(endpoint,'/api/chat',payload,control,lambda _:None,timeout):
         text=record.get('message',{}).get('content','')
         thinking_chars+=len(record.get('message',{}).get('thinking',''))
@@ -132,12 +133,15 @@ def chat(messages, endpoint=DEFAULT_ENDPOINT, model=MODEL, cancel=None, progress
         if time.monotonic()-last_update>.5:
             progress('Ollama: '+str(total)+' characters' if total else 'Ollama: preparing the report…');last_update=time.monotonic()
         if record.get('done'):
-            if record.get('done_reason')=='length':
-                raise RuntimeError('Ollama reached its output limit; the incomplete report was not saved')
+            reason=record.get('done_reason')
+            if reason=='length':
+                raise OutputLimitError('Ollama reached its output limit; the incomplete report was not saved')
+            if json_output and reason!='stop':
+                raise RuntimeError('Ollama did not confirm a finished evidence response')
             done=True; break
     result=''.join(chunks).strip()
     if not done or not result: raise RuntimeError('Ollama generation incomplete or empty')
-    if '<think>' in result or '</think>' in result:
+    if not json_output and ('<think>' in result or '</think>' in result):
         if '</think>' not in result: raise RuntimeError('Ollama returned incomplete thinking instead of a report')
         result=result.rsplit('</think>',1)[-1].strip()
         if not result: raise RuntimeError('Ollama returned thinking without a final report')

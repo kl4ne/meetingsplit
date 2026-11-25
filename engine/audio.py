@@ -54,24 +54,44 @@ def _run(args: list[str], *, timeout: int|None=None, cancel: Cancellation|None=N
         return result
 
 
+def _probe_data(path: Path) -> dict:
+    args=[bundled_exe('ffprobe'),'-v','error','-select_streams','a:0',
+          '-show_entries','stream=index,duration,start_time:format=duration,start_time','-of','json',str(path)]
+    return json.loads(_run(args,timeout=75).stdout)
+
+
 def probe(path: Path) -> float:
-    args=[bundled_exe('ffprobe'),'-v','error','-show_entries','format=duration',
-          '-of','json',str(path)]
-    d=json.loads(_run(args,timeout=75).stdout)
-    seconds=float(d.get('format',{}).get('duration','0'))
+    data=_probe_data(path)
+    streams=data.get('streams',[])
+    if not streams:
+        raise ValueError('El archivo no contiene una pista de audio.')
+    duration=streams[0].get('duration')
+    if duration in (None, 'N/A'):
+        duration=data.get('format',{}).get('duration','0')
+    seconds=float(duration)
     if not math.isfinite(seconds) or seconds<=0 or seconds>24*3600:
         raise ValueError('Audio sin duración válida')
     return seconds
 
 
+def audio_start_offset(path: Path) -> float:
+    data=_probe_data(path)
+    audio=data['streams'][0]
+    def time_or_zero(value):
+        stamp=float(value) if value not in (None,'N/A') else 0.
+        return stamp if math.isfinite(stamp) else 0.
+    return max(0.,time_or_zero(audio.get('start_time'))-
+               time_or_zero(data.get('format',{}).get('start_time')))
+
+
 def detect_silences(path: Path, threshold_db: int=-35, minimum_s: float=.65, cancel: Cancellation|None=None) -> list[tuple[float,float]]:
     cmd=[bundled_exe('ffmpeg'),'-hide_banner','-nostdin','-i',str(path),
-         '-vn','-af',f'silencedetect=noise={threshold_db}dB:d={minimum_s}',
+         '-map','0:a:0','-vn','-af',f'asetpts=PTS-STARTPTS,silencedetect=noise={threshold_db}dB:d={minimum_s}',
          '-f','null','NUL' if os.name=='nt' else '/dev/null']
     p=_run(cmd,cancel=cancel)
     # Parse chronological start/end events; ignore unmatched final silence.
     # Match events in temporal order; end-of-file silence without end isn't used.
-    events=re.findall(r'silence_(start|end):\s*([\d.]+)',p.stderr)
+    events=re.findall(r'silence_(start|end):\s*([-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)',p.stderr)
     ranges=[]
     active=None
     for kind,value in events:
@@ -90,14 +110,15 @@ CODEC={
 }
 
 
-def export_clip(source: Path, destination: Path, clip: Clip, fmt: str, cancel: Cancellation|None=None) -> dict:
+def export_clip(source: Path, destination: Path, clip: Clip, fmt: str,
+                cancel: Cancellation|None=None, *, source_offset: float=0.) -> dict:
     if fmt not in CODEC: raise ValueError('Formato no compatible')
     temp=destination.with_suffix(destination.suffix+'.partial')
     if temp.exists(): temp.unlink()
     cmd=[bundled_exe('ffmpeg'),'-hide_banner','-nostdin','-y',
-         '-ss',f'{clip.export_start:.3f}','-i',str(source),
-         '-t',f'{clip.export_end-clip.export_start:.3f}',
-         '-vn',*CODEC[fmt],str(temp)]
+         '-ss',f'{source_offset+clip.export_start:.6f}','-i',str(source),
+         '-t',f'{clip.export_end-clip.export_start:.6f}',
+         '-map','0:a:0','-vn',*CODEC[fmt],str(temp)]
     try:
         _run(cmd,cancel=cancel)
         recorded=probe(temp)

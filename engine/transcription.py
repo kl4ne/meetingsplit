@@ -1,6 +1,7 @@
 """Optional locally executed Faster-Whisper; never contacts ChatGPT or Gemini."""
 from __future__ import annotations
 from pathlib import Path
+import math
 import os
 import ctypes
 import sys
@@ -94,13 +95,13 @@ def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_sta
 
 def transcribe_clip(model, clip: Clip, path: Path, *, language: str='auto', cancel: Cancellation|None=None, preserve_quality=False) -> list[dict]:
     kwargs={
-        'beam_size':5,'vad_filter':False,'word_timestamps':True,
+        'beam_size':5,'vad_filter':True,'word_timestamps':True,
+        'vad_parameters':{'min_silence_duration_ms':600,'speech_pad_ms':250},
         'condition_on_previous_text':False,'task':'transcribe',
     }
     # CPU fallback is slower: make progress practical without increasing RAM.
     if not preserve_quality and getattr(getattr(model, 'model', None), 'device', None) == 'cpu':
         kwargs['beam_size'] = 2
-        kwargs['word_timestamps'] = False
     if language=='auto':
         kwargs.update(language=None,multilingual=True)
     elif language in ('es','en'):
@@ -108,25 +109,37 @@ def transcribe_clip(model, clip: Clip, path: Path, *, language: str='auto', canc
     else:
         raise ValueError('Idioma de entrada no válido')
     segments, _=model.transcribe(str(path), **kwargs)
+    def bounded_times(start, end):
+        start=clip.export_start+float(start)
+        end=clip.export_start+float(end)
+        if not (math.isfinite(start) and math.isfinite(end)):
+            return None
+        start=max(clip.export_start,start)
+        end=min(clip.export_end,end)
+        return (start,end) if start<end else None
+
     lines=[]
     for seg in segments:
         if cancel:cancel.check()
         words=getattr(seg,'words',None) or []
         if words:
-            chosen=[w for w in words if assign_text_to_core(
-                clip.export_start+float(w.start),clip.export_start+float(w.end),
-                clip.core_start,clip.core_end)]
+            chosen=[]
+            for word in words:
+                times=bounded_times(word.start,word.end)
+                if times and assign_text_to_core(*times,clip.core_start,clip.core_end):
+                    chosen.append((times,word.word))
             if not chosen: continue
-            text=''.join(w.word for w in chosen).strip()
-            t0=clip.export_start+float(chosen[0].start)
-            t1=clip.export_start+float(chosen[-1].end)
+            text=''.join(word for _,word in chosen).strip()
+            t0=min(times[0] for times,_ in chosen)
+            t1=max(times[1] for times,_ in chosen)
         else:
-            t0=clip.export_start+float(seg.start)
-            t1=clip.export_start+float(seg.end)
-            if not assign_text_to_core(t0,t1,clip.core_start,clip.core_end):continue
+            times=bounded_times(seg.start,seg.end)
+            if not times or not assign_text_to_core(*times,clip.core_start,clip.core_end):
+                continue
+            t0,t1=times
             text=seg.text.strip()
         if text:
-            lines.append({'start':round(t0,2),'end':round(t1,2),'text':text,
+            lines.append({'start':round(t0,6),'end':round(t1,6),'text':text,
                           'part':clip.number})
     return lines
 

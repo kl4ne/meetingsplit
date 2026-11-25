@@ -10,7 +10,8 @@ from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import QWebEngineUrlRequestInterceptor, QWebEngineProfile
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from engine.job import run_job
+from desktop.version import VERSION
+from engine.job import can_retry_minutes, retry_minutes, run_job
 from engine.control import Cancellation, JobCancelled
 from desktop.storage import configure_data_root, validate_local_folder, UnsafeStorage
 
@@ -33,7 +34,11 @@ class JobWorker(QObject):
     @Slot()
     def run(self):
         try:
-            output=run_job(self.configuration,lambda message,pct:self.progress.emit(message,pct),self.control)
+            progress=lambda message,pct:self.progress.emit(message,pct)
+            if folder:=self.configuration.get('retry_minutes_folder'):
+                output=retry_minutes(folder,self.configuration['output'],progress,self.control)
+            else:
+                output=run_job(self.configuration,progress,self.control)
             self.complete.emit(str(output))
         except JobCancelled as exc:
             self.cancelled.emit(str(exc))
@@ -161,18 +166,49 @@ class DesktopBridge(QObject):
             conf['file']=self._source
             conf['output']=self._output
             conf['model_cache']=str(Path(self._output)/'Modelos')
-            if not self._source: raise ValueError(self._tr('Choose a recording first.','Primero selecciona una grabación.'))
             if not self._output:raise ValueError(self._tr('Choose a local folder for your data first.','Primero escoge una carpeta local para los datos.'))
             validate_local_folder(Path(self._output))
             if conf.pop('resume_requested',False):
                 folder=QFileDialog.getExistingDirectory(None,self._tr('Choose interrupted MeetingSplit job','Escoge trabajo interrumpido de MeetingSplit'),self._output)
                 if not folder:
                     self.cancelled.emit(self._tr('Resume cancelled','Reanudación cancelada'));return
+                if can_retry_minutes(folder,self._output):
+                    self._start_worker({'retry_minutes_folder':folder,'output':self._output})
+                    return
+                if not self._source:
+                    raise ValueError(self._tr('Choose the original recording to resume audio processing.',
+                                              'Selecciona la grabación original para reanudar el audio.'))
                 conf['resume_folder']=folder
             else:
                 conf.pop('resume_folder',None)
+                if not self._source:
+                    raise ValueError(self._tr('Choose a recording first.','Primero selecciona una grabación.'))
         except Exception as exc:
             self.failed.emit(str(exc));return
+        self._start_worker(conf)
+
+    @Slot()
+    def retryLocalMinutes(self):
+        if self._thread and self._thread.isRunning():
+            self.failed.emit(self._tr('A meeting is already processing.','Hay una reunión procesándose.'))
+            return
+        if self._last_folder:
+            self._start_worker({'retry_minutes_folder':self._last_folder,'output':self._output})
+
+    @Slot(result=str)
+    def getSummaryStatus(self):
+        if self._last_folder:
+            path=Path(self._last_folder)/'manifest.json'
+            try:
+                if not path.is_symlink():
+                    state=json.loads(path.read_text(encoding='utf-8')).get('summary_status')
+                    if state in ('failed','needs_review','excluded','complete'):
+                        return state
+            except (OSError,ValueError):
+                pass
+        return ''
+
+    def _start_worker(self,conf):
         self._control=Cancellation()
         self._thread=QThread(self)
         self._worker=JobWorker(conf,self._control)
@@ -251,7 +287,7 @@ class DesktopBridge(QObject):
 class MainWindow(QWebEngineView):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('MeetingSplit | Private Audio Studio')
+        self.setWindowTitle(f'MeetingSplit | Private Audio Studio | v{VERSION}')
         self.resize(1366,880)
         self.setMinimumSize(920,670)
         self._interceptor=BlockNetwork(self)
@@ -277,6 +313,7 @@ class MainWindow(QWebEngineView):
 def main():
     app=QApplication(sys.argv)
     app.setApplicationName('MeetingSplit')
+    app.setApplicationVersion(VERSION)
     app.setOrganizationName('MeetingSplit')
     app.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps)
     view=MainWindow();view.show()

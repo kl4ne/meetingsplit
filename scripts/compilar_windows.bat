@@ -1,7 +1,9 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0\.."
-set "RELEASE=0.8.6"
+set "RELEASE=0.8.8"
+set "PORTABLE_BASENAME=MeetingSplit-v%RELEASE%-Windows-portable"
+if /I "%~1"=="--portable-only" set "PORTABLE_BASENAME=%PORTABLE_BASENAME%-candidate"
 rem Only this build process: avoid harvesting unrelated Poppler/ICU DLLs from host PATH.
 set "PATH=%CD%\.venv\Scripts;%CD%\bin;%SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0"
 if /I "%~1"=="--release" (
@@ -33,6 +35,7 @@ if errorlevel 1 (
 if errorlevel 1 exit /b 1
 .venv\Scripts\python.exe -m PyInstaller --noconfirm --clean --onedir --windowed ^
  --name MeetingSplit --icon "assets\meetingsplit.ico" ^
+ --version-file "scripts\windows_version.txt" ^
  --additional-hooks-dir "scripts\hooks" ^
  --add-data "ui;ui" ^
  --add-data "docs;docs" --add-data "LICENSE;." ^
@@ -72,8 +75,9 @@ if not "%PROBE_EXIT%"=="0" (
  echo ERROR: el ejecutable no paso sus verificaciones obligatorias.
  exit /b 1
 )
-powershell.exe -NoProfile -NonInteractive -Command "Compress-Archive -Path '.\dist\MeetingSplit\*' -DestinationPath '.\dist\MeetingSplit-v%RELEASE%-Windows-portable.zip' -Force"
+powershell.exe -NoProfile -NonInteractive -Command "Compress-Archive -Path '.\dist\MeetingSplit\*' -DestinationPath '.\dist\%PORTABLE_BASENAME%.zip' -Force"
 if errorlevel 1 exit /b 1
+if /I "%~1"=="--portable-only" goto portable_complete
 set "ISCC=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
 if exist "%ISCC%" (
  "%ISCC%" "%CD%\scripts\MeetingSplit.iss"
@@ -81,6 +85,7 @@ if exist "%ISCC%" (
 ) else (
  echo NOTA: Inno Setup no esta instalado. Se creo un ZIP portable, no un Setup.
 )
+:portable_complete
 echo.
 echo EXITO: compilacion y prueba basica del EXE completadas en este equipo.
 echo NOTA: faltan las pruebas con audio real y NVIDIA en tu ASUS.

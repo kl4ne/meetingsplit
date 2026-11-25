@@ -10,7 +10,7 @@ const enDictionary=window.MeetingSplitLocales.englishBySpanish;
 let uiLocale='en', currentPage='home', statusOriginal='', stateLabelOriginal='', currentNotice='';
 const staticText=[];
 const SKIP_DYNAMIC=new Set(['page-crumb','file-title','file-sub','folder-display','state-label','job-status',
-'result-eyebrow','result-heading','result-description','result-path','result-files','provider-hint']);
+'result-eyebrow','result-heading','result-description','result-path','result-files','result-minutes-status','provider-hint']);
 function translate(text){
   if(uiLocale==='es')return text;
   const direct=enDictionary[text];if(direct)return direct;
@@ -90,13 +90,14 @@ function applyUILocale(lang,persist=true){
   if(statusOriginal)el('job-status').textContent=translate(statusOriginal);
   if(stateLabelOriginal)el('state-label').textContent=translate(stateLabelOriginal);
   if(resultIndexJSON)renderResults(resultIndexJSON);
+  renderSummaryStatus(summaryStatus);
   if(persist)saveUILocale(uiLocale);
 }
 window.meetingSplitSetUILanguage=applyUILocale;
 document.querySelectorAll('.ui-lang-btn').forEach(b=>b.addEventListener('click',()=>applyUILocale(b.dataset.locale)));
 function savedUILocale(){try{return localStorage.getItem('meetingsplit-ui-language')||'en';}catch(_){return 'en';}}
 collectStaticText();
-let bridge = null, working = false, chosenFile = '', resultPath = '', resultIndexJSON = '';
+let bridge = null, working = false, chosenFile = '', resultPath = '', resultIndexJSON = '', summaryStatus = '';
 let jobStarted = 0, jobTimer = null;
 function formatElapsed(seconds){const m=Math.floor(seconds/60);return String(m).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
 function showWorking(){
@@ -197,18 +198,18 @@ function finished(){
   el('cancel-job').hidden=true;
   el('cancel-job').disabled=false;
 }
-function beginJob(resume=false){
+function beginJob(resume=false,retryMinutes=false){
   navigate('process');
   if(working) return;
   if(!bridge){setStatus('Vista previa: instala o ejecuta MeetingSplit para procesar audio.',0);return;}
-  if(!chosenFile){navigate('import');el('file-title').textContent=translate('Primero selecciona una grabación');return;}
+  if(!chosenFile && !resume && !retryMinutes){navigate('import');el('file-title').textContent=translate('Primero selecciona una grabación');return;}
   const data={};
   for(const id of ['action','provider','plan','minutes','overlap','format','model','report'])data[id]=el(id).value;
   data.resume_requested=resume;
   data.input_language=el('input-language').value;
   data.report_language=el('report-language').value;
   data.preserve_cpu_quality=el('preserve-cpu-quality').checked;
-  data.local_summary=el('local-summary').checked;
+  data.local_summary=data.action!=='split' && el('local-summary').checked;
   data.zip_output=el('zip-output').checked;
   data.ollama_model='qwen3:4b';
   working=true;jobStarted=Date.now();
@@ -219,10 +220,13 @@ function beginJob(resume=false){
   el('open-result').hidden=true;
   setStateLabel('PROCESANDO EN TU PC');
   setStatus('Preparando los archivos en el disco...',2);
-  bridge.startJob(JSON.stringify(data));
+  if(retryMinutes) bridge.retryLocalMinutes();
+  else bridge.startJob(JSON.stringify(data));
 }
 el('start-job').addEventListener('click',()=>beginJob(false));
 el('resume-job').addEventListener('click',()=>beginJob(true));
+el('action').addEventListener('change',()=>{el('local-summary').disabled=el('action').value==='split';});
+el('retry-minutes').addEventListener('click',()=>beginJob(false,true));
 el('cancel-job').addEventListener('click',()=>{
   if(bridge&&working){bridge.cancelJob();el('cancel-job').disabled=true;setStatus('Solicitando cancelación segura; los resultados parciales se conservarán.',0);}
 });
@@ -244,6 +248,23 @@ function renderResults(index){
   }
   container.hidden=container.children.length===0;
 }
+function renderSummaryStatus(state){
+  summaryStatus=state;
+  const message={
+    failed:'La minuta local no se generó. Los demás resultados están disponibles.',
+    needs_review:'La minuta es un borrador. Revisa la cobertura de acuerdos y montos.',
+    excluded:'Solo dividir no genera una minuta local.'
+  }[state];
+  const notice=el('result-minutes-status');
+  notice.hidden=!message;
+  notice.textContent=message?translate(message):'';
+  if(message && resultPath){
+    el('result-heading').textContent=translate('Archivos disponibles.');
+    setStatus(message,100);
+  }
+  el('retry-minutes').hidden=!(bridge && typeof bridge.retryLocalMinutes==='function' &&
+    (state==='failed'||state==='needs_review'));
+}
 function showResult(folder){
   finished();
   resultPath=folder;
@@ -256,6 +277,8 @@ function showResult(folder){
   el('result-path').textContent=folder;
   el('result-path').hidden=false;
   el('results-open-folder').hidden=false;
+  renderSummaryStatus('');
+  if(bridge && typeof bridge.getSummaryStatus==='function') bridge.getSummaryStatus(renderSummaryStatus);
   if(bridge && typeof bridge.getResultIndex==='function') bridge.getResultIndex(renderResults);
   navigate('results');
 }

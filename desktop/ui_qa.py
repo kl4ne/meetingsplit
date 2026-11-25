@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import sys
+from desktop.version import VERSION
 from PySide6.QtCore import QTimer,QUrl
 from PySide6.QtWidgets import QApplication
 from PySide6.QtWebEngineCore import QWebEngineProfile
@@ -19,9 +20,10 @@ def main(output_path):
         def inspect(data):
             data=json.loads(data) if isinstance(data,str) and data else {}
             result.update(data)
-            result['ok']=bool(data.get('screens')==5 and data.get('active')==1 and data.get('language')=='en')
+            result['ok']=bool(data.get('screens')==5 and data.get('active')==1 and data.get('language')=='en'
+                              and data.get('version_label','').endswith('v'+VERSION))
             app.quit()
-        view.page().runJavaScript('JSON.stringify({screens:document.querySelectorAll(".screen").length,active:document.querySelectorAll(".active-screen").length,language:document.documentElement.lang})',inspect)
+        view.page().runJavaScript('JSON.stringify({screens:document.querySelectorAll(".screen").length,active:document.querySelectorAll(".active-screen").length,language:document.documentElement.lang,version_label:document.querySelector(".version-chip").textContent.trim()})',inspect)
     view.loadFinished.connect(done)
     root=Path(getattr(sys,'_MEIPASS',Path(__file__).resolve().parents[1]))
     # WebEngine does not start a renderer for an unexposed view on all platforms.

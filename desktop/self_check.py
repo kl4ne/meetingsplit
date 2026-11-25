@@ -12,6 +12,8 @@ import ssl
 import sqlite3
 import sys
 
+from desktop.version import VERSION
+
 
 def run_checks() -> tuple[dict, int]:
     checks: dict[str,dict] = {}
@@ -62,7 +64,7 @@ def run_checks() -> tuple[dict, int]:
         record('whisper',False,f'{type(e).__name__}: {e}'[:240])
         record('cuda',False,'Not tested because Faster-Whisper is unavailable',False)
     report={
-        'product':'MeetingSplit','version':'0.8.6','offline':True,
+        'product':'MeetingSplit','version':VERSION,'offline':True,
         'python':platform.python_version(),
         'openssl':ssl.OPENSSL_VERSION,
         'sqlite':sqlite3.sqlite_version,

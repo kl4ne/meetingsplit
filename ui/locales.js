@@ -1,6 +1,13 @@
-// MeetingSplit v0.8.6 — UI translations. Spanish originals are the keys; English is the initial UI locale.
+// MeetingSplit v0.8.8 — UI translations. Spanish originals are the keys; English is the initial UI locale.
 // This UI language preference does NOT change meeting audio language or report language.
 window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
+  'Opcional. Necesita transcripción, Ollama y qwen3:4b.':'Optional. Requires transcription, Ollama and qwen3:4b.',
+  'Archivos disponibles.':'Files available.',
+  'REINTENTAR MINUTA LOCAL':'RETRY LOCAL MINUTES',
+  'La minuta local no se generó. Los demás resultados están disponibles.':'Local minutes could not be generated. The other results are available.',
+  'La minuta es un borrador. Revisa la cobertura de acuerdos y montos.':'The minutes are a draft. Review coverage of agreements and amounts.',
+  'Solo dividir no genera una minuta local.':'Split only does not generate local minutes.',
+
   "CONTINUAR TRABAJO ↗":"RESUME JOB ↗",
   "Preparar CUDA / Ollama opcionales": "Set up optional CUDA / Ollama",
   "MeetingSplit · Estudio privado de reuniones": "MeetingSplit · Private Meeting Studio",
@@ -14,7 +21,7 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "ARCHIVOS EN TU EQUIPO": "FILES STAY ON YOUR PC",
   "Privacidad por diseño. Tus grabaciones no se envían a servidores.": "Private by design. Your recordings never leave your device.",
   "PROCESAMIENTO LOCAL": "LOCAL PROCESSING",
-  "EDICIÓN PRIVADA · v0.8.6": "PRIVATE EDITION · v0.8.6",
+  "EDICIÓN PRIVADA · v0.8.8": "PRIVATE EDITION · v0.8.8",
   "TU VOZ. TU INFORMACIÓN. TU CONTROL.": "YOUR VOICE. YOUR DATA. YOUR CONTROL.",
   "Cada palabra cuenta.": "Every word matters.",
   "Cada decisión permanece.": "Every decision stays.",
@@ -98,7 +105,7 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "Español e inglés": "Spanish and English",
   "Los resultados se preparan para utilizarlos en tu plataforma preferida.": "Results are prepared for use in your preferred platform.",
   "Conservar precisión en CPU":"Preserve CPU accuracy",
-  "Mantiene el modelo seleccionado y las marcas por palabra; puede tardar más.":"Keeps the selected model and word timestamps; may take longer.",
+  "Mantiene el modelo seleccionado y una búsqueda más amplia; puede tardar más.":"Keeps the selected model and a wider search; this may take longer.",
   "Minuta automática local con Ollama": "Local automatic meeting minutes with Ollama",
   "Opcional. Necesita Ollama y qwen3:4b instalados.": "Optional. Requires Ollama and qwen3:4b installed.",
   "Exportar un ZIP con resultados": "Export results as ZIP",

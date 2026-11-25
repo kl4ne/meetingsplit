@@ -1,7 +1,9 @@
 """Grounded meeting prompts + optional entirely local Ollama summarization."""
 from __future__ import annotations
+import hashlib
+import json
 import re
-from .ollama import chat, DEFAULT_ENDPOINT
+from .ollama import chat, DEFAULT_ENDPOINT, OutputLimitError
 
 _TIMESTAMP=re.compile(r'\[(\d{2}:\d{2}:\d{2})\]')
 
@@ -51,28 +53,62 @@ def ollama_chat(messages: list[dict], model: str='qwen3:4b', timeout: int=900, *
 
 def summarize_local(transcript: str, mode: str, language: str, model: str,
                     progress=lambda msg:None, *, endpoint=DEFAULT_ENDPOINT, cancel=None,
-                    evidence_sink=None) -> str:
+                    evidence_sink=None, read_block=None, write_block=None) -> str:
     """Extract bounded structured candidates, validate literal evidence, then render."""
-    from .minutes_evidence import source_blocks, validate_items, render_minutes, extraction_prompt
+    from .minutes_evidence import (source_blocks, validate_items, render_minutes,
+                                   extraction_prompt, extraction_schema, find_coverage_gaps)
     if mode not in ('summary','minutes','both') or language not in ('es','en','both'):
         raise ValueError('Invalid report mode or language')
     blocks=list(source_blocks(transcript))
-    items=[];seen=set();empty=[]
-    for number,rows in enumerate(blocks,1):
+    items=[];seen=set();empty=[];coverage_gaps=[]
+
+    def extract(rows, number):
         if cancel: cancel.check()
-        progress(f'Analizando evidencias / Checking evidence: {number}/{len(blocks)}')
         messages=extraction_prompt(rows,language)
+        key=hashlib.sha256(json.dumps([1,model,language,messages],ensure_ascii=False).encode()).hexdigest()
+        cached=read_block(key) if read_block else None
+        if cached is not None:
+            try:
+                saved=validate_items(cached,rows,language)
+                if not find_coverage_gaps(rows,saved) and all(item['category']!='review' for item in saved):
+                    return saved
+            except ValueError:
+                pass
+        schema=extraction_schema(rows,language)
         for attempt in range(2):
             if cancel: cancel.check()
-            raw=ollama_chat(messages,model,endpoint=endpoint,cancel=cancel,progress=progress,json_output=True)
             try:
-                extracted=validate_items(raw,rows,language)
+                raw=ollama_chat(messages,model,endpoint=endpoint,cancel=cancel,progress=progress,json_output=schema)
+            except OutputLimitError:
+                if len(rows)==1:
+                    raise
                 break
+            try:
+                extracted=validate_items(raw,rows,language,source_only_on_mismatch=bool(attempt))
             except ValueError as exc:
                 if attempt:
-                    raise RuntimeError(f'Invalid source evidence in section {number}; review transcript') from exc
-                messages=extraction_prompt(rows,language)+[
-                    {'role':'user','content':'The last response failed mechanical validation. Regenerate JSON using only exact source quotations and IDs, null for missing owner or date.'}]
+                    if len(rows)==1:
+                        raise RuntimeError(f'Invalid source evidence in section {number}; review transcript') from exc
+                    break
+                messages=messages+[
+                    {'role':'user','content':'Use exact source quotations and IDs. Leave digits and currency values in the quotations, not the descriptions.'}]
+                continue
+            gaps=find_coverage_gaps(rows,extracted)
+            if extracted and not gaps and write_block and all(item['category']!='review' for item in extracted):
+                verified=[
+                    dict(item,sources=[{'id':ref['source_id'],'quote':ref['quote']} for ref in item['sources']])
+                    for item in extracted
+                ]
+                write_block(key,json.dumps({'items':verified},ensure_ascii=False))
+            coverage_gaps.extend(gaps)
+            return extracted
+        progress(f'Dividiendo sección {number} / Splitting evidence section {number}')
+        midpoint=len(rows)//2
+        return extract(rows[:midpoint],number)+extract(rows[midpoint:],number)
+
+    for number,rows in enumerate(blocks,1):
+        progress(f'Analizando evidencias / Checking evidence: {number}/{len(blocks)}')
+        extracted=extract(rows,number)
         if not extracted: empty.append(number)
         for item in extracted:
             # Deduplicate identical evidence only; do not merge distinct obligations.
@@ -81,8 +117,9 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             if key not in seen:
                 seen.add(key);items.append(item)
     if cancel: cancel.check()
-    report=render_minutes(items,mode,language,empty)
+    report=render_minutes(items,mode,language,empty,coverage_gaps)
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
-                       'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,'items':items})
+                       'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,
+                       'coverage_gaps':coverage_gaps,'items':items})
     return report

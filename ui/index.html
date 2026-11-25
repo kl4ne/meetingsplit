@@ -27,7 +27,7 @@
       </a>
       <div class="security-mark"><span class="green-dot"></span><span>ARCHIVOS EN TU EQUIPO</span></div>
       <p>Privacidad por diseño. Tus grabaciones no se envían a servidores.</p>
-      <div class="sidebar-identity"><span>MS / DESKTOP</span><span>v0.8.6</span></div>
+      <div class="sidebar-identity"><span>MS / DESKTOP</span><span>v0.8.8</span></div>
     </div>
   </aside>
   <div class="main-shell">
@@ -35,7 +35,7 @@
       <div class="page-position"><span class="location-kicker">MEETINGSPLIT</span><span class="crumb">/</span><span id="page-crumb">Inicio</span></div>
       <div class="top-right"><div class="ui-language-control" role="group" aria-label="Interface language" id="ui-language-control">
         <span class="language-label" id="language-label">LANGUAGE</span><button type="button" class="ui-lang-btn selected" id="lang-en" data-locale="en" aria-pressed="true" lang="en">EN</button><span class="lang-rule" aria-hidden="true">/</span><button type="button" class="ui-lang-btn" id="lang-es" data-locale="es" aria-pressed="false" lang="es">ES</button>
-      </div><span class="gold-separator"></span><span class="privacy-badge"><span class="green-dot"></span> PROCESAMIENTO LOCAL</span><span class="version-chip">EDICIÓN PRIVADA · v0.8.6</span></div>
+      </div><span class="gold-separator"></span><span class="privacy-badge"><span class="green-dot"></span> PROCESAMIENTO LOCAL</span><span class="version-chip">EDICIÓN PRIVADA · v0.8.8</span></div>
     </header>
     <main id="screen-container" tabindex="-1">
       <!-- One individual view is present at a time; navigation never stacks pages vertically. -->
@@ -83,8 +83,8 @@
             <label><span class="field-label">TIPO DE DOCUMENTO</span><select id="report"><option value="both">Resumen + minuta</option><option value="summary">Solo resumen</option><option value="minutes">Solo minuta</option></select></label>
             <label><span class="field-label">IDIOMA DEL DOCUMENTO</span><select id="report-language"><option value="es">Español</option><option value="en">Inglés</option><option value="both">Español e inglés</option></select></label>
           </div><div class="ai-notice" id="provider-hint"><span class="info-symbol">i</span><span>Los resultados se preparan para utilizarlos en tu plataforma preferida.</span></div>
-            <label class="checkbox-row"><input type="checkbox" id="preserve-cpu-quality"><span><b>Conservar precisión en CPU</b><small>Mantiene el modelo seleccionado y las marcas por palabra; puede tardar más.</small></span></label>
-            <label class="checkbox-row"><input type="checkbox" id="local-summary"><span><b>Minuta automática local con Ollama</b><small>Opcional. Necesita Ollama y qwen3:4b instalados.</small></span></label>
+            <label class="checkbox-row"><input type="checkbox" id="preserve-cpu-quality"><span><b>Conservar precisión en CPU</b><small>Mantiene el modelo seleccionado y una búsqueda más amplia; puede tardar más.</small></span></label>
+            <label class="checkbox-row"><input type="checkbox" id="local-summary" aria-describedby="local-summary-note"><span><b>Minuta automática local con Ollama</b><small id="local-summary-note">Opcional. Necesita transcripción, Ollama y qwen3:4b.</small></span></label>
             <button type="button" class="text-button" id="setup-components">Preparar CUDA / Ollama opcionales</button>
             <label class="checkbox-row"><input type="checkbox" id="zip-output" checked><span><b>Exportar un ZIP con resultados</b><small>Incluye los archivos generados.</small></span></label>
           </div>
@@ -99,7 +99,7 @@
       </section>
       <section class="screen" id="view-results" data-view="results" aria-labelledby="results-title" hidden>
         <div class="screen-intro"><div><p class="eyebrow ink">04 / ENTREGA Y EXPORTACIÓN</p><h1 id="results-title">Tus <em>resultados.</em></h1><p>Transcripciones con tiempos, fragmentos numerados y documentos de seguimiento.</p></div><span class="step-count">ARCHIVO LOCAL</span></div>
-        <div class="results-layout surface-card"><div class="result-emblem">▤</div><div class="result-eyebrow" id="result-eyebrow">TODAVÍA NO HAY UNA REUNIÓN PROCESADA</div><h2 id="result-heading">Tu información,<br><em>organizada con claridad.</em></h2><p id="result-description">Cuando termine una reunión, podrás abrir la carpeta elegida y consultar los archivos generados sin salir de MeetingSplit.</p><div class="results-path" id="result-path" hidden></div><div class="result-files" id="result-files" hidden></div><button type="button" id="results-open-folder" class="gold-button" hidden>ABRIR CARPETA DE RESULTADOS ↗</button><button type="button" id="results-new" data-go="import" class="text-button">PREPARAR UNA REUNIÓN ↗</button></div>
+        <div class="results-layout surface-card"><div class="result-emblem">▤</div><div class="result-eyebrow" id="result-eyebrow">TODAVÍA NO HAY UNA REUNIÓN PROCESADA</div><h2 id="result-heading">Tu información,<br><em>organizada con claridad.</em></h2><p id="result-description">Cuando termine una reunión, podrás abrir la carpeta elegida y consultar los archivos generados sin salir de MeetingSplit.</p><div class="results-path" id="result-path" hidden></div><p id="result-minutes-status" role="status" hidden></p><button type="button" id="retry-minutes" class="text-button" hidden>REINTENTAR MINUTA LOCAL</button><div class="result-files" id="result-files" hidden></div><button type="button" id="results-open-folder" class="gold-button" hidden>ABRIR CARPETA DE RESULTADOS ↗</button><button type="button" id="results-new" data-go="import" class="text-button">PREPARAR UNA REUNIÓN ↗</button></div>
       </section>
     </main>
     <div class="bottomline"><span>MEETINGSPLIT <b>·</b> PRIVATE AUDIO STUDIO</span><div class="credit-stack"><span class="developer-signature" id="developer-signature">Designed &amp; Developed by <span id="developer-name">Roberto S. Macfie</span></span><span class="copyright-line" id="copyright-line">© 2026 Roberto S. Macfie. All rights reserved.</span></div></div>

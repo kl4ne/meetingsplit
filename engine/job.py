@@ -12,15 +12,16 @@ import shutil
 from pathlib import Path
 import re
 from datetime import datetime
-from .audio import detect_silences, export_clip, probe
+from .audio import audio_start_offset, detect_silences, export_clip, probe
 from .control import Cancellation, JobCancelled
 from .output import format_srt, pack_result
-from .planning import plan_clips
+from .planning import Clip, plan_clips
 from .inference_worker import InferenceWorker, NativeInferenceError
 from .summarize import instructions, summarize_local
 from .transcription import (format_transcript, load_whisper, load_cpu_whisper,
                             is_cuda_runtime_error, transcribe_clip)
 from desktop.storage import validate_local_folder
+from desktop.version import VERSION
 
 ALLOWED={'.mp3','.m4a','.wav','.aac','.ogg','.flac','.mp4','.wma','.opus'}
 
@@ -187,23 +188,144 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
     _check_source(src,identity)
     resume=config.get('resume_folder')
     if resume:
-        folder=validate_local_folder(Path(resume))
-        if folder.parent!=base or not folder.name.startswith('MeetingSplit-'):
-            raise ValueError('Choose a MeetingSplit job inside the configured data folder')
+        folder=_project_folder(resume,base)
     else:
         folder.mkdir(parents=False,exist_ok=False)
     with _job_lock(folder):
         return _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task)
 
 
+def _project_folder(folder, base):
+    folder=validate_local_folder(Path(folder))
+    if folder.parent!=base or not folder.name.startswith('MeetingSplit-'):
+        raise ValueError('Choose a MeetingSplit job inside the configured data folder')
+    return folder
+
+
+def _read_manifest(folder):
+    path=folder/'manifest.json'
+    if path.is_symlink():
+        raise ValueError('Unsafe job manifest')
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
+def _minutes_pending(manifest):
+    return (manifest.get('transcript_ready') or manifest.get('status')=='complete') and \
+        manifest.get('summary_status') in ('started','failed','needs_review')
+
+
+def _generate_minutes(folder, base, manifest, settings, transcript, progress, task):
+    from .ollama import LocalService
+    manifest['summary_status']='started'
+    for key in ('summary_evidence','summary_evidence_items','summary_empty_source_blocks',
+                'summary_review_required','summary_coverage_gaps'):
+        manifest.pop(key,None)
+    _write_json(folder/'manifest.json',manifest)
+    diagnostic=folder/'MINUTA_NO_GENERADA.txt'
+    try:
+        task.check()
+        progress('Preparando minuta local con Ollama',91)
+        evidence={}
+        def read_block(key):
+            path=folder/f'.minutes-{key}.json'
+            if path.is_symlink():
+                raise ValueError('Unsafe minutes checkpoint')
+            return path.read_text(encoding='utf-8') if path.is_file() else None
+
+        with LocalService(base,task,lambda msg:progress(msg,92)) as service:
+            service.ensure_model()
+            report=summarize_local(transcript,settings['report'],settings['language'],
+                                   settings.get('ollama_model','qwen3:4b'),
+                                   progress=lambda msg:progress(msg,92),endpoint=service.endpoint,
+                                   cancel=task,evidence_sink=evidence.update,read_block=read_block,
+                                   write_block=lambda key,raw:_write_text(folder/f'.minutes-{key}.json',raw))
+        task.check()
+        _write_json(folder/'MINUTA_EVIDENCIAS.json',evidence)
+        _write_text(folder/'RESUMEN_Y_MINUTA_LOCAL.md',report)
+        diagnostic.unlink(missing_ok=True)
+        gaps=len(evidence.get('coverage_gaps',[]))
+        items=evidence.get('items',[])
+        needs_review=bool(gaps or not items or any(item.get('category')=='review' for item in items))
+        manifest.update(summary_status='needs_review' if needs_review else 'complete',
+                        summary_review_required=True,summary_evidence='MINUTA_EVIDENCIAS.json',
+                        summary_evidence_items=len(evidence.get('items',[])),
+                        summary_empty_source_blocks=evidence.get('empty_blocks',0),
+                        summary_coverage_gaps=gaps)
+    except JobCancelled:
+        raise
+    except Exception as exc:
+        manifest['summary_status']='failed'
+        warning=('La minuta local no se generó; audio y transcripción conservados. / '
+                 'Local minutes failed; audio and transcript preserved.\n'+str(exc)[:500])
+        _write_text(diagnostic,warning)
+
+
+def _finish_job(folder, manifest, zip_output, progress, task):
+    task.check()
+    manifest['status']='complete'
+    manifest.pop('error',None)
+    _write_json(folder/'manifest.json',manifest)
+    if zip_output:
+        target=folder/'RESULTADOS_COMPLETOS.zip'
+        _check_space(folder, sum(f.stat().st_size for f in folder.iterdir()
+                                 if f.is_file() and f!=target and not f.name.startswith('.'))+16*1024**2)
+        progress('Creando paquete ZIP de resultados',96)
+        pack_result(folder,target,cancel=task)
+    progress('Resultados terminados. Ya puedes abrirlos.',100)
+    return folder
+
+
+def _retry_minutes_locked(folder, base, manifest, progress, task):
+    settings=manifest['resume_signature']['settings']
+    if settings.get('action') not in ('transcribe','both') or not settings.get('local_summary'):
+        raise ValueError('This project does not include local minutes.')
+    if not _minutes_pending(manifest):
+        raise ValueError('This project has no local minutes to retry.')
+    rows=[]
+    clips=manifest.get('clips',[])
+    if not clips:
+        raise ValueError('No saved transcript for this project.')
+    for clip in clips:
+        number=clip['number']
+        path=folder/f'transcripcion_parte_{number:02}.json'
+        _verify_checkpoint(path,manifest.get('checkpoints',{}).get(str(number)),task)
+        rows.extend(json.loads(path.read_text(encoding='utf-8'))['segments'])
+    rows.sort(key=lambda row:row['start'])
+    manifest['transcript_ready']=True
+    try:
+        _generate_minutes(folder,base,manifest,settings,format_transcript(rows),progress,task)
+        return _finish_job(folder,manifest,settings.get('zip_output',True),progress,task)
+    except JobCancelled:
+        manifest['status']='cancelled'
+        _write_json(folder/'manifest.json',manifest)
+        raise
+    except Exception as exc:
+        manifest.update(status='failed',error=str(exc)[:800])
+        _write_json(folder/'manifest.json',manifest)
+        raise
+
+
+def can_retry_minutes(folder, output):
+    base=validate_local_folder(Path(output))
+    folder=_project_folder(folder,base)
+    return bool(_minutes_pending(_read_manifest(folder)))
+
+
+def retry_minutes(folder, output, progress, cancel=None):
+    """Retry only local minutes from the project's verified transcript checkpoints."""
+    base=validate_local_folder(Path(output))
+    folder=_project_folder(folder,base)
+    with _job_lock(folder):
+        return _retry_minutes_locked(folder,base,_read_manifest(folder),progress,cancel or Cancellation())
+
+
 def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task):
     if resume:
-        manifest_path=folder/'manifest.json'
-        if manifest_path.is_symlink():
-            raise ValueError('Unsafe job manifest')
-        manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
+        manifest=_read_manifest(folder)
         if manifest.get('resume_signature')!=signature:
             raise ValueError('Resume requires the same recording and settings')
+        if _minutes_pending(manifest):
+            return _retry_minutes_locked(folder,base,manifest,progress,task)
         if manifest.get('status')=='complete' and (not signature['settings']['zip_output'] or (folder/'RESULTADOS_COMPLETOS.zip').is_file()):
             raise ValueError('This job is already complete')
         if manifest.get('status') not in ('started','failed','cancelled','complete'):
@@ -212,7 +334,7 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
         manifest.pop('error',None)
     else:
         manifest={
-        'version':'0.8.6', 'source_name':src.name,'source_bytes':src.stat().st_size,
+        'version':VERSION, 'source_name':src.name,'source_bytes':src.stat().st_size,
         'created':datetime.now().isoformat(), 'status':'started',
         'mode':x['action'],'max_export_seconds':x['minutes']*60,
         'overlap_seconds':x['overlap'],'model':x['model'],
@@ -245,6 +367,11 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
         progress('Inspeccionando duración y formato',4)
         task.check()
         duration=probe(src)
+        media_options={}
+        if src.suffix.lower() in ('.mp4','.m4a'):
+            offset=audio_start_offset(src)
+            if offset:
+                media_options['source_offset']=offset
         _check_source(src,identity)
         if duration>4*3600:
             raise ValueError('Esta versión acepta grabaciones de hasta 4 horas.')
@@ -261,8 +388,19 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
         if any(c.export_end-c.export_start>target+.01 for c in clips):
             raise RuntimeError('Plan de cortes supera la duración máxima solicitada.')
         plan=[c.to_dict() for c in clips]
-        if resume and manifest.get('clips') and manifest['clips']!=plan:
-            raise ValueError('The saved clip plan differs; previous outputs preserved')
+        saved_plan=manifest.get('clips')
+        if resume and saved_plan and saved_plan!=plan:
+            # v0.8.6 rounded cuts to milliseconds before applying overlap.
+            # Keep completed parts on exactly their old timeline when only
+            # that rounding differs.
+            coordinates=('core_start','core_end','export_start','export_end')
+            if len(saved_plan)!=len(plan) or any(
+                old['number']!=new['number'] or any(abs(old[k]-new[k])>.001 for k in coordinates)
+                for old,new in zip(saved_plan,plan)
+            ):
+                raise ValueError('The saved clip plan differs; previous outputs preserved')
+            clips=[Clip(**part) for part in saved_plan]
+            plan=saved_plan
         manifest['clips']=plan
         _write_json(folder/'manifest.json',manifest)
         _write_text(folder/'INSTRUCCIONES_CHATGPT_GEMINI.txt',
@@ -309,7 +447,7 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
                     _verify_checkpoint(file,saved_exports[file.name].get('sha256'),task)
                 else:
                     if resume: _quarantine(file)
-                    entry=export_clip(src,file,clip,x['fmt'],cancel=task)
+                    entry=export_clip(src,file,clip,x['fmt'],cancel=task,**media_options)
                     _check_source(src,identity)
                     entry['sha256']=_sha256(file,task)
                     manifest['exports'].append(entry)
@@ -326,7 +464,7 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
                 if not do_export:
                     file=folder/f'.temporal_{clip.number:02}.mp3'
                     if resume: _quarantine(file)
-                    export_clip(src,file,clip,'mp3',cancel=task)
+                    export_clip(src,file,clip,'mp3',cancel=task,**media_options)
                     _check_source(src,identity)
                 try:
                     task.check()
@@ -376,62 +514,25 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
             _write_text(folder/'TRANSCRIPCION_COMPLETA.txt',transcript)
             _write_text(folder/'TRANSCRIPCION_SUBTITULOS.srt',format_srt(lines))
             _write_json(folder/'TRANSCRIPCION_MARCAS_TIEMPO.json',{'segments':lines})
+            manifest['transcript_ready']=True
             if config.get('local_summary',False):
-                if resume:
-                    _quarantine(folder/'RESUMEN_Y_MINUTA_LOCAL.md')
-                    _quarantine(folder/'MINUTA_NO_GENERADA.txt')
-                    _quarantine(folder/'MINUTA_EVIDENCIAS.json')
-                # Release Whisper VRAM before asking Qwen to load on an 8 GB GPU.
+                # Release Whisper before Qwen needs the same memory.
                 close_model()
                 gc.collect()
-                task.check()
-                progress('Preparando minuta local con Ollama',91)
-                from .ollama import LocalService
-                try:
-                    with LocalService(base,task,lambda msg:progress(msg,92)) as service:
-                        service.ensure_model()
-                        evidence={}
-                        report=summarize_local(transcript,x['report'],x['language'],
-                                                config.get('ollama_model','qwen3:4b'),
-                                                progress=lambda message:progress(message,92),
-                                                endpoint=service.endpoint,cancel=task,
-                                                evidence_sink=evidence.update)
-                    task.check()
-                    _write_json(folder/'MINUTA_EVIDENCIAS.json',evidence)
-                    _write_text(folder/'RESUMEN_Y_MINUTA_LOCAL.md',report)
-                    manifest['summary_status']='complete'
-                    manifest['summary_review_required']=True
-                    manifest['summary_evidence']='MINUTA_EVIDENCIAS.json'
-                    manifest['summary_evidence_items']=len(evidence.get('items',[]))
-                    manifest['summary_empty_source_blocks']=evidence.get('empty_blocks',0)
-                except JobCancelled:
-                    raise
-                except Exception as exc:
-                    # Optional AI must not hide the successfully completed audio,
-                    # transcript and subtitles from the Results page.
-                    manifest['summary_status']='failed'
-                    for key in ('summary_evidence','summary_evidence_items','summary_empty_source_blocks','summary_review_required'):
-                        manifest.pop(key,None)
-                    warning='La minuta local no se generó; audio y transcripción conservados. / Local minutes failed; audio and transcript preserved.\n'+str(exc)[:500]
-                    manifest['warnings'].append(warning)
-                    _write_text(folder/'MINUTA_NO_GENERADA.txt',warning)
+                _generate_minutes(folder,base,manifest,signature['settings'],transcript,progress,task)
             else:
+                manifest['summary_status']='not_requested'
                 manifest['warnings'].append(
                     'La minuta automática requiere un modelo local adicional. '
                     'Se adjuntan instrucciones para ChatGPT/Gemini.')
+        else:
+            manifest['summary_status']='excluded'
+            if config.get('local_summary',False):
+                manifest['warnings'].append(
+                    'Solo dividir no usa transcripción y no genera una minuta local.')
         close_model()
-        task.check()
         _check_source(src,identity)
-        manifest['status']='complete'
-        _write_json(folder/'manifest.json',manifest)
-        if bool(config.get('zip_output',True)):
-            if resume: _quarantine(folder/'RESULTADOS_COMPLETOS.zip')
-            _check_space(folder, sum(f.stat().st_size for f in folder.iterdir()
-                                     if f.is_file() and not f.name.startswith('.'))+16*1024**2)
-            progress('Creando paquete ZIP de resultados',96)
-            pack_result(folder, folder/'RESULTADOS_COMPLETOS.zip',cancel=task)
-        progress('Resultados terminados. Ya puedes abrirlos.',100)
-        return folder
+        return _finish_job(folder,manifest,signature['settings']['zip_output'],progress,task)
     except JobCancelled:
         manifest['status']='cancelled'
         manifest['warnings'].append('Cancelado; se conservaron los archivos completos anteriores a la cancelación.')

@@ -1,3 +1,9 @@
+## v0.8.8 — Private Windows portable
+
+- Distinguishes the verified classification candidate from the earlier private candidates, which displayed v0.8.6.
+- Carries forward the verified v0.8.6 classification repair. This revision changes version metadata and its checks.
+- The public release gate stays closed.
+
 ## v0.8.6 — Readability pass
 - Increased UI typography two steps throughout all five English/Spanish screens, including dropdowns, status and footer.
 - Rebalanced layout to protect visible text and preserve independent, scrollable screens at shorter heights.

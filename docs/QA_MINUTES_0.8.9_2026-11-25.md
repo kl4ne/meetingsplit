@@ -46,3 +46,5 @@ El binario extraído pasó el autodiagnóstico y abrió las cinco pantallas en l
 El ZIP portátil completo pesa 459.789.829 bytes. SHA-256 `0bb57dcb86be852664dd5d99881f6cb101b9a211bf120c51a984b551d0a5b337`. SHA-256 del EXE `004ac72c6f88be33f888e25d79b4aef62928f65f9b0f76a861fb38d9e7297a83`.
 
 La prueba larga comienza con una transcripción sintética, con intervenciones espaciadas, y la división y recuperación se comprobaron por separado. No cubre una grabación continua de una reunión real, transcripción por CUDA de Whisper, clics en la sesión personal, ni instalación/actualización/desinstalación.
+
+La revisión manual encontró una diferencia de redacción en el texto bilingüe generado: el borrador en español dice «antes del viernes» donde la cita inglesa dice «by Friday». El campo del plazo y la cita literal conservaron «Friday». La aceptación de los campos y citas estructurados no certifica la equivalencia de todas las traducciones.

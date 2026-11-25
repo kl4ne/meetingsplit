@@ -1,0 +1,49 @@
+name: Exact portable candidate - CPU speech QA
+on:
+  push:
+    branches: [qa/frozen-cpu-086-85193b8]
+    paths: ['.github/workflows/frozen-cpu-qa.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  frozen-cpu:
+    if: github.ref == 'refs/heads/qa/frozen-cpu-086-85193b8'
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: '15000374975'
+          run-id: '45567744108'
+          github-token: ${{ github.token }}
+          path: work/portable
+      - name: Extract existing portable and create synthetic speech
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem work/portable -Recurse -Filter '*.zip' -File | Select-Object -First 1
+          if (-not $zip) { throw 'Exact portable artifact ZIP missing' }
+          Expand-Archive -LiteralPath $zip.FullName -DestinationPath work/frozen
+          Add-Type -AssemblyName System.Speech
+          $speech = New-Object System.Speech.Synthesis.SpeechSynthesizer
+          $speech.SetOutputToWaveFile((Join-Path (Get-Location) 'work/synthetic.wav'))
+          $speech.Speak('The meeting is about the budget. Please send the report on Friday.')
+          $speech.Dispose()
+      - name: Actual frozen CPU transcription and worker exit
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem work/frozen -Recurse -Filter 'MeetingSplit.exe' -File | Select-Object -First 1
+          if (-not $exe) { throw 'Frozen executable missing' }
+          python qa/frozen_cpu_artifact_qa.py $exe.FullName work/synthetic.wav work/frozen-cpu-qa.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: exact-portable-cpu-qa
+          path: work/frozen-cpu-qa.json
+          if-no-files-found: warn

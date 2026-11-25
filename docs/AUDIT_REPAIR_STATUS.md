@@ -38,3 +38,13 @@ Python CycloneDX dependency audit added. Native security/SBOM, legal review,
 reproducible transitive lock, signing and hardware acceptance remain.
 All release evidence flags reset for this changed candidate; previous
 main evidence is historical, not proof that the new branch passed.
+
+## First repair-branch Windows CI, 2026-11-25
+
+Run #45555215797: engine 97 passed, 2 skipped; browser 11 passed.
+Dependency audit failed: 12 known vulnerabilities in one package. Downloaded
+CycloneDX artifact #14995786441 maps the reported findings to pip 24.0 in the
+audit environment, not to the MeetingSplit runtime packages. The engine CI
+successfully installed pip 26.3. Pin both CI environments to pip 26.3 before
+installing dependencies; retain a failing security gate and print advisory IDs
+from the SBOM. New execution required; no frozen installer was built.

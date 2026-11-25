@@ -44,8 +44,8 @@ jobs:
         shell: pwsh
         run: |
           python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install --upgrade 'pip==26.3'
           .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-          .\.venv\Scripts\python.exe -m pip install --upgrade 'pip>=26.1.2'
           choco install ffmpeg --yes --no-progress
           # Installer tooling is needed only for an explicit packaging run.
           # Chocolatey .exe shims cannot be copied into the binary package.
@@ -137,10 +137,19 @@ jobs:
         shell: pwsh
         run: |
           python -m venv .audit-venv
-          .\.audit-venv\Scripts\python.exe -m pip install -r requirements.txt pip-audit
+          .\.audit-venv\Scripts\python.exe -m pip install --upgrade 'pip==26.3'
+          .\.audit-venv\Scripts\python.exe -m pip install -r requirements.txt pip-audit==2.10.1
+          .\.audit-venv\Scripts\python.exe -m pip check
       - name: Scan Python dependencies and generate CycloneDX report
         shell: pwsh
-        run: .\.audit-venv\Scripts\python.exe -m pip_audit --local --format cyclonedx-json --output python-sbom-audit.json
+        run: |
+          .\.audit-venv\Scripts\python.exe -m pip_audit --local --format cyclonedx-json --output python-sbom-audit.json
+          $auditExit = $LASTEXITCODE
+          if (Test-Path python-sbom-audit.json) {
+            .\.audit-venv\Scripts\python.exe qa/print_audit_findings.py python-sbom-audit.json
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          exit $auditExit
       - name: Upload dependency report even if findings exist
         if: always()
         uses: actions/upload-artifact@v4

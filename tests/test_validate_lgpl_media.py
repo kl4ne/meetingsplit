@@ -58,7 +58,9 @@ def test_ci_source_builder_has_fail_closed_vendor_strategy():
 def test_media_vendor_archive_pin_matches_exact_release():
     from pathlib import Path
     script=(Path(__file__).resolve().parents[1]/'scripts/prepare_lgpl_media.ps1').read_text(encoding='utf-8')
-    assert 'autobuild-2026-10-20-13-08/ffmpeg-n8.1.3-18-g46d899d7a0-win64-lgpl-shared-8.1.zip' in script
-    assert '453a30a5019676e805a85d4845e3aad31234dfed4ae0ea2b1d4e97254dc44b0a' in script
+    assert 'autobuild-2026-11-24-12-41/ffmpeg-n8.1.3-41-ga8029b6528-win64-lgpl-shared-8.1.zip' in script
+    assert 'dbed3e64d68de76472bf2cd0b0f3250384fb96bac14b635a708e998f6e1d6996' in script
+    assert 'https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/' in script
+    assert '(Get-Item $archive).Length -ne 81544256' in script
     assert 'download/latest/' not in script
     assert 'win64-lgpl-shared-9.0.zip' not in script

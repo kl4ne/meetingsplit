@@ -138,3 +138,5 @@ codec gates and blocked release status. New media binary needs fresh QA; a
 published digest is not an independent signature or legal clearance. The dated
 upstream asset can expire again; do not use an unpinned latest alias. No installer
 was produced in the failed run.
+
+Run #45558065925: dependency scan passed; engine 130 passed, 2 skipped, 1 failed because a second test retained the October archive pin. Update that assertion to the exact November asset URL, hash and size; preserve negative GPL checks. New CI and QA packaging still required. No application runtime change in this correction.

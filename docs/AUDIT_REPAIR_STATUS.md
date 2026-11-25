@@ -84,3 +84,14 @@ reject duplicate JSON keys, and retain distinct interpretations of a shared
 quotation. Add a synthetic bilingual local-only acceptance rubric in
 qa/minutes_acceptance.py (requires existing Ollama/Qwen on verified Windows
 storage). No hardware evaluation has been performed by this checkpoint.
+
+## Native review checkpoint and minutes regression
+
+Run #45556005729: Python dependency audit succeeded; engine test collection
+failed because a stray quote in test_minutes_evidence.py caused a SyntaxError.
+Corrected the typo. Browser tests were skipped in that failed run. Added an
+evidence-only native provenance report to the future manual QA packaging path,
+including exact local build-input hash matches, PE version metadata, NVIDIA
+binary flags and candidate Chromium notice files. See docs/NATIVE_RELEASE_REVIEW.md.
+The exact frozen binaries, native vulnerability review and qualified license
+review are still outstanding. No installer built; new tests require CI.

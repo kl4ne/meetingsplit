@@ -58,7 +58,7 @@ def test_chunking_preserves_source_ids_and_timestamps():
     blocks=list(source_blocks(text))
     rows=[r for b in blocks for r in b]
     assert [r['id'] for r in rows]==list(range(1,len(rows)+1))
-    assert ''.join(r['text'] for r in rows if r['timestamp']=='00:00:01')=='x'*9000'
+    assert ''.join(r['text'] for r in rows if r['timestamp']=='00:00:01')=='x'*9000
     assert rows[-1]['timestamp']=='00:00:02'
 
 def test_cancel_before_call(monkeypatch):

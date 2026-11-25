@@ -5,6 +5,7 @@ the network. The parent owns the temporary directory and the worker lifecycle.
 """
 from __future__ import annotations
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -37,7 +38,9 @@ def child(directory):
         command=json.loads(request.read_text(encoding='utf-8'))
         request.unlink()
         try:
-            if command['op']=='load':
+            if command['op']=='ping':
+                result={'pid':os.getpid(),'protocol':1}
+            elif command['op']=='load':
                 cache=Path(command['cache'])
                 name=command['model']
                 if command['cpu']:
@@ -96,6 +99,9 @@ class InferenceWorker:
             if time.monotonic()>deadline:
                 raise NativeInferenceError('Native inference worker timed out')
             time.sleep(.1)
+
+    def ping(self):
+        return self.exchange({'op':'ping'},timeout=20)
 
     def load(self, model, cpu=False):
         return self.exchange({'op':'load','cache':str(self.cache),'model':model,

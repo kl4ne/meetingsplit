@@ -32,3 +32,14 @@ Free disk space / Espacio: at least 12 GiB for setup, preferably more for Whispe
 Cancel / Cancelar: downloads check cancellation between bounded reads (20-second stalled network timeout); model pulls show progress. A started model pull may leave reusable partial blobs. CPU remains available after failed/cancelled optional setup.
 
 Release remains on hold until GPU, Ollama, installer, regressions and licenses have all been evaluated. / La publicación sigue bloqueada hasta evaluar GPU, Ollama, instalador, regresiones y licencias.
+
+### Verified repair / Reparación verificada
+
+Older component receipts lack the new per-file integrity inventory. In Settings,
+select the affected optional component and explicitly enable Repair. Close other
+MeetingSplit instances first. A fresh hash-verified archive is staged and checked
+before replacing the component directory. Previous files are retained in a
+.backup-* directory; models and recordings are not moved or deleted. A failed
+staging operation preserves the old component. Backups may consume several GiB;
+review them manually after acceptance. The repair does not alter independent
+Ollama installations. Do not treat a legacy receipt as proof of integrity.

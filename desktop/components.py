@@ -1,7 +1,9 @@
 """Opt-in, pinned vendor downloads. No drivers, admin rights or system PATH edits."""
 from __future__ import annotations
 from dataclasses import dataclass
+from contextlib import contextmanager
 import hashlib
+import uuid
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -51,6 +53,48 @@ class VendorRedirects(HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
+def _reject_unsafe_path(path: Path, *, writable=False) -> None:
+    try:
+        info=path.lstat()
+    except FileNotFoundError:
+        return
+    # Python 3.11 has no Path.is_junction. Reject all reparse points here.
+    if stat.S_ISLNK(info.st_mode) or getattr(info,'st_file_attributes',0)&0x400:
+        raise ValueError('Unsafe component link or reparse point: '+path.name)
+    if writable and (not stat.S_ISREG(info.st_mode) or info.st_nlink>1):
+        raise ValueError('Unsafe writable component file: '+path.name)
+
+
+@contextmanager
+def _package_lock(components: Path, name: str):
+    path=components/('.'+name+'.lock')
+    _reject_unsafe_path(path,writable=True)
+    fd=os.open(path,os.O_CREAT|os.O_RDWR|getattr(os,'O_NOFOLLOW',0),0o600)
+    locked=False
+    try:
+        try:
+            if os.name=='nt':
+                import msvcrt
+                msvcrt.locking(fd,msvcrt.LK_NBLCK,1)
+            else:
+                import fcntl
+                fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            locked=True
+        except OSError as exc:
+            raise RuntimeError('Another setup is using this component') from exc
+        yield
+    finally:
+        try:
+            if locked:
+                if os.name=='nt':
+                    os.lseek(fd,0,os.SEEK_SET)
+                    msvcrt.locking(fd,msvcrt.LK_UNLCK,1)
+                else:
+                    fcntl.flock(fd,fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
+
+
 def digest(path: Path, cancel: Cancellation | None = None) -> str:
     hasher = hashlib.sha256()
     with path.open('rb') as stream:
@@ -63,10 +107,13 @@ def digest(path: Path, cancel: Cancellation | None = None) -> str:
 def download(package: Package, cache: Path, progress, cancel: Cancellation) -> Path:
     """Bounded streaming, check cancellation, verify size AND SHA before extraction."""
     cache.mkdir(parents=True, exist_ok=True)
+    _reject_unsafe_path(cache)
     archive = cache/(package.name+'.zip')
+    _reject_unsafe_path(archive)
     if archive.is_file() and archive.stat().st_size == package.size and digest(archive,cancel) == package.sha256:
         return archive
     partial = archive.with_suffix('.partial')
+    _reject_unsafe_path(partial,writable=True)
     opener = build_opener(ProxyHandler({}), HTTPSHandler(), VendorRedirects())
     deadline = time.monotonic()+3600
     count = partial.stat().st_size if partial.is_file() else 0
@@ -147,18 +194,20 @@ def extract_verified(archive: Path, dest: Path, cancel: Cancellation) -> None:
 
 def installed_inventory(folder: Path, cancel: Cancellation|None=None) -> dict:
     files={}
+    _reject_unsafe_path(folder)
     for path in sorted(folder.rglob('*')):
         if cancel: cancel.check()
-        if path.is_symlink() or (hasattr(path,'is_junction') and path.is_junction()):
-            raise ValueError('Unsafe link in installed component')
-        if path.is_file() and path.name != 'meetingsplit-receipt.json':
+        _reject_unsafe_path(path)
+        if path.is_file() and path!=folder/'meetingsplit-receipt.json':
             files[path.relative_to(folder).as_posix()]=digest(path,cancel)
     return files
 
 
 def verify_installed(package: Package, folder: Path, cancel: Cancellation|None=None) -> None:
+    _reject_unsafe_path(folder)
     validate_local_folder(folder)
     receipt=folder/'meetingsplit-receipt.json'
+    _reject_unsafe_path(receipt)
     if not receipt.is_file() or receipt.is_symlink():
         raise ValueError('Component receipt missing; repair required: '+package.name)
     data=json.loads(receipt.read_text(encoding='utf-8'))
@@ -167,36 +216,67 @@ def verify_installed(package: Package, folder: Path, cancel: Cancellation|None=N
         raise ValueError('Component integrity check failed; reinstall into a clean folder: '+package.name)
 
 
-def install_package(package: Package, root: Path, progress, cancel: Cancellation) -> Path:
+def install_package(package: Package, root: Path, progress, cancel: Cancellation, *, repair=False) -> Path:
     root = validate_local_folder(root)
     components = root/'Componentes'
     components.mkdir(exist_ok=True)
+    _reject_unsafe_path(components)
     validate_local_folder(components)
-    target = components/package.name
-    receipt = target/'meetingsplit-receipt.json'
-    if receipt.is_file():
-        verify_installed(package,target,cancel)
-        return target
-    if target.exists(): raise ValueError('Incomplete component; choose another folder or repair: '+package.name)
+    with _package_lock(components,package.name):
+        return _install_locked(package,root,components,progress,cancel,repair)
+
+
+def _install_locked(package, root, components, progress, cancel, repair):
+    target=components/package.name
+    _reject_unsafe_path(target)
+    if target.exists():
+        if not target.is_dir():
+            raise ValueError('Component target is not a directory')
+        try:
+            verify_installed(package,target,cancel)
+            return target
+        except (ValueError,OSError) as exc:
+            if not repair:
+                raise ValueError('Component requires verified repair in Settings: '+package.name) from exc
+            progress('Preparing verified replacement; existing component will be preserved: '+package.name)
     if shutil.disk_usage(root).free < package.size+5*1024**3:
         raise OSError('At least the download size plus 5 GiB free is required')
-    archive=download(package, components/'Downloads', progress, cancel)
+    cache=components/'Downloads'
+    cache.mkdir(exist_ok=True)
+    _reject_unsafe_path(cache)
+    validate_local_folder(cache)
+    archive=download(package,cache,progress,cancel)
     staging=Path(tempfile.mkdtemp(prefix='.stage-',dir=components))
+    backup=None
     try:
         extract_verified(archive,staging,cancel)
         (staging/'meetingsplit-receipt.json').write_text(json.dumps({
             'name':package.name,'url':package.url,'sha256':package.sha256,
             'size':package.size,'files':installed_inventory(staging,cancel)},indent=2),encoding='utf-8')
+        verify_installed(package,staging,cancel)
         cancel.check()
-        staging.rename(target)
+        if target.exists():
+            if not repair:
+                raise ValueError('Component appeared during setup; retry')
+            _reject_unsafe_path(target)
+            backup=components/('.backup-'+package.name+'-'+uuid.uuid4().hex)
+            target.rename(backup)
+        try:
+            staging.rename(target)
+        except BaseException:
+            if backup is not None and not target.exists():
+                backup.rename(target)
+            raise
     finally:
         if staging.exists(): shutil.rmtree(staging)
     archive.unlink(missing_ok=True)
+    if backup is not None:
+        progress('Previous component preserved / Componente anterior conservado: '+backup.name)
     return target
 
 
-def install_gpu(root: Path, progress, cancel: Cancellation) -> None:
-    for package in GPU_PACKAGES: install_package(package,root,progress,cancel)
+def install_gpu(root: Path, progress, cancel: Cancellation, *, repair=False) -> None:
+    for package in GPU_PACKAGES: install_package(package,root,progress,cancel,repair=repair)
 
 
 def gpu_directories(root: Path) -> list[Path]:

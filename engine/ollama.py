@@ -230,7 +230,7 @@ class LocalService:
         if self.log: self.log.close()
 
 
-def setup_ollama(root, progress, cancel):
+def setup_ollama(root, progress, cancel, *, repair=False):
     """Verify optional local minutes and persist a truthful final setup state.
 
     A failed or cancelled attempt may leave independently verified downloads in
@@ -248,7 +248,7 @@ def setup_ollama(root, progress, cancel):
         # Never download into or modify a user's existing, independently managed
         # local Ollama service.
         if not reusable_existing():
-            install_package(OLLAMA_PACKAGE,root,progress,cancel)
+            install_package(OLLAMA_PACKAGE,root,progress,cancel,repair=repair)
         with LocalService(root,cancel,progress) as service:
             model=service.ensure_model(allow_download=True)
             details=request_json(service.endpoint,'/api/show',{'model':MODEL})

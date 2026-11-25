@@ -28,3 +28,20 @@ def test_cancel_before_inference_request(tmp_path,monkeypatch):
         assert not (w.root/'request.json').exists()
     finally:
         w.close()
+
+
+def test_real_worker_ipc_and_cleanup(tmp_path):
+    # Real child process and file protocol, no native model or network.
+    task=Cancellation()
+    w=worker.InferenceWorker(tmp_path,tmp_path/'cache',task)
+    pid=w.process.pid
+    try:
+        response=w.ping()
+        assert response['pid']==pid and response['protocol']==1
+        with pytest.raises(RuntimeError,match='Unknown inference operation'):
+            w.exchange({'op':'unknown'},timeout=20)
+        assert w.ping()['pid']==pid
+    finally:
+        w.close()
+    assert w.process.poll() is not None
+    assert not list(tmp_path.iterdir())

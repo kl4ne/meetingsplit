@@ -101,3 +101,14 @@ and true; empty or partially removed requirement sets cannot authorize release.
 Malformed or duplicate-key JSON and non-boolean approval fail closed. The current
 gate remains unchanged and blocked. This guard does not validate legal sign-off
 or hardware evidence by itself; those must still be reviewed separately.
+
+## Component migration and actual worker IPC
+
+Added an explicit unchecked repair option for legacy or invalid component receipts.
+Stage and verify new vendor bytes before replacing a component, retain old files
+under a unique backup directory, avoid moving models/recordings, and serialize
+component setup via OS-backed file locks. Reject unsafe reparse points and writable
+hardlinked partials. Add offline repair failure and preservation tests. Add a
+real subprocess ping/error/cleanup test (no model download or GPU). This tests
+source-mode IPC, not the frozen executable or hardware inference. Windows CI and
+interactive installer/ASUS acceptance remain required; no installer was built.

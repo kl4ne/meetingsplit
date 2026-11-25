@@ -16,8 +16,8 @@ class SetupWorker(QObject):
     completed=Signal(str)
     finished=Signal()
 
-    def __init__(self, root, gpu, ollama, cancel):
-        super().__init__();self.root=root;self.gpu=gpu;self.ollama=ollama;self.cancel=cancel
+    def __init__(self, root, gpu, ollama, cancel, repair=False):
+        super().__init__();self.root=root;self.gpu=gpu;self.ollama=ollama;self.cancel=cancel;self.repair=repair
         self.last_update=0
 
     def update(self, message):
@@ -30,14 +30,14 @@ class SetupWorker(QObject):
             if self.gpu:
                 from desktop.components import install_gpu
                 from desktop.cuda_probe import probe_cuda
-                install_gpu(self.root,self.update,self.cancel)
+                install_gpu(self.root,self.update,self.cancel,repair=self.repair)
                 self.progress.emit('CUDA: testing real inference / probando inferencia real (small)...')
                 report=probe_cuda('small',self.root/'Modelos',cancel=self.cancel)
                 (self.root/'Componentes'/'cuda-validation.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
                 if not report.get('ok'): raise RuntimeError(report.get('error','CUDA test failed'))
             if self.ollama:
                 from engine.ollama import setup_ollama
-                setup_ollama(self.root,self.update,self.cancel)
+                setup_ollama(self.root,self.update,self.cancel,repair=self.repair)
             self.completed.emit('Components prepared. Review the local test reports. / Componentes preparados. Revisa los informes de prueba locales.')
         except JobCancelled:
             self.completed.emit('Cancelled. Verified completed components kept. / Cancelado. Se conservaron los componentes completos verificados.')
@@ -64,6 +64,10 @@ class ComponentDialog(QDialog):
         self.gpu=QCheckBox(self.tr('NVIDIA CUDA 12 + cuDNN 9 (~1.1 GiB download)','NVIDIA CUDA 12 + cuDNN 9 (~1.1 GiB de descarga)'))
         self.ollama=QCheckBox(self.tr('Ollama + qwen3:4b (~4 GiB download if missing)','Ollama + qwen3:4b (~4 GiB de descarga si faltan)'))
         layout.addWidget(self.gpu);layout.addWidget(self.ollama)
+        self.repair=QCheckBox(self.tr('Repair selected MeetingSplit components (keep old copies; close other instances first)',
+                                     'Reparar componentes seleccionados (conservar copias anteriores; cerrar otras instancias primero)'))
+        self.repair.setChecked(False)
+        layout.addWidget(self.repair)
         self.terms=QCheckBox(self.tr('I accept the selected vendor licenses and optional downloads.','Acepto las licencias y descargas opcionales seleccionadas.'))
         self.terms.setChecked(False)
         notices=QTextEdit();notices.setReadOnly(True)
@@ -99,18 +103,18 @@ class ComponentDialog(QDialog):
             if shutil.disk_usage(root).free<12*1024**3: raise OSError(self.tr('At least 12 GiB free is required.','Se necesitan al menos 12 GiB libres.'))
         except Exception as exc: self.status.setText(str(exc));return
         self.control=Cancellation();self.thread=QThread(self)
-        self.worker=SetupWorker(root,self.gpu.isChecked(),self.ollama.isChecked(),self.control)
+        self.worker=SetupWorker(root,self.gpu.isChecked(),self.ollama.isChecked(),self.control,repair=self.repair.isChecked())
         self.worker.moveToThread(self.thread);self.thread.started.connect(self.worker.run)
         self.worker.progress.connect(self.status.setText);self.worker.completed.connect(self.status.setText)
         self.worker.finished.connect(self.thread.quit);self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater);self.thread.finished.connect(self.finished_setup)
-        for widget in (self.choose,self.gpu,self.ollama,self.terms,self.prepare): widget.setEnabled(False)
+        for widget in (self.choose,self.gpu,self.ollama,self.repair,self.terms,self.prepare): widget.setEnabled(False)
         self.close_button.setText(self.tr('Cancel','Cancelar'));self.thread.start()
 
     def finished_setup(self):
         self.thread=None;self.worker=None
         self.close_button.setText(self.tr('Close','Cerrar'))
-        for widget in (self.choose,self.gpu,self.ollama,self.terms,self.prepare): widget.setEnabled(True)
+        for widget in (self.choose,self.gpu,self.ollama,self.repair,self.terms,self.prepare): widget.setEnabled(True)
 
     def close_or_cancel(self):
         if self.thread:

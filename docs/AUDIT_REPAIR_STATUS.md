@@ -28,3 +28,13 @@ signature, per-export and transcript checkpoint hashes, explicit folder
 picker and preservation of orphan files. Only jobs created by this new
 implementation have compatible recovery metadata. End-to-end Windows QA
 and resume test execution are pending.
+
+Fifth batch: report timestamp citations must exist in original transcript;
+draft review warning and manifest flag. This checks citations, not factual
+correctness; structured fact extraction/validation and natural EN/ES QA
+are outstanding. Extra Dropbox/Windows sync-root heuristics are not a
+guarantee that every sync provider is detected. Browser PR tests and
+Python CycloneDX dependency audit added. Native security/SBOM, legal review,
+reproducible transitive lock, signing and hardware acceptance remain.
+All release evidence flags reset for this changed candidate; previous
+main evidence is historical, not proof that the new branch passed.

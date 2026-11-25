@@ -321,6 +321,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                     task.check()
                     (folder/'RESUMEN_Y_MINUTA_LOCAL.md').write_text(report,encoding='utf-8')
                     manifest['summary_status']='complete'
+                    manifest['summary_review_required']=True
                 except JobCancelled:
                     raise
                 except Exception as exc:
@@ -334,6 +335,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                 manifest['warnings'].append(
                     'La minuta automática requiere un modelo local adicional. '
                     'Se adjuntan instrucciones para ChatGPT/Gemini.')
+        close_model()
         task.check()
         manifest['status']='complete'
         _write_json(folder/'manifest.json',manifest)

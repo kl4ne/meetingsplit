@@ -101,7 +101,7 @@ let jobStarted = 0, jobTimer = null;
 function formatElapsed(seconds){const m=Math.floor(seconds/60);return String(m).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
 function showWorking(){
   const button=el('start-job');
-  button.disabled=working;button.classList.toggle('processing',working);
+  button.disabled=working;el('resume-job').disabled=working;button.classList.toggle('processing',working);
   button.setAttribute('aria-busy',working?'true':'false');
   button.innerHTML = working ? ('<span class="processing-spinner" aria-hidden="true"></span> '+(uiLocale==='en'?'PROCESSING…':'PROCESANDO…'))
                              : (translate('INICIAR PROCESAMIENTO')+' <span>↗</span>');

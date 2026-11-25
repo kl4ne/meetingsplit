@@ -2,13 +2,15 @@
   "release_allowed": false,
   "version_policy": "Keep 0.8.6; development checkpoints only; no Release or user installation request",
   "required": {
-    "asus_gpu_real_speech": true,
-    "frozen_app_gpu_and_ollama_on_asus": true,
-    "long_synthetic_workload": true,
-    "cpu_split_transcription_regression": true,
-    "ollama_real_generation_and_failure_paths": true,
+    "asus_gpu_real_speech": false,
+    "frozen_app_gpu_and_ollama_on_asus": false,
+    "long_synthetic_workload": false,
+    "cpu_split_transcription_regression": false,
+    "ollama_real_generation_and_failure_paths": false,
     "installer_clean_upgrade_cancel_uninstall": false,
-    "five_screens_en_es_large_typography": true,
-    "third_party_license_and_security_review": false
+    "five_screens_en_es_large_typography": false,
+    "third_party_license_and_security_review": false,
+    "resume_and_isolated_worker_acceptance": false,
+    "installed_component_integrity_and_resume": false
   }
 }

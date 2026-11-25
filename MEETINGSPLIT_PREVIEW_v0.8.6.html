@@ -336,6 +336,7 @@
             <label><span class="field-label">TIPO DE DOCUMENTO</span><select id="report"><option value="both">Resumen + minuta</option><option value="summary">Solo resumen</option><option value="minutes">Solo minuta</option></select></label>
             <label><span class="field-label">IDIOMA DEL DOCUMENTO</span><select id="report-language"><option value="es">Español</option><option value="en">Inglés</option><option value="both">Español e inglés</option></select></label>
           </div><div class="ai-notice" id="provider-hint"><span class="info-symbol">i</span><span>Los resultados se preparan para utilizarlos en tu plataforma preferida.</span></div>
+            <label class="checkbox-row"><input type="checkbox" id="preserve-cpu-quality"><span><b>Conservar precisión en CPU</b><small>Mantiene el modelo seleccionado y las marcas por palabra; puede tardar más.</small></span></label>
             <label class="checkbox-row"><input type="checkbox" id="local-summary"><span><b>Minuta automática local con Ollama</b><small>Opcional. Necesita Ollama y qwen3:4b instalados.</small></span></label>
             <button type="button" class="text-button" id="setup-components">Preparar CUDA / Ollama opcionales</button>
             <label class="checkbox-row"><input type="checkbox" id="zip-output" checked><span><b>Exportar un ZIP con resultados</b><small>Incluye los archivos generados.</small></span></label>
@@ -346,7 +347,7 @@
         <div class="screen-intro"><div><p class="eyebrow ink">03 / MOTOR DE PROCESAMIENTO</p><h1 id="process-title">Estudio <em>de audio.</em></h1><p>Tu reunión se procesa localmente con cortes seguros y transcripción temporal.</p></div><span class="step-count">PASO 03 — 03</span></div>
         <div class="two-cols process-layout">
           <div class="dark-card processing-stage"><span class="card-caption light">PROCESAMIENTO INTELIGENTE <span>03</span></span><div class="waveform" aria-hidden="true"><svg id="wave-svg" viewBox="0 0 310 105" preserveAspectRatio="none"></svg></div><h2>La precisión <em>es prioridad.</em></h2><p>Detectamos pausas naturales, conservamos segundos de contexto y registramos la procedencia de cada fragmento.</p><div class="stage-features"><span>ANÁLISIS LOCAL</span><span>CORTES CON SOLAPAMIENTO</span><span>IDIOMAS MIXTOS</span></div></div>
-          <div class="surface-card run-card"><div class="card-caption">ESTADO DEL TRABAJO <span>LIVE</span></div><div class="state-label" id="state-label">ESPERANDO GRABACIÓN</div><div class="progress-track"><span id="progress-fill"></span></div><p id="job-status" role="status" aria-live="polite">Importa una grabación para comenzar.</p><p id="job-elapsed" class="job-elapsed" role="status" aria-live="off" hidden></p><button id="start-job" class="gold-button full" type="button">INICIAR PROCESAMIENTO <span>↗</span></button><button id="cancel-job" class="cancel-button full" type="button" hidden>CANCELAR PROCESAMIENTO ✕</button><button id="open-result" class="outline-cta full" type="button" hidden>ABRIR RESULTADOS ↗</button><div class="run-note">El modelo de voz puede requerir Internet únicamente la primera vez para su descarga. Los análisis posteriores son locales.</div></div>
+          <div class="surface-card run-card"><div class="card-caption">ESTADO DEL TRABAJO <span>LIVE</span></div><div class="state-label" id="state-label">ESPERANDO GRABACIÓN</div><div class="progress-track"><span id="progress-fill"></span></div><p id="job-status" role="status" aria-live="polite">Importa una grabación para comenzar.</p><p id="job-elapsed" class="job-elapsed" role="status" aria-live="off" hidden></p><button id="start-job" class="gold-button full" type="button">INICIAR PROCESAMIENTO <span>↗</span></button><button id="resume-job" class="outline-cta full" type="button">CONTINUAR TRABAJO ↗</button><button id="cancel-job" class="cancel-button full" type="button" hidden>CANCELAR PROCESAMIENTO ✕</button><button id="open-result" class="outline-cta full" type="button" hidden>ABRIR RESULTADOS ↗</button><div class="run-note">El modelo de voz puede requerir Internet únicamente la primera vez para su descarga. Los análisis posteriores son locales.</div></div>
         </div>
       </section>
       <section class="screen" id="view-results" data-view="results" aria-labelledby="results-title" hidden>
@@ -361,6 +362,7 @@
 <script>// MeetingSplit v0.8.6 — UI translations. Spanish originals are the keys; English is the initial UI locale.
 // This UI language preference does NOT change meeting audio language or report language.
 window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
+  "CONTINUAR TRABAJO ↗":"RESUME JOB ↗",
   "Preparar CUDA / Ollama opcionales": "Set up optional CUDA / Ollama",
   "MeetingSplit · Estudio privado de reuniones": "MeetingSplit · Private Meeting Studio",
   "ESTUDIO": "STUDIO",
@@ -456,6 +458,8 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "IDIOMA DEL DOCUMENTO": "DOCUMENT LANGUAGE",
   "Español e inglés": "Spanish and English",
   "Los resultados se preparan para utilizarlos en tu plataforma preferida.": "Results are prepared for use in your preferred platform.",
+  "Conservar precisión en CPU":"Preserve CPU accuracy",
+  "Mantiene el modelo seleccionado y las marcas por palabra; puede tardar más.":"Keeps the selected model and word timestamps; may take longer.",
   "Minuta automática local con Ollama": "Local automatic meeting minutes with Ollama",
   "Opcional. Necesita Ollama y qwen3:4b instalados.": "Optional. Requires Ollama and qwen3:4b installed.",
   "Exportar un ZIP con resultados": "Export results as ZIP",
@@ -633,7 +637,7 @@ let jobStarted = 0, jobTimer = null;
 function formatElapsed(seconds){const m=Math.floor(seconds/60);return String(m).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
 function showWorking(){
   const button=el('start-job');
-  button.disabled=working;button.classList.toggle('processing',working);
+  button.disabled=working;el('resume-job').disabled=working;button.classList.toggle('processing',working);
   button.setAttribute('aria-busy',working?'true':'false');
   button.innerHTML = working ? ('<span class="processing-spinner" aria-hidden="true"></span> '+(uiLocale==='en'?'PROCESSING…':'PROCESANDO…'))
                              : (translate('INICIAR PROCESAMIENTO')+' <span>↗</span>');
@@ -729,15 +733,17 @@ function finished(){
   el('cancel-job').hidden=true;
   el('cancel-job').disabled=false;
 }
-el('start-job').addEventListener('click',()=>{
+function beginJob(resume=false){
   navigate('process');
   if(working) return;
   if(!bridge){setStatus('Vista previa: instala o ejecuta MeetingSplit para procesar audio.',0);return;}
   if(!chosenFile){navigate('import');el('file-title').textContent=translate('Primero selecciona una grabación');return;}
   const data={};
   for(const id of ['action','provider','plan','minutes','overlap','format','model','report'])data[id]=el(id).value;
+  data.resume_requested=resume;
   data.input_language=el('input-language').value;
   data.report_language=el('report-language').value;
+  data.preserve_cpu_quality=el('preserve-cpu-quality').checked;
   data.local_summary=el('local-summary').checked;
   data.zip_output=el('zip-output').checked;
   data.ollama_model='qwen3:4b';
@@ -750,7 +756,9 @@ el('start-job').addEventListener('click',()=>{
   setStateLabel('PROCESANDO EN TU PC');
   setStatus('Preparando los archivos en el disco...',2);
   bridge.startJob(JSON.stringify(data));
-});
+}
+el('start-job').addEventListener('click',()=>beginJob(false));
+el('resume-job').addEventListener('click',()=>beginJob(true));
 el('cancel-job').addEventListener('click',()=>{
   if(bridge&&working){bridge.cancelJob();el('cancel-job').disabled=true;setStatus('Solicitando cancelación segura; los resultados parciales se conservarán.',0);}
 });
@@ -759,7 +767,7 @@ function renderResults(index){
   const container=el('result-files');
   container.textContent='';
   const allowed=new Set(['TRANSCRIPCION_COMPLETA.txt','TRANSCRIPCION_SUBTITULOS.srt',
-    'RESUMEN_Y_MINUTA_LOCAL.md','RESULTADOS_COMPLETOS.zip','INSTRUCCIONES_CHATGPT_GEMINI.txt']);
+    'RESUMEN_Y_MINUTA_LOCAL.md','MINUTA_NO_GENERADA.txt','RESULTADOS_COMPLETOS.zip','INSTRUCCIONES_CHATGPT_GEMINI.txt']);
   let items=[];
   try { items=JSON.parse(index); }catch(_){ return; }
   if(!Array.isArray(items))return;

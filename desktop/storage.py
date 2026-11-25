@@ -1,6 +1,8 @@
 """Validate user-selected data folders without trusting fixed USB disks or cloud folders."""
 from __future__ import annotations
 import ctypes
+import json
+import stat
 import os
 from pathlib import Path
 import re
@@ -138,13 +140,49 @@ try {
     return result.stdout.strip().splitlines()[-1].strip()
 
 
+def _configured_sync_roots() -> list[Path]:
+    roots=[Path(value).expanduser() for key in ('OneDrive','OneDriveConsumer','OneDriveCommercial')
+           if (value:=os.environ.get(key))]
+    for key in ('APPDATA','LOCALAPPDATA'):
+        if value:=os.environ.get(key):
+            try:
+                data=json.loads((Path(value)/'Dropbox'/'info.json').read_text(encoding='utf-8'))
+                roots.extend(Path(item['path']) for item in data.values()
+                             if isinstance(item,dict) and isinstance(item.get('path'),str))
+            except (OSError,ValueError,AttributeError):
+                pass
+    if os.name=='nt':
+        import winreg
+        for hive,path,field in (
+            (winreg.HKEY_CURRENT_USER,r'Software\Microsoft\OneDrive\Accounts','UserFolder'),
+            (winreg.HKEY_CURRENT_USER,r'Software\SyncEngines\Providers','MountPoint'),
+        ):
+            try:
+                with winreg.OpenKey(hive,path) as parent:
+                    for i in range(winreg.QueryInfoKey(parent)[0]):
+                        with winreg.OpenKey(parent,winreg.EnumKey(parent,i)) as child:
+                            try:
+                                value,_=winreg.QueryValueEx(child,field)
+                                if isinstance(value,str) and value: roots.append(Path(value))
+                            except OSError:
+                                continue
+            except OSError:
+                pass
+    return roots
+
+
+def _has_cloud_attributes(path: Path) -> bool:
+    mask=(getattr(stat,'FILE_ATTRIBUTE_OFFLINE',0x1000)|0x40000|0x400000)
+    return any(getattr(parent.stat(),'st_file_attributes',0)&mask
+               for parent in (path,*path.parents))
+
+
 def validate_local_folder(folder: Path) -> Path:
     target = Path(folder).expanduser().resolve(strict=True)
     if not target.is_dir():
         raise UnsafeStorage("La ubicación seleccionada no es una carpeta.")
-    cloud_roots=[os.environ.get(key,'') for key in ('OneDrive','OneDriveConsumer','OneDriveCommercial')]
-    configured_cloud=any(value and target.is_relative_to(Path(value).expanduser().resolve()) for value in cloud_roots)
-    if configured_cloud or any(part.casefold() in _CLOUD_NAMES or part.casefold().startswith('onedrive - ') for part in target.parts):
+    configured_cloud=any(target.is_relative_to(root.resolve()) for root in _configured_sync_roots())
+    if configured_cloud or (os.name=='nt' and _has_cloud_attributes(target)) or any(part.casefold() in _CLOUD_NAMES or part.casefold().startswith('onedrive - ') for part in target.parts):
         raise UnsafeStorage(
             "Esa carpeta está dentro de OneDrive, Google Drive u otra nube. "
             "Selecciona C:\\MeetingSplit o una carpeta en un disco interno, "

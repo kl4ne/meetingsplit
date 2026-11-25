@@ -32,7 +32,11 @@ def pack_result(folder: Path, target: Path, cancel: Cancellation|None=None) -> d
             for path in sorted(folder.iterdir()):
                 if cancel: cancel.check()
                 if path.is_file() and not path.name.startswith('.') and path.name != target.name and not path.name.endswith('.partial'):
-                    zipped.write(path, arcname=path.name)
+                    with path.open('rb') as source, zipped.open(path.name,'w',force_zip64=True) as sink:
+                        while chunk := source.read(1024*1024):
+                            if cancel: cancel.check()
+                            sink.write(chunk)
+        if cancel: cancel.check()
         tmp.replace(target)
     finally:
         tmp.unlink(missing_ok=True)

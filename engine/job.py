@@ -2,6 +2,8 @@
 from __future__ import annotations
 import json
 import gc
+import math
+import shutil
 from pathlib import Path
 import re
 from datetime import datetime
@@ -51,9 +53,28 @@ def _validate(config: dict) -> dict:
             'report':report,'language':language}
 
 
+def _check_space(folder: Path, required: int) -> None:
+    if shutil.disk_usage(folder).free < required:
+        raise OSError(f'Insufficient disk space / Espacio insuficiente: {required} bytes required')
+
+
+def _estimated_output_bytes(clips, fmt: str, export: bool, zip_output: bool) -> int:
+    # PCM upper bound for each current mono output format, plus metadata.
+    rate = {'mp3': 8000, 'm4a': 12000, 'wav': 32000}[fmt]
+    total = sum(math.ceil((c.export_end-c.export_start)*rate)+65536 for c in clips)
+    return 128*1024**2 + (total*(2 if zip_output else 1) if export else
+                          max((math.ceil((c.export_end-c.export_start)*8000)+65536 for c in clips), default=0))
+
+
 def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
     """Return project directory; errors/cancellation preserve auditable partial outputs."""
     task=cancel or Cancellation()
+    notify=progress
+    last_pct=0
+    def progress(message, pct):
+        nonlocal last_pct
+        last_pct=max(last_pct, min(100, max(0, int(pct))))
+        notify(message,last_pct)
     x=_validate(config)
     src=x['source'];base=x['base']
     task.check()
@@ -63,6 +84,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
     suffix=2
     while folder.exists():
         folder=base/f'MeetingSplit-{slug}-{stamp}-{suffix}';suffix+=1
+    _check_space(base, 128*1024**2)
     folder.mkdir(parents=False,exist_ok=False)
     manifest={
         'version':'0.8.6', 'source_name':src.name,'source_bytes':src.stat().st_size,
@@ -102,6 +124,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             encoding='utf-8')
         do_transcribe=x['action'] in ('both','transcribe')
         do_export=x['action'] in ('both','split')
+        _check_space(folder, _estimated_output_bytes(clips,x['fmt'],do_export,bool(config.get('zip_output',True))))
         lines=[]
         model=None
         if do_transcribe:
@@ -115,9 +138,10 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             _write_json(folder/'manifest.json',manifest)
         for index,clip in enumerate(clips):
             task.check()
+            _check_space(folder, 64*1024**2)
             file=folder/f'parte_{clip.number:02}.{x["fmt"]}'
             if do_export:
-                progress(f'Exportando audio {index+1} de {len(clips)}', int(17+32*index/len(clips)))
+                progress(f'Exportando audio {index+1} de {len(clips)}', int(17+71*index/len(clips)))
                 manifest['exports'].append(export_clip(src,file,clip,x['fmt'],cancel=task))
                 _write_json(folder/'manifest.json',manifest)
             if do_transcribe:
@@ -127,7 +151,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                 try:
                     task.check()
                     progress(f'Transcribiendo audio {index+1} de {len(clips)}. En CPU el primer fragmento puede tardar varios minutos; el tiempo transcurrido se muestra en pantalla.',
-                             int(49+39*index/len(clips)))
+                             int(17+71*(index+.5)/len(clips)))
                     try:
                         part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
                     except Exception as exc:
@@ -138,7 +162,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                             raise
                         task.check()
                         progress('Fallo de bibliotecas NVIDIA/CUDA. Reintentando el audio por CPU.',
-                                 int(49+39*index/len(clips)))
+                                 int(17+71*(index+.5)/len(clips)))
                         manifest['warnings'].append(
                             'GPU no disponible durante la inferencia; transcripción continuó por CPU. '
                             + str(exc)[:180])
@@ -146,7 +170,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                         gc.collect()
                         cpu_model = 'small' if x['model'] in ('medium','large-v3') else x['model']
                         progress('Reintentando con CPU y modelo '+cpu_model+'. Puede tardar varios minutos por fragmento.',
-                                 int(49+39*index/len(clips)))
+                                 int(17+71*(index+.5)/len(clips)))
                         model = load_cpu_whisper(cpu_model,model_cache=base/'Modelos')
                         manifest['actual_model'] = cpu_model
                         device = 'CPU'
@@ -154,6 +178,10 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                         _write_json(folder/'manifest.json',manifest)
                         task.check()
                         part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
+                    # Persist timestamped rows before marking this clip complete.
+                    _write_json(folder/f'transcripcion_parte_{clip.number:02}.json',
+                                {'segments':part,'device':device,
+                                 'model':manifest.get('actual_model',x['model'])})
                     lines.extend(part)
                     (folder/f'transcripcion_parte_{clip.number:02}.txt').write_text(
                         format_transcript(part),encoding='utf-8')
@@ -201,6 +229,8 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         manifest['status']='complete'
         _write_json(folder/'manifest.json',manifest)
         if bool(config.get('zip_output',True)):
+            _check_space(folder, sum(f.stat().st_size for f in folder.iterdir()
+                                     if f.is_file() and not f.name.startswith('.'))+16*1024**2)
             progress('Creando paquete ZIP de resultados',96)
             pack_result(folder, folder/'RESULTADOS_COMPLETOS.zip',cancel=task)
         progress('Resultados terminados. Ya puedes abrirlos.',100)

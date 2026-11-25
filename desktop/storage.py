@@ -171,6 +171,7 @@ def configure_data_root(selected_parent: Path) -> Path:
     parent = validate_local_folder(selected_parent)
     root = parent if parent.name.casefold() == "meetingsplit" else parent / "MeetingSplit"
     root.mkdir(parents=True, exist_ok=True)
+    root = validate_local_folder(root)
     try:
         with tempfile.NamedTemporaryFile(prefix=".ms-write-check-", dir=root, delete=True) as f:
             f.write(b"OK")

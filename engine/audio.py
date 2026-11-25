@@ -1,6 +1,7 @@
 """Disk-streamed audio inspection, silence scanning and loss-conscious export."""
 from __future__ import annotations
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -58,7 +59,7 @@ def probe(path: Path) -> float:
           '-of','json',str(path)]
     d=json.loads(_run(args,timeout=75).stdout)
     seconds=float(d.get('format',{}).get('duration','0'))
-    if seconds<=0 or seconds>24*3600:
+    if not math.isfinite(seconds) or seconds<=0 or seconds>24*3600:
         raise ValueError('Audio sin duración válida')
     return seconds
 

@@ -1,0 +1,56 @@
+name: Native vendor license evidence - no packaging
+on:
+  push:
+    branches: [qa/native-license-evidence-086-9eef50b]
+    paths: ['.github/workflows/native-license-evidence.yml']
+permissions:
+  contents: read
+jobs:
+  nvidia-evidence:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - name: Verify exact official cuDNN archive and collect notices only
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force work/nvidia | Out-Null
+          Invoke-WebRequest -Uri 'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.1.0.70_cuda12-archive.zip' -OutFile work/nvidia/cudnn.zip -TimeoutSec 600
+          python qa/nvidia_license_evidence.py work/nvidia
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nvidia-exact-license-evidence
+          path: work/nvidia/evidence/
+          if-no-files-found: warn
+  qt-evidence:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - name: Inspect exact Qt wheel credits and runtime version
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip==26.3
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install PySide6==6.12.0 PySide6-WebEngine==6.12.0.140 PySide6-Pdf==6.12.0.140
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:QT_QPA_PLATFORM = 'offscreen'
+          $env:QTWEBENGINE_CHROMIUM_FLAGS = '--disable-gpu'
+          python qa/qt_license_evidence.py work/qt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qt-exact-license-evidence
+          path: work/qt/
+          if-no-files-found: warn

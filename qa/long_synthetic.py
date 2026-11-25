@@ -23,7 +23,8 @@ subprocess.run([ffmpeg,'-y','-v','error','-stream_loop','-1','-i',str(pair),
     '-t','3600','-ar','16000','-ac','1',str(source)],check=True,timeout=120)
 config={'file':str(source),'output':str(root),'action':'both','format':'mp3',
     'minutes':10,'overlap':20,'model':'medium','input_language':'auto',
-    'report':'both','report_language':'both','local_summary':False,'zip_output':True}
+    'report':'both','report_language':'both','local_summary':False,'zip_output':True,
+    'isolated_inference':True}
 start=time.monotonic()
 result=run_job(config,lambda message,pct:print(f'{pct}% {message}',flush=True))
 manifest=json.loads((result/'manifest.json').read_text(encoding='utf-8'))

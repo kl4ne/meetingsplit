@@ -112,3 +112,15 @@ hardlinked partials. Add offline repair failure and preservation tests. Add a
 real subprocess ping/error/cleanup test (no model download or GPU). This tests
 source-mode IPC, not the frozen executable or hardware inference. Windows CI and
 interactive installer/ASUS acceptance remain required; no installer was built.
+
+## Windows worker lifecycle regression
+
+Run #45556632831: 129 passed, 1 failed, 2 skipped; Python dependency scan
+passed. The actual IPC handshake succeeded but Windows virtual-environment
+launcher PID differed from the executing Python PID. Correct the assertion to
+check the stable worker PID, not the launcher PID. Add an application-owner
+watchdog and private stop marker, with process-tree termination fallback on
+Windows, and test the actual executing process's exit using a Windows handle.
+Long synthetic and frozen hardware QA now exercise the isolated production
+worker rather than the in-process legacy test path. This is not yet hardware
+acceptance. The new commit must pass CI; no new installer has been built.

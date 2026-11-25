@@ -23,23 +23,30 @@ def main(root_path, output_path):
         temporary.replace(output)
     save()
     try:
-        from engine.transcription import load_whisper,transcribe_clip
+        from engine.inference_worker import InferenceWorker
+        from engine.control import Cancellation
         from engine.audio import probe
         from engine.planning import Clip
         for language in ('en','es'):
             if not (root/f'synthetic-meeting-{language}.wav').is_file():
                 raise ValueError('Required synthetic TTS fixture missing: '+language)
-        model,device=load_whisper('medium',model_cache=root/'Modelos')
-        if device!='NVIDIA GPU': raise RuntimeError('Frozen GPU check entered CPU fallback')
-        for language in ('en','es'):
-            audio=root/f'synthetic-meeting-{language}.wav'
-            duration=probe(audio);start=time.monotonic()
-            rows=transcribe_clip(model,Clip(1,0,duration,0,duration),audio,language=language)
-            if not rows: raise RuntimeError('Frozen GPU did not transcribe synthetic speech')
-            report['stages'].append({'stage':'cuda-speech','language':language,'device':device,
-                'seconds':round(time.monotonic()-start,2),'rows':rows})
-            save()
-        model=None;gc.collect()
+        worker=InferenceWorker(root,root/'Modelos',Cancellation())
+        try:
+            worker_info=worker.ping()
+            device=worker.load('medium')
+            if device!='NVIDIA GPU': raise RuntimeError('Frozen GPU check entered CPU fallback')
+            for language in ('en','es'):
+                audio=root/f'synthetic-meeting-{language}.wav'
+                duration=probe(audio);start=time.monotonic()
+                rows=worker.transcribe(Clip(1,0,duration,0,duration),audio,language)
+                if not rows: raise RuntimeError('Frozen GPU did not transcribe synthetic speech')
+                report['stages'].append({'stage':'cuda-speech','language':language,'device':device,
+                    'isolated_worker':True,'worker_protocol':worker_info['protocol'],
+                    'seconds':round(time.monotonic()-start,2),'rows':rows})
+                save()
+        finally:
+            worker.close()
+        gc.collect()
         from engine.ollama import LocalService,MODEL
         from engine.summarize import summarize_local
         source='[00:00:01] Ana will send the draft on Friday.\n[00:00:06] Luis agreed to review it on Monday.'

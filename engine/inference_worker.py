@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import threading
 
 from .planning import Clip
 from .control import Cancellation, JobCancelled
@@ -26,8 +27,43 @@ def _atomic(path, data):
     temp.replace(path)
 
 
-def child(directory):
+def _watch_owner(root: Path, owner_pid: int):
+    """Watch the actual application PID, not the Windows venv launcher PID."""
+    handle=None
+    if os.name=='nt':
+        import ctypes
+        from ctypes import wintypes
+        kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+        kernel.OpenProcess.argtypes=[wintypes.DWORD,wintypes.BOOL,wintypes.DWORD]
+        kernel.OpenProcess.restype=wintypes.HANDLE
+        kernel.WaitForSingleObject.argtypes=[wintypes.HANDLE,wintypes.DWORD]
+        kernel.WaitForSingleObject.restype=wintypes.DWORD
+        kernel.CloseHandle.argtypes=[wintypes.HANDLE]
+        handle=kernel.OpenProcess(0x00100000,False,owner_pid)  # SYNCHRONIZE
+        if not handle:
+            os._exit(3)
+    try:
+        while True:
+            if (root/'stop').exists():
+                os._exit(0)
+            if handle is not None:
+                status=kernel.WaitForSingleObject(handle,100)
+                if status!=258:  # signaled or invalid handle
+                    os._exit(0 if status==0 else 3)
+            else:
+                # Non-Windows source launch is direct; reparenting means the
+                # owner is gone. Do not rely on a reusable PID alone.
+                if os.getppid()!=owner_pid:
+                    os._exit(0)
+                time.sleep(.1)
+    finally:
+        if handle is not None:
+            kernel.CloseHandle(handle)
+
+
+def child(directory, owner_pid):
     root=Path(directory)
+    threading.Thread(target=_watch_owner,args=(root,int(owner_pid)),daemon=True).start()
     from .transcription import load_whisper,load_cpu_whisper,transcribe_clip
     model=None
     while True:
@@ -73,7 +109,7 @@ class InferenceWorker:
         command=[sys.executable]
         if not getattr(sys,'frozen',False):
             command.append(str(Path(__file__).resolve().parents[1]/'run.py'))
-        command+=['--inference-worker',str(self.root)]
+        command+=['--inference-worker',str(self.root),str(os.getpid())]
         try:
             self.process=subprocess.Popen(command,stdin=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
@@ -114,10 +150,23 @@ class InferenceWorker:
     def close(self):
         try:
             if self.process is not None and self.process.poll() is None:
-                self.process.terminate()
-                try: self.process.wait(timeout=3)
+                # The worker may be behind a Python launcher; request exit
+                # through the private IPC directory, not by killing only the
+                # launcher's PID. The watchdog also handles parent death.
+                (self.root/'stop').touch()
+                try:
+                    self.process.wait(timeout=3)
                 except subprocess.TimeoutExpired:
-                    self.process.kill()
+                    if os.name=='nt':
+                        taskkill=Path(os.environ.get('WINDIR',r'C:\Windows'))/'System32'/'taskkill.exe'
+                        try:
+                            subprocess.run([str(taskkill),'/PID',str(self.process.pid),'/T','/F'],
+                                stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+                                timeout=8,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                        except (OSError,subprocess.TimeoutExpired):
+                            pass
+                    if self.process.poll() is None:
+                        self.process.kill()
                     self.process.wait(timeout=5)
         finally:
             self.temp.cleanup()

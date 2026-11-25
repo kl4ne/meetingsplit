@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+import os
 import pytest
 from engine import inference_worker as worker
 from engine.control import Cancellation, JobCancelled
@@ -34,10 +35,11 @@ def test_real_worker_ipc_and_cleanup(tmp_path):
     # Real child process and file protocol, no native model or network.
     task=Cancellation()
     w=worker.InferenceWorker(tmp_path,tmp_path/'cache',task)
-    pid=w.process.pid
     try:
         response=w.ping()
-        assert response['pid']==pid and response['protocol']==1
+        pid=response['pid']
+        # Windows virtual environments can launch a second Python process.
+        assert type(pid) is int and pid>0 and pid!=os.getpid() and response['protocol']==1
         with pytest.raises(RuntimeError,match='Unknown inference operation'):
             w.exchange({'op':'unknown'},timeout=20)
         assert w.ping()['pid']==pid
@@ -45,3 +47,27 @@ def test_real_worker_ipc_and_cleanup(tmp_path):
         w.close()
     assert w.process.poll() is not None
     assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.skipif(os.name!='nt',reason='Windows process-handle lifecycle test')
+def test_real_windows_worker_exits_even_behind_launcher(tmp_path):
+    import ctypes
+    from ctypes import wintypes
+    kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+    kernel.OpenProcess.argtypes=[wintypes.DWORD,wintypes.BOOL,wintypes.DWORD]
+    kernel.OpenProcess.restype=wintypes.HANDLE
+    kernel.WaitForSingleObject.argtypes=[wintypes.HANDLE,wintypes.DWORD]
+    kernel.WaitForSingleObject.restype=wintypes.DWORD
+    kernel.CloseHandle.argtypes=[wintypes.HANDLE]
+    w=worker.InferenceWorker(tmp_path,tmp_path/'cache',Cancellation())
+    handle=None
+    try:
+        pid=w.ping()['pid']
+        handle=kernel.OpenProcess(0x00100000,False,pid)
+        assert handle
+        assert kernel.WaitForSingleObject(handle,0)==258
+        w.close()
+        assert kernel.WaitForSingleObject(handle,5000)==0
+    finally:
+        w.close()
+        if handle: kernel.CloseHandle(handle)

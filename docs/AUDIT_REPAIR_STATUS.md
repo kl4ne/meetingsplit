@@ -154,3 +154,13 @@ files to interpreter inputs. The previous package passed actual CPU inference
 source orchestration and the exact frozen worker/FFmpeg. Those results remain
 historical and cannot certify a changed runtime. No change to release gate.
 Python advisory: https://www.python.org/downloads/release/python-31410/ .
+
+## Runtime gate regression — 2026-11-25
+
+Run #45566385506: 133 engine tests passed, 2 skipped; 11 browser tests passed;
+Python dependency audit passed. Packaging run #45566407427: source-built PyAV
+for CPython 3.14 passed media validation. The prebuild gate rejected the legacy
+OpenSSL numeric tuple despite the runtime string reporting OpenSSL 3.5.9.
+Read the exact stable runtime version string instead; log both representations,
+reject malformed/prerelease values and retain the 3.5.9 minimum. Frozen runtime
+must still pass independent verification. No release gate change.

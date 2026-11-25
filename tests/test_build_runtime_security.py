@@ -15,3 +15,11 @@ def test_ci_and_build_require_approved_runtime():
     assert workflow.count("python-version: '3.14.10'")==2
     script=(ROOT/'scripts/compilar_windows.bat').read_text(encoding='utf-8')
     assert script.index('qa\\check_build_runtime.py')<script.index('-m PyInstaller')
+
+
+def test_openssl_actual_runtime_version_string():
+    from qa.check_build_runtime import openssl_runtime_version
+    assert openssl_runtime_version('OpenSSL 3.5.9 29 Sep 2026')==(3,5,9)
+    assert blockers((3,14,10),openssl_runtime_version('OpenSSL 3.0.13 30 Jan 2024'),(3,50,4),64)
+    assert blockers((3,14,10),openssl_runtime_version('OpenSSL 3.5.9-dev'),(3,50,4),64)
+    assert blockers((3,14,10),openssl_runtime_version('LibreSSL 4.0.0'),(3,50,4),64)

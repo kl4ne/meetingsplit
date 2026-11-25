@@ -1,6 +1,7 @@
 """Fail closed for the approved development build runtime (not a CVE scanner)."""
 import json
 import platform
+import re
 import sqlite3
 import ssl
 import struct
@@ -24,9 +25,19 @@ def blockers(python, openssl, sqlite, bits):
     return failures
 
 
+def openssl_runtime_version(text):
+    # Use the runtime version string and record the legacy tuple separately.
+    match=re.fullmatch(r'OpenSSL (\d+)\.(\d+)\.(\d+)(?:\s+\d{1,2} [A-Za-z]{3} \d{4})?',text)
+    if not match:
+        return (0,0,0)
+    return tuple(map(int,match.groups()))
+
+
 def main():
-    failures=blockers(sys.version_info,ssl.OPENSSL_VERSION_INFO,sqlite3.sqlite_version_info,struct.calcsize('P')*8)
+    runtime=openssl_runtime_version(ssl.OPENSSL_VERSION)
+    failures=blockers(sys.version_info,runtime,sqlite3.sqlite_version_info,struct.calcsize('P')*8)
     print(json.dumps({'python':platform.python_version(),'openssl':ssl.OPENSSL_VERSION,
+                      'openssl_runtime_parsed':runtime,'openssl_legacy_tuple':ssl.OPENSSL_VERSION_INFO,
                       'sqlite':sqlite3.sqlite_version,'blockers':failures}))
     return 2 if failures else 0
 

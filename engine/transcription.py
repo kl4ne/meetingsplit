@@ -59,7 +59,12 @@ def load_cpu_whisper(model_name: str='medium', *, model_cache:Path|None=None):
 def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_status:Callable[[str],None]=lambda _:None, cancel:Cancellation|None=None):
     if model_cache is not None:
         from desktop.components import activate_gpu
-        activate_gpu(Path(model_cache).parent)
+        try:
+            activate_gpu(Path(model_cache).parent)
+        except (OSError, ValueError) as exc:
+            on_status('Optional GPU component verification failed; using CPU: '+str(exc))
+            return load_cpu_whisper('small' if model_name in ('medium','large-v3') else model_name,
+                                    model_cache=model_cache), 'CPU'
     try:
         from faster_whisper import WhisperModel
     except ImportError as err:

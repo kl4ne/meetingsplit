@@ -10,3 +10,9 @@ Remaining: isolated persistent inference worker, restart/recovery UI, explicit C
 quality policy, report evidence validation, component integrity and resumable
 downloads, cloud-root detection, CI/SBOM, exact installer acceptance and legal review.
 Do not change release_allowed or distribute an installer.
+
+Second batch: HTTP range resume with pinned size/hash, installed file inventory
+and revalidation (legacy receipts require reinstall in a clean folder),
+GPU verification failure uses CPU, diagnostic minute file exposed in UI.
+Local receipts detect corruption, not malicious modification of both receipt and files.
+Live Windows installer, download and runtime acceptance still required.

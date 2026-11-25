@@ -156,7 +156,7 @@ class LocalService:
     def __enter__(self):
         if self.reuse and reusable_existing():
             return self
-        from desktop.components import OLLAMA_PACKAGE
+        from desktop.components import OLLAMA_PACKAGE, verify_installed
         folder=self.root/'Componentes'/OLLAMA_PACKAGE.name
         exe=folder/'ollama.exe'
         if not exe.is_file():
@@ -167,6 +167,7 @@ class LocalService:
         with socket.socket() as sock:
             if sock.connect_ex(('127.0.0.1',11435))==0:
                 raise RuntimeError('Ollama setup port 11435 is busy. Close the other MeetingSplit local AI operation.')
+        verify_installed(OLLAMA_PACKAGE,folder,self.cancel)
         model_dir=self.root/'Modelos'/'Ollama'
         model_dir.mkdir(parents=True,exist_ok=True)
         validate_local_folder(model_dir)

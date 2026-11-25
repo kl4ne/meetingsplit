@@ -132,6 +132,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             model,device=load_whisper(x['model'],model_cache=base/'Modelos',
                                        on_status=lambda message:progress(message,15),cancel=task)
             manifest['device']=device
+            manifest['actual_model']=x['model']
             if device == 'CPU':
                 manifest['actual_model'] = 'small' if x['model'] in ('medium', 'large-v3') else x['model']
                 manifest['warnings'].append('Modo CPU: modelo small para acelerar el procesamiento; revisa la precisión.')

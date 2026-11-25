@@ -69,24 +69,49 @@ def download(package: Package, cache: Path, progress, cancel: Cancellation) -> P
     partial = archive.with_suffix('.partial')
     opener = build_opener(ProxyHandler({}), HTTPSHandler(), VendorRedirects())
     deadline = time.monotonic()+3600
-    count = 0
+    count = partial.stat().st_size if partial.is_file() else 0
+    if count >= package.size:
+        partial.unlink(missing_ok=True)
+        count = 0
+    headers={'User-Agent':'MeetingSplit-components','Accept-Encoding':'identity'}
+    if count: headers['Range']=f'bytes={count}-'
     try:
-        with opener.open(Request(package.url, headers={'User-Agent':'MeetingSplit-components'}),timeout=20) as src, partial.open('wb') as dst:
-            while True:
-                cancel.check()
-                if time.monotonic()>deadline: raise TimeoutError('Component download exceeded one hour; retry to resume setup.')
-                chunk = src.read(1024*1024)
-                if not chunk: break
-                count += len(chunk)
-                if count>package.size: raise ValueError('Component exceeds its pinned size')
-                dst.write(chunk)
-                progress(f'{package.name}: {count//1048576} / {package.size//1048576} MiB')
-        if count != package.size or digest(partial,cancel) != package.sha256:
+        with opener.open(Request(package.url, headers=headers),timeout=20) as src:
+            status=getattr(src,'status',200)
+            if count and status == 206:
+                expected=f'bytes {count}-{package.size-1}/{package.size}'
+                if src.headers.get('Content-Range') != expected:
+                    partial.unlink(missing_ok=True)
+                    raise ValueError('Invalid component Content-Range; retry from zero')
+            elif status == 200:
+                count=0
+            else:
+                raise ValueError('Unexpected component HTTP response')
+            with partial.open('ab' if count else 'wb') as dst:
+                while True:
+                    cancel.check()
+                    if time.monotonic()>deadline: raise TimeoutError('Component download exceeded one hour; retry to resume setup.')
+                    chunk = src.read(1024*1024)
+                    if not chunk: break
+                    count += len(chunk)
+                    if count>package.size:
+                        raise ValueError('Component exceeds its pinned size')
+                    dst.write(chunk)
+                    progress(f'{package.name}: {count//1048576} / {package.size//1048576} MiB')
+        if count != package.size:
+            raise OSError('Component download interrupted; retry to resume')
+        if digest(partial,cancel) != package.sha256:
             raise ValueError('Component integrity verification failed: '+package.name)
+        cancel.check()
         partial.replace(archive)
         return archive
-    finally:
+    except ValueError:
         partial.unlink(missing_ok=True)
+        raise
+    finally:
+        # Only strictly incomplete bytes may be reused; never install a partial.
+        if partial.is_file() and not 0 < partial.stat().st_size < package.size:
+            partial.unlink(missing_ok=True)
 
 
 def extract_verified(archive: Path, dest: Path, cancel: Cancellation) -> None:
@@ -120,6 +145,28 @@ def extract_verified(archive: Path, dest: Path, cancel: Cancellation) -> None:
                     cancel.check(); dst.write(chunk)
 
 
+def installed_inventory(folder: Path, cancel: Cancellation|None=None) -> dict:
+    files={}
+    for path in sorted(folder.rglob('*')):
+        if cancel: cancel.check()
+        if path.is_symlink() or (hasattr(path,'is_junction') and path.is_junction()):
+            raise ValueError('Unsafe link in installed component')
+        if path.is_file() and path.name != 'meetingsplit-receipt.json':
+            files[path.relative_to(folder).as_posix()]=digest(path,cancel)
+    return files
+
+
+def verify_installed(package: Package, folder: Path, cancel: Cancellation|None=None) -> None:
+    validate_local_folder(folder)
+    receipt=folder/'meetingsplit-receipt.json'
+    if not receipt.is_file() or receipt.is_symlink():
+        raise ValueError('Component receipt missing; repair required: '+package.name)
+    data=json.loads(receipt.read_text(encoding='utf-8'))
+    if (data.get('sha256') != package.sha256 or not data.get('files')
+            or data['files'] != installed_inventory(folder,cancel)):
+        raise ValueError('Component integrity check failed; reinstall into a clean folder: '+package.name)
+
+
 def install_package(package: Package, root: Path, progress, cancel: Cancellation) -> Path:
     root = validate_local_folder(root)
     components = root/'Componentes'
@@ -128,8 +175,8 @@ def install_package(package: Package, root: Path, progress, cancel: Cancellation
     target = components/package.name
     receipt = target/'meetingsplit-receipt.json'
     if receipt.is_file():
-        data=json.loads(receipt.read_text(encoding='utf-8'))
-        if data.get('sha256') == package.sha256: return target
+        verify_installed(package,target,cancel)
+        return target
     if target.exists(): raise ValueError('Incomplete component; choose another folder or repair: '+package.name)
     if shutil.disk_usage(root).free < package.size+5*1024**3:
         raise OSError('At least the download size plus 5 GiB free is required')
@@ -139,7 +186,7 @@ def install_package(package: Package, root: Path, progress, cancel: Cancellation
         extract_verified(archive,staging,cancel)
         (staging/'meetingsplit-receipt.json').write_text(json.dumps({
             'name':package.name,'url':package.url,'sha256':package.sha256,
-            'size':package.size},indent=2),encoding='utf-8')
+            'size':package.size,'files':installed_inventory(staging,cancel)},indent=2),encoding='utf-8')
         cancel.check()
         staging.rename(target)
     finally:
@@ -156,7 +203,9 @@ def gpu_directories(root: Path) -> list[Path]:
     result=[]
     for package in GPU_PACKAGES:
         folder=root/'Componentes'/package.name
-        if folder.is_dir(): result.extend(p for p in folder.rglob('bin') if p.is_dir())
+        if folder.is_dir():
+            verify_installed(package,folder)
+            result.extend(p for p in folder.rglob('bin') if p.is_dir())
     return result
 
 

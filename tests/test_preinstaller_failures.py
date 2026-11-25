@@ -14,7 +14,7 @@ from engine import ollama
 from engine.control import Cancellation, JobCancelled
 
 
-def test_interrupted_vendor_download_discards_unverified_partial(tmp_path, monkeypatch):
+def test_cancel_at_full_download_discards_unverified_partial(tmp_path, monkeypatch):
     class Opener:
         def open(self, *_args, **_kwargs):
             return io.BytesIO(b'abc')

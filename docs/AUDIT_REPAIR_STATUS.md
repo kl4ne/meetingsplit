@@ -95,3 +95,9 @@ including exact local build-input hash matches, PE version metadata, NVIDIA
 binary flags and candidate Chromium notice files. See docs/NATIVE_RELEASE_REVIEW.md.
 The exact frozen binaries, native vulnerability review and qualified license
 review are still outstanding. No installer built; new tests require CI.
+
+Release-gate hardening: all ten mandatory requirements must be explicitly present
+and true; empty or partially removed requirement sets cannot authorize release.
+Malformed or duplicate-key JSON and non-boolean approval fail closed. The current
+gate remains unchanged and blocked. This guard does not validate legal sign-off
+or hardware evidence by itself; those must still be reviewed separately.

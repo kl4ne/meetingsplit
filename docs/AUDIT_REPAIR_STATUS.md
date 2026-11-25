@@ -16,3 +16,9 @@ and revalidation (legacy receipts require reinstall in a clean folder),
 GPU verification failure uses CPU, diagnostic minute file exposed in UI.
 Local receipts detect corruption, not malicious modification of both receipt and files.
 Live Windows installer, download and runtime acceptance still required.
+
+Third batch: desktop uses persistent isolated Whisper subprocess with bounded
+file IPC; native GPU worker crash/timeout retries current clip on CPU. CPU
+precision opt-in preserves selected model and word timestamps. PR tests-only
+trigger added. Frozen worker lifecycle, real cancellation, layouts and GPU
+fallback require Windows/ASUS acceptance. No release or packaging authorized.

@@ -96,6 +96,8 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "IDIOMA DEL DOCUMENTO": "DOCUMENT LANGUAGE",
   "Español e inglés": "Spanish and English",
   "Los resultados se preparan para utilizarlos en tu plataforma preferida.": "Results are prepared for use in your preferred platform.",
+  "Conservar precisión en CPU":"Preserve CPU accuracy",
+  "Mantiene el modelo seleccionado y las marcas por palabra; puede tardar más.":"Keeps the selected model and word timestamps; may take longer.",
   "Minuta automática local con Ollama": "Local automatic meeting minutes with Ollama",
   "Opcional. Necesita Ollama y qwen3:4b instalados.": "Optional. Requires Ollama and qwen3:4b installed.",
   "Exportar un ZIP con resultados": "Export results as ZIP",

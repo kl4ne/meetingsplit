@@ -11,6 +11,7 @@ from .audio import detect_silences, export_clip, probe
 from .control import Cancellation, JobCancelled
 from .output import format_srt, pack_result
 from .planning import plan_clips
+from .inference_worker import InferenceWorker, NativeInferenceError
 from .summarize import instructions, summarize_local
 from .transcription import (format_transcript, load_whisper, load_cpu_whisper,
                             is_cuda_runtime_error, transcribe_clip)
@@ -98,6 +99,23 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         'warnings':['Verifica cifras, nombres, fechas y cambios entre idiomas en el audio original.'],
     }
     _write_json(folder/'manifest.json',manifest)
+    model=None
+    isolated=bool(config.get('isolated_inference',False))
+    preserve=bool(config.get('preserve_cpu_quality',False))
+    cpu_model=x['model'] if preserve else ('small' if x['model'] in ('medium','large-v3') else x['model'])
+    def close_model():
+        nonlocal model
+        if isinstance(model,InferenceWorker): model.close()
+        model=None
+    def start_isolated(name,cpu=False):
+        nonlocal model
+        model=InferenceWorker(folder,base/'Modelos',task,preserve)
+        return model.load(name,cpu=cpu)
+    def infer(clip,path):
+        if isolated: return model.transcribe(clip,path,x['audio_language'])
+        kwargs={'language':x['audio_language'],'cancel':task}
+        if preserve: kwargs['preserve_quality']=True
+        return transcribe_clip(model,clip,path,**kwargs)
     try:
         progress('Inspeccionando duración y formato',4)
         task.check()
@@ -129,13 +147,24 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         model=None
         if do_transcribe:
             task.check()
-            model,device=load_whisper(x['model'],model_cache=base/'Modelos',
-                                       on_status=lambda message:progress(message,15),cancel=task)
+            if isolated:
+                progress('Preparing isolated Whisper worker / Preparando motor aislado',15)
+                try:
+                    device=start_isolated(x['model'])
+                except NativeInferenceError:
+                    close_model()
+                    task.check()
+                    manifest['warnings'].append('Native model startup failed; retrying on CPU.')
+                    device=start_isolated(cpu_model,cpu=True)
+            else:
+                kwargs={'model_cache':base/'Modelos','on_status':lambda message:progress(message,15),'cancel':task}
+                if preserve: kwargs['preserve_quality']=True
+                model,device=load_whisper(x['model'],**kwargs)
             manifest['device']=device
             manifest['actual_model']=x['model']
             if device == 'CPU':
-                manifest['actual_model'] = 'small' if x['model'] in ('medium', 'large-v3') else x['model']
-                manifest['warnings'].append('Modo CPU: modelo small para acelerar el procesamiento; revisa la precisión.')
+                manifest['actual_model'] = cpu_model
+                manifest['warnings'].append('Modo CPU: '+cpu_model+'; revisa la precisión.')
             _write_json(folder/'manifest.json',manifest)
         for index,clip in enumerate(clips):
             task.check()
@@ -154,12 +183,12 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                     progress(f'Transcribiendo audio {index+1} de {len(clips)}. En CPU el primer fragmento puede tardar varios minutos; el tiempo transcurrido se muestra en pantalla.',
                              int(17+71*(index+.5)/len(clips)))
                     try:
-                        part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
+                        part=infer(clip,file)
                     except Exception as exc:
                         # The first real CUDA call can occur while iterating the
                         # lazy Whisper generator, AFTER successful model creation.
                         # Retry only the current clip on CPU, never duplicate rows.
-                        if device != 'NVIDIA GPU' or not is_cuda_runtime_error(exc):
+                        if device != 'NVIDIA GPU' or not (isinstance(exc,NativeInferenceError) or is_cuda_runtime_error(exc)):
                             raise
                         task.check()
                         progress('Fallo de bibliotecas NVIDIA/CUDA. Reintentando el audio por CPU.',
@@ -167,18 +196,18 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                         manifest['warnings'].append(
                             'GPU no disponible durante la inferencia; transcripción continuó por CPU. '
                             + str(exc)[:180])
-                        model = None
+                        close_model()
                         gc.collect()
-                        cpu_model = 'small' if x['model'] in ('medium','large-v3') else x['model']
                         progress('Reintentando con CPU y modelo '+cpu_model+'. Puede tardar varios minutos por fragmento.',
                                  int(17+71*(index+.5)/len(clips)))
-                        model = load_cpu_whisper(cpu_model,model_cache=base/'Modelos')
+                        if isolated: start_isolated(cpu_model,cpu=True)
+                        else: model = load_cpu_whisper(cpu_model,model_cache=base/'Modelos')
                         manifest['actual_model'] = cpu_model
                         device = 'CPU'
                         manifest['device'] = device
                         _write_json(folder/'manifest.json',manifest)
                         task.check()
-                        part=transcribe_clip(model,clip,file,language=x['audio_language'],cancel=task)
+                        part=infer(clip,file)
                     # Persist timestamped rows before marking this clip complete.
                     _write_json(folder/f'transcripcion_parte_{clip.number:02}.json',
                                 {'segments':part,'device':device,
@@ -198,7 +227,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             _write_json(folder/'TRANSCRIPCION_MARCAS_TIEMPO.json',{'segments':lines})
             if config.get('local_summary',False):
                 # Release Whisper VRAM before asking Qwen to load on an 8 GB GPU.
-                model=None
+                close_model()
                 gc.collect()
                 task.check()
                 progress('Preparando minuta local con Ollama',91)
@@ -246,3 +275,5 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         manifest['error']=str(exc)[:800]
         _write_json(folder/'manifest.json',manifest)
         raise
+    finally:
+        close_model()

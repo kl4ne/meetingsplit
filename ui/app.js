@@ -206,6 +206,7 @@ el('start-job').addEventListener('click',()=>{
   for(const id of ['action','provider','plan','minutes','overlap','format','model','report'])data[id]=el(id).value;
   data.input_language=el('input-language').value;
   data.report_language=el('report-language').value;
+  data.preserve_cpu_quality=el('preserve-cpu-quality').checked;
   data.local_summary=el('local-summary').checked;
   data.zip_output=el('zip-output').checked;
   data.ollama_model='qwen3:4b';

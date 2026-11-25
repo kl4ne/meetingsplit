@@ -56,21 +56,21 @@ def load_cpu_whisper(model_name: str='medium', *, model_cache:Path|None=None):
                         cpu_threads=min(8, os.cpu_count() or 4), **_model_options(model_cache))
 
 
-def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_status:Callable[[str],None]=lambda _:None, cancel:Cancellation|None=None):
+def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_status:Callable[[str],None]=lambda _:None, cancel:Cancellation|None=None, preserve_quality=False, probe_runtime=True):
     if model_cache is not None:
         from desktop.components import activate_gpu
         try:
             activate_gpu(Path(model_cache).parent)
         except (OSError, ValueError) as exc:
             on_status('Optional GPU component verification failed; using CPU: '+str(exc))
-            return load_cpu_whisper('small' if model_name in ('medium','large-v3') else model_name,
+            return load_cpu_whisper('small' if not preserve_quality and model_name in ('medium','large-v3') else model_name,
                                     model_cache=model_cache), 'CPU'
     try:
         from faster_whisper import WhisperModel
     except ImportError as err:
         raise RuntimeError('Falta faster-whisper. Ejecuta instalar.bat para instalar las dependencias.') from err
     ready, reason = _gpu_runtime_ready()
-    if ready and sys.platform == 'win32' and model_cache is not None:
+    if ready and probe_runtime and sys.platform == 'win32' and model_cache is not None:
         # cuDNN lazily initializes on inference and may abort the native process.
         # Probe in a disposable child so a missing dependency cannot kill the UI.
         from desktop.cuda_probe import probe_cuda
@@ -87,18 +87,18 @@ def load_whisper(model_name: str='medium', *, model_cache:Path|None=None, on_sta
             if not is_cuda_runtime_error(exc):
                 raise
             reason = str(exc)[:130]
-    on_status(f'GPU CUDA 12 no disponible ({reason}). Se utilizará CPU con modelo small (más rápido, precisión posiblemente menor).')
-    cpu_model = 'small' if model_name in ('medium','large-v3') else model_name
+    cpu_model = 'small' if not preserve_quality and model_name in ('medium','large-v3') else model_name
+    on_status(f'GPU CUDA 12 no disponible ({reason}). CPU: {cpu_model}.')
     return load_cpu_whisper(cpu_model, model_cache=model_cache), 'CPU'
 
 
-def transcribe_clip(model, clip: Clip, path: Path, *, language: str='auto', cancel: Cancellation|None=None) -> list[dict]:
+def transcribe_clip(model, clip: Clip, path: Path, *, language: str='auto', cancel: Cancellation|None=None, preserve_quality=False) -> list[dict]:
     kwargs={
         'beam_size':5,'vad_filter':False,'word_timestamps':True,
         'condition_on_previous_text':False,'task':'transcribe',
     }
     # CPU fallback is slower: make progress practical without increasing RAM.
-    if getattr(getattr(model, 'model', None), 'device', None) == 'cpu':
+    if not preserve_quality and getattr(getattr(model, 'model', None), 'device', None) == 'cpu':
         kwargs['beam_size'] = 2
         kwargs['word_timestamps'] = False
     if language=='auto':

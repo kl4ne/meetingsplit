@@ -157,6 +157,7 @@ class DesktopBridge(QObject):
             self.failed.emit(self._tr('A meeting is already processing.','Hay una reunión procesándose.'));return
         try:
             conf=json.loads(payload)
+            conf['isolated_inference']=True
             conf['file']=self._source
             conf['output']=self._output
             conf['model_cache']=str(Path(self._output)/'Modelos')

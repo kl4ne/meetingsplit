@@ -12,6 +12,8 @@ on:
       - 'tests/**'
       - 'requirements.txt'
       - 'run.py'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
       package_for_qa:

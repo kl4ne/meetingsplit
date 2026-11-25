@@ -59,3 +59,15 @@ text from verified JSON checkpoints; quarantine stale temporary audio. ZIP
 excludes symlinks. These are defensive checks, not protection against a hostile
 local administrator or arbitrary simultaneous filesystem tampering. Regression
 tests added; exact new commit requires CI.
+
+## Evidence-based local minutes
+
+Replace lossy recursive free-text consolidation with bounded structured JSON
+candidate extraction. A deterministic validator checks exact source IDs,
+verbatim quotations and literal owner/deadline fields before rendering bilingual
+Markdown. Failed mechanical validation gets one retry, then the optional minutes
+operation fails without discarding audio or transcripts. An evidence JSON sidecar
+records source citations and review-required status; classifications, summaries,
+translations and completeness are still AI interpretations, not verified facts.
+Empty extraction is not proof that nothing was discussed. Real Qwen EN/ES and
+long-meeting accuracy/performance acceptance are required; unit tests use mocks.

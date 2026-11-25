@@ -380,6 +380,7 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
                 if resume:
                     _quarantine(folder/'RESUMEN_Y_MINUTA_LOCAL.md')
                     _quarantine(folder/'MINUTA_NO_GENERADA.txt')
+                    _quarantine(folder/'MINUTA_EVIDENCIAS.json')
                 # Release Whisper VRAM before asking Qwen to load on an 8 GB GPU.
                 close_model()
                 gc.collect()
@@ -389,14 +390,20 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
                 try:
                     with LocalService(base,task,lambda msg:progress(msg,92)) as service:
                         service.ensure_model()
+                        evidence={}
                         report=summarize_local(transcript,x['report'],x['language'],
                                                 config.get('ollama_model','qwen3:4b'),
                                                 progress=lambda message:progress(message,92),
-                                                endpoint=service.endpoint,cancel=task)
+                                                endpoint=service.endpoint,cancel=task,
+                                                evidence_sink=evidence.update)
                     task.check()
+                    _write_json(folder/'MINUTA_EVIDENCIAS.json',evidence)
                     _write_text(folder/'RESUMEN_Y_MINUTA_LOCAL.md',report)
                     manifest['summary_status']='complete'
                     manifest['summary_review_required']=True
+                    manifest['summary_evidence']='MINUTA_EVIDENCIAS.json'
+                    manifest['summary_evidence_items']=len(evidence.get('items',[]))
+                    manifest['summary_empty_source_blocks']=evidence.get('empty_blocks',0)
                 except JobCancelled:
                     raise
                 except Exception as exc:

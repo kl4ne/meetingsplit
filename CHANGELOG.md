@@ -1,3 +1,9 @@
+## v0.8.9 - Private Windows portable QA
+
+- Recovers explicit approvals and commitments omitted by local extraction.
+- Preserves evidence across source blocks when the transcript explicitly connects it.
+- The public release gate stays closed.
+
 ## v0.8.8 — Private Windows portable
 
 - Distinguishes the verified classification candidate from the earlier private candidates, which displayed v0.8.6.

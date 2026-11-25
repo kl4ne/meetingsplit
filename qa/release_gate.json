@@ -1,6 +1,6 @@
 {
   "release_allowed": false,
-  "version_policy": "0.8.8 identifies private Windows portable QA only; no public release, tag or installer delivery",
+  "version_policy": "0.8.9 identifies private Windows portable QA only; no public release, tag or installer delivery",
   "required": {
     "asus_gpu_real_speech": false,
     "frozen_app_gpu_and_ollama_on_asus": false,

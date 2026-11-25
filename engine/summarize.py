@@ -56,11 +56,12 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                     evidence_sink=None, read_block=None, write_block=None) -> str:
     """Extract bounded structured candidates, validate literal evidence, then render."""
     from .minutes_evidence import (source_blocks, validate_items, render_minutes,
-                                   extraction_prompt, extraction_schema, find_coverage_gaps)
+                                   extraction_prompt, extraction_schema, find_coverage_gaps,
+                                   explicit_source_items, reconcile_source_items)
     if mode not in ('summary','minutes','both') or language not in ('es','en','both'):
         raise ValueError('Invalid report mode or language')
     blocks=list(source_blocks(transcript))
-    items=[];seen=set();empty=[];coverage_gaps=[]
+    items=[];seen=set();empty=[]
 
     def extract(rows, number):
         if cancel: cancel.check()
@@ -100,7 +101,6 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                     for item in extracted
                 ]
                 write_block(key,json.dumps({'items':verified},ensure_ascii=False))
-            coverage_gaps.extend(gaps)
             return extracted
         progress(f'Dividiendo sección {number} / Splitting evidence section {number}')
         midpoint=len(rows)//2
@@ -117,6 +117,9 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             if key not in seen:
                 seen.add(key);items.append(item)
     if cancel: cancel.check()
+    rows=[row for block in blocks for row in block]
+    items=reconcile_source_items(items,explicit_source_items(rows,language))
+    coverage_gaps=find_coverage_gaps(rows,items)
     report=render_minutes(items,mode,language,empty,coverage_gaps)
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',

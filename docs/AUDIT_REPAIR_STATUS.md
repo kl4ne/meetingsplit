@@ -124,3 +124,17 @@ Windows, and test the actual executing process's exit using a Windows handle.
 Long synthetic and frozen hardware QA now exercise the isolated production
 worker rather than the in-process legacy test path. This is not yet hardware
 acceptance. The new commit must pass CI; no new installer has been built.
+
+## QA media archive refresh — 2026-11-25
+
+Approved source candidate ccaaf42: run #45557024304, 131 engine tests passed,
+2 skipped, 11 browser tests passed and Python dependency audit passed.
+Owner-authorized isolated QA run #45557597177 failed before compilation: the
+October 20 FFmpeg archive returned Not Found. Upstream has moved to
+FFmpeg-Builds/FFmpeg-Builds. Pin the November 24 published shared LGPL 8.1 asset
+(ffmpeg-n8.1.3-41-ga8029b6528-win64-lgpl-shared-8.1.zip), 81544256 bytes, SHA-256 dbed3e64d68de76472bf2cd0b0f3250384fb96bac14b635a708e998f6e1d6996,
+from the upstream release API. Preserve the existing PyAV source digest,
+codec gates and blocked release status. New media binary needs fresh QA; a
+published digest is not an independent signature or legal clearance. The dated
+upstream asset can expire again; do not use an unpinned latest alias. No installer
+was produced in the failed run.

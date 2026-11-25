@@ -6,13 +6,13 @@ Set-Location ([IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')))
 $python = Join-Path (Get-Location) '.venv\Scripts\python.exe'
 $wheelRoot = Join-Path (Get-Location) 'build\lgpl-wheel'
 $archive = Join-Path $wheelRoot 'ffmpeg-lgpl.zip'
-$assetUrl = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-20-13-08/ffmpeg-n8.1.3-18-g46d899d7a0-win64-lgpl-shared-8.1.zip'
+$assetUrl = 'https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-11-24-12-41/ffmpeg-n8.1.3-41-ga8029b6528-win64-lgpl-shared-8.1.zip'
 New-Item -ItemType Directory -Force $wheelRoot | Out-Null
 Write-Host 'Fetching LGPL shared FFmpeg. Development QA only; exact hash is recorded.'
 Invoke-WebRequest -Uri $assetUrl -OutFile $archive -MaximumRedirection 8
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-if ($hash -ne '453a30a5019676e805a85d4845e3aad31234dfed4ae0ea2b1d4e97254dc44b0a') { throw "Downloaded LGPL FFmpeg digest mismatch: $hash / URL $assetUrl" }
-if ((Get-Item $archive).Length -lt 10000000) { throw 'FFmpeg archive unexpectedly small' }
+if ($hash -ne 'dbed3e64d68de76472bf2cd0b0f3250384fb96bac14b635a708e998f6e1d6996') { throw "Downloaded LGPL FFmpeg digest mismatch: $hash / URL $assetUrl" }
+if ((Get-Item $archive).Length -ne 81544256) { throw 'FFmpeg archive differs from pinned size' }
 $extract = Join-Path $wheelRoot 'lgpl-ffmpeg'
 New-Item -ItemType Directory -Force $extract | Out-Null
 Expand-Archive -LiteralPath $archive -DestinationPath $extract -Force

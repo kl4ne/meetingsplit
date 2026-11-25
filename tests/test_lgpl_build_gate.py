@@ -22,8 +22,8 @@ def test_packaging_requires_pinned_lgpl_media_and_remains_manual():
 
 def test_media_source_and_native_audit_are_pinned():
     setup = (ROOT/'scripts/prepare_lgpl_media.ps1').read_text(encoding='utf-8')
-    assert 'autobuild-2026-10-20-13-08' in setup
-    assert '453a30a5019676e805a85d4845e3aad31234dfed4ae0ea2b1d4e97254dc44b0a' in setup
+    assert 'autobuild-2026-11-24-12-41' in setup
+    assert 'dbed3e64d68de76472bf2cd0b0f3250384fb96bac14b635a708e998f6e1d6996' in setup
     assert 'dd2ce779fa0b5f5889a6d9e00fbbbc39f58e247e52d31044272648fe16ff1dbf' in setup
     assert '--no-binary av' in setup
     assert 'delvewheel repair' in setup

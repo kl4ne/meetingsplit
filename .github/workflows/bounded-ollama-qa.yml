@@ -1,0 +1,33 @@
+name: Bounded Qwen structured extraction feasibility
+on:
+  push:
+    branches: [qa/ollama-bounded-086-34dd4ab]
+    paths: ['.github/workflows/bounded-ollama-qa.yml']
+permissions:
+  contents: read
+jobs:
+  minutes:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - name: Test explicit non-thinking template with actual Qwen3
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force work/minutes | Out-Null
+          python qa/bounded_ollama_qa.py work/minutes
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bounded-qwen-real-report
+          path: |
+            work/minutes/report.json
+            work/minutes/*-raw.json
+            work/minutes/*-evidence.json
+            work/minutes/*-minutes.md
+          if-no-files-found: warn

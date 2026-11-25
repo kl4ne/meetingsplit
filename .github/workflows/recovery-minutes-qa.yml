@@ -1,0 +1,72 @@
+name: Reuse exact portable - recovery and local minutes QA
+on:
+  push:
+    branches: [qa/recovery-minutes-native-086-b48f7e1]
+    paths: ['.github/workflows/recovery-minutes-qa.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  recovery:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: '14997442379'
+          run-id: '45558345248'
+          github-token: ${{ github.token }}
+          path: work/portable
+      - name: Extract exact portable and generate synthetic fixture
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem work/portable -Recurse -Filter '*.zip' -File | Select-Object -First 1
+          if (-not $zip) { throw 'Exact portable missing' }
+          Expand-Archive -LiteralPath $zip.FullName -DestinationPath work/frozen
+          Add-Type -AssemblyName System.Speech
+          $speech = New-Object System.Speech.Synthesis.SpeechSynthesizer
+          $speech.SetOutputToWaveFile((Join-Path (Get-Location) 'work/synthetic.wav'))
+          $speech.Speak('The meeting is about the budget. Please send the report on Friday.')
+          $speech.Dispose()
+      - name: Real CPU cancellation and recovery
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem work/frozen -Recurse -Filter 'MeetingSplit.exe' -File | Select-Object -First 1
+          if (-not $exe) { throw 'Frozen executable missing' }
+          python qa/recovery_artifact_qa.py $exe.FullName work
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: exact-portable-recovery-report
+          path: work/recovery-report.json
+          if-no-files-found: warn
+  minutes:
+    runs-on: windows-2022
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run real local Ollama and bilingual evidence rubric
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force work/minutes | Out-Null
+          python qa/real_minutes_ci.py work/minutes
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-local-minutes-report
+          path: |
+            work/minutes/minutes-report.json
+            work/minutes/*-evidence.json
+            work/minutes/*-minutes.md
+          if-no-files-found: warn

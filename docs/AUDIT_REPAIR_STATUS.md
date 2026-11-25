@@ -48,3 +48,14 @@ audit environment, not to the MeetingSplit runtime packages. The engine CI
 successfully installed pip 26.3. Pin both CI environments to pip 26.3 before
 installing dependencies; retain a failing security gate and print advisory IDs
 from the SBOM. New execution required; no frozen installer was built.
+
+## Recovery integrity follow-up
+
+Use an OS-backed exclusive job lock to prevent two processes writing the same
+resumed job. Detect source file identity/metadata changes before/after exports
+and before completion; do not checkpoint a changed source. Write metadata and
+text outputs atomically using unique staging files; rebuild missing per-clip
+text from verified JSON checkpoints; quarantine stale temporary audio. ZIP
+excludes symlinks. These are defensive checks, not protection against a hostile
+local administrator or arbitrary simultaneous filesystem tampering. Regression
+tests added; exact new commit requires CI.

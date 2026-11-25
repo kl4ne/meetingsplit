@@ -3,6 +3,9 @@ from __future__ import annotations
 import json
 import gc
 import hashlib
+import os
+import tempfile
+from contextlib import contextmanager
 import uuid
 import math
 import shutil
@@ -22,10 +25,67 @@ from desktop.storage import validate_local_folder
 ALLOWED={'.mp3','.m4a','.wav','.aac','.ogg','.flac','.mp4','.wma','.opus'}
 
 
+def _write_text(path: Path, text: str) -> None:
+    # Unique exclusive staging file, not a predictable .partial that could
+    # point at another file. Replacement does not modify a hardlink target.
+    if path.is_symlink():
+        raise ValueError('Unsafe result path: '+path.name)
+    fd,name=tempfile.mkstemp(prefix='.write-',suffix='.partial',dir=path.parent)
+    tmp=Path(name)
+    try:
+        with os.fdopen(fd,'w',encoding='utf-8') as stream:
+            stream.write(text)
+            stream.flush()
+            os.fsync(stream.fileno())
+        tmp.replace(path)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
 def _write_json(path: Path, data: dict) -> None:
-    tmp = path.with_suffix('.json.partial')
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
-    tmp.replace(path)
+    _write_text(path,json.dumps(data,ensure_ascii=False,indent=2))
+
+
+@contextmanager
+def _job_lock(folder: Path):
+    # OS-backed advisory lock: released automatically even on process death.
+    # Keep the small lock file, avoiding unlink/recreate races between instances.
+    path=folder/'.job.lock'
+    if path.is_symlink(): raise ValueError('Unsafe job lock')
+    fd=os.open(path,os.O_CREAT|os.O_RDWR|getattr(os,'O_NOFOLLOW',0),0o600)
+    locked=False
+    try:
+        try:
+            if os.name=='nt':
+                import msvcrt
+                msvcrt.locking(fd,msvcrt.LK_NBLCK,1)
+            else:
+                import fcntl
+                fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            locked=True
+        except OSError as exc:
+            raise RuntimeError('This MeetingSplit job is already in use') from exc
+        yield
+    finally:
+        try:
+            if locked:
+                if os.name=='nt':
+                    os.lseek(fd,0,os.SEEK_SET)
+                    msvcrt.locking(fd,msvcrt.LK_UNLCK,1)
+                else:
+                    fcntl.flock(fd,fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
+
+
+def _source_identity(path):
+    stat=path.stat()
+    return stat.st_size,stat.st_mtime_ns,stat.st_ctime_ns,stat.st_dev,stat.st_ino
+
+
+def _check_source(path, identity):
+    if _source_identity(path)!=identity:
+        raise ValueError('Source recording changed during processing; previous verified parts preserved')
 
 
 def _validate(config: dict) -> dict:
@@ -122,12 +182,22 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         folder=base/f'MeetingSplit-{slug}-{stamp}-{suffix}';suffix+=1
     _check_space(base, 128*1024**2)
     progress('Verificando integridad de la grabación / Checking source integrity',2)
+    identity=_source_identity(src)
     signature=_resume_signature(src,x,config,task)
+    _check_source(src,identity)
     resume=config.get('resume_folder')
     if resume:
         folder=validate_local_folder(Path(resume))
         if folder.parent!=base or not folder.name.startswith('MeetingSplit-'):
             raise ValueError('Choose a MeetingSplit job inside the configured data folder')
+    else:
+        folder.mkdir(parents=False,exist_ok=False)
+    with _job_lock(folder):
+        return _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task)
+
+
+def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task):
+    if resume:
         manifest_path=folder/'manifest.json'
         if manifest_path.is_symlink():
             raise ValueError('Unsafe job manifest')
@@ -141,7 +211,6 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         manifest['status']='started'
         manifest.pop('error',None)
     else:
-        folder.mkdir(parents=False,exist_ok=False)
         manifest={
         'version':'0.8.6', 'source_name':src.name,'source_bytes':src.stat().st_size,
         'created':datetime.now().isoformat(), 'status':'started',
@@ -176,11 +245,13 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         progress('Inspeccionando duración y formato',4)
         task.check()
         duration=probe(src)
+        _check_source(src,identity)
         if duration>4*3600:
             raise ValueError('Esta versión acepta grabaciones de hasta 4 horas.')
         manifest['duration_seconds']=round(duration,3)
         progress('Analizando silencios sin cargar todo el audio en RAM',10)
         silences=detect_silences(src,cancel=task)
+        _check_source(src,identity)
         task.check()
         target=x['minutes']*60
         max_core=target-2*x['overlap']
@@ -194,11 +265,10 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             raise ValueError('The saved clip plan differs; previous outputs preserved')
         manifest['clips']=plan
         _write_json(folder/'manifest.json',manifest)
-        (folder/'INSTRUCCIONES_CHATGPT_GEMINI.txt').write_text(
+        _write_text(folder/'INSTRUCCIONES_CHATGPT_GEMINI.txt',
             instructions(x['report'],x['language'])+
             '\n\nAdjunta TRANSCRIPCION_COMPLETA.txt o los audios numerados. '
-            'Usa los tiempos para contrastar y evita repetir el solapamiento.\n',
-            encoding='utf-8')
+            'Usa los tiempos para contrastar y evita repetir el solapamiento.\n')
         do_transcribe=x['action'] in ('both','transcribe')
         do_export=x['action'] in ('both','split')
         checkpoints=manifest.setdefault('checkpoints',{})
@@ -230,6 +300,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             _write_json(folder/'manifest.json',manifest)
         for index,clip in enumerate(clips):
             task.check()
+            _check_source(src,identity)
             _check_space(folder, 64*1024**2)
             file=folder/f'parte_{clip.number:02}.{x["fmt"]}'
             if do_export:
@@ -239,6 +310,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                 else:
                     if resume: _quarantine(file)
                     entry=export_clip(src,file,clip,x['fmt'],cancel=task)
+                    _check_source(src,identity)
                     entry['sha256']=_sha256(file,task)
                     manifest['exports'].append(entry)
                     _write_json(folder/'manifest.json',manifest)
@@ -248,11 +320,14 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                     _verify_checkpoint(part_path,checkpoints[str(clip.number)],task)
                     part=json.loads(part_path.read_text(encoding='utf-8'))['segments']
                     lines.extend(part)
+                    _write_text(folder/f'transcripcion_parte_{clip.number:02}.txt',format_transcript(part))
                     continue
                 if resume: _quarantine(part_path)
                 if not do_export:
                     file=folder/f'.temporal_{clip.number:02}.mp3'
+                    if resume: _quarantine(file)
                     export_clip(src,file,clip,'mp3',cancel=task)
+                    _check_source(src,identity)
                 try:
                     task.check()
                     progress(f'Transcribiendo audio {index+1} de {len(clips)}. En CPU el primer fragmento puede tardar varios minutos; el tiempo transcurrido se muestra en pantalla.',
@@ -288,18 +363,18 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                                           'model':manifest.get('actual_model',x['model'])})
                     checkpoints[str(clip.number)]=_sha256(part_path,task)
                     lines.extend(part)
-                    (folder/f'transcripcion_parte_{clip.number:02}.txt').write_text(
-                        format_transcript(part),encoding='utf-8')
+                    _write_text(folder/f'transcripcion_parte_{clip.number:02}.txt',format_transcript(part))
                     manifest['transcription_segments']=len(lines)
                     _write_json(folder/'manifest.json',manifest)
                 finally:
                     if not do_export:file.unlink(missing_ok=True)
+        _check_source(src,identity)
         if do_transcribe:
             manifest['transcription_segments']=len(lines)
             lines.sort(key=lambda row:row['start'])
             transcript=format_transcript(lines)
-            (folder/'TRANSCRIPCION_COMPLETA.txt').write_text(transcript,encoding='utf-8')
-            (folder/'TRANSCRIPCION_SUBTITULOS.srt').write_text(format_srt(lines),encoding='utf-8')
+            _write_text(folder/'TRANSCRIPCION_COMPLETA.txt',transcript)
+            _write_text(folder/'TRANSCRIPCION_SUBTITULOS.srt',format_srt(lines))
             _write_json(folder/'TRANSCRIPCION_MARCAS_TIEMPO.json',{'segments':lines})
             if config.get('local_summary',False):
                 if resume:
@@ -319,7 +394,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                                                 progress=lambda message:progress(message,92),
                                                 endpoint=service.endpoint,cancel=task)
                     task.check()
-                    (folder/'RESUMEN_Y_MINUTA_LOCAL.md').write_text(report,encoding='utf-8')
+                    _write_text(folder/'RESUMEN_Y_MINUTA_LOCAL.md',report)
                     manifest['summary_status']='complete'
                     manifest['summary_review_required']=True
                 except JobCancelled:
@@ -330,13 +405,14 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                     manifest['summary_status']='failed'
                     warning='La minuta local no se generó; audio y transcripción conservados. / Local minutes failed; audio and transcript preserved.\n'+str(exc)[:500]
                     manifest['warnings'].append(warning)
-                    (folder/'MINUTA_NO_GENERADA.txt').write_text(warning,encoding='utf-8')
+                    _write_text(folder/'MINUTA_NO_GENERADA.txt',warning)
             else:
                 manifest['warnings'].append(
                     'La minuta automática requiere un modelo local adicional. '
                     'Se adjuntan instrucciones para ChatGPT/Gemini.')
         close_model()
         task.check()
+        _check_source(src,identity)
         manifest['status']='complete'
         _write_json(folder/'manifest.json',manifest)
         if bool(config.get('zip_output',True)):

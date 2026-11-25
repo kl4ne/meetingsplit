@@ -22,3 +22,9 @@ file IPC; native GPU worker crash/timeout retries current clip on CPU. CPU
 precision opt-in preserves selected model and word timestamps. PR tests-only
 trigger added. Frozen worker lifecycle, real cancellation, layouts and GPU
 fallback require Windows/ASUS acceptance. No release or packaging authorized.
+
+Fourth batch: resumable interrupted jobs, same-source SHA-256 and settings
+signature, per-export and transcript checkpoint hashes, explicit folder
+picker and preservation of orphan files. Only jobs created by this new
+implementation have compatible recovery metadata. End-to-end Windows QA
+and resume test execution are pending.

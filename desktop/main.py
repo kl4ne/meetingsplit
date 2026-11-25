@@ -164,6 +164,13 @@ class DesktopBridge(QObject):
             if not self._source: raise ValueError(self._tr('Choose a recording first.','Primero selecciona una grabación.'))
             if not self._output:raise ValueError(self._tr('Choose a local folder for your data first.','Primero escoge una carpeta local para los datos.'))
             validate_local_folder(Path(self._output))
+            if conf.pop('resume_requested',False):
+                folder=QFileDialog.getExistingDirectory(None,self._tr('Choose interrupted MeetingSplit job','Escoge trabajo interrumpido de MeetingSplit'),self._output)
+                if not folder:
+                    self.cancelled.emit(self._tr('Resume cancelled','Reanudación cancelada'));return
+                conf['resume_folder']=folder
+            else:
+                conf.pop('resume_folder',None)
         except Exception as exc:
             self.failed.emit(str(exc));return
         self._control=Cancellation()

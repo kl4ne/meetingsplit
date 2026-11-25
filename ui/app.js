@@ -197,13 +197,14 @@ function finished(){
   el('cancel-job').hidden=true;
   el('cancel-job').disabled=false;
 }
-el('start-job').addEventListener('click',()=>{
+function beginJob(resume=false){
   navigate('process');
   if(working) return;
   if(!bridge){setStatus('Vista previa: instala o ejecuta MeetingSplit para procesar audio.',0);return;}
   if(!chosenFile){navigate('import');el('file-title').textContent=translate('Primero selecciona una grabación');return;}
   const data={};
   for(const id of ['action','provider','plan','minutes','overlap','format','model','report'])data[id]=el(id).value;
+  data.resume_requested=resume;
   data.input_language=el('input-language').value;
   data.report_language=el('report-language').value;
   data.preserve_cpu_quality=el('preserve-cpu-quality').checked;
@@ -219,7 +220,9 @@ el('start-job').addEventListener('click',()=>{
   setStateLabel('PROCESANDO EN TU PC');
   setStatus('Preparando los archivos en el disco...',2);
   bridge.startJob(JSON.stringify(data));
-});
+}
+el('start-job').addEventListener('click',()=>beginJob(false));
+el('resume-job').addEventListener('click',()=>beginJob(true));
 el('cancel-job').addEventListener('click',()=>{
   if(bridge&&working){bridge.cancelJob();el('cancel-job').disabled=true;setStatus('Solicitando cancelación segura; los resultados parciales se conservarán.',0);}
 });

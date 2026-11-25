@@ -2,6 +2,8 @@
 from __future__ import annotations
 import json
 import gc
+import hashlib
+import uuid
 import math
 import shutil
 from pathlib import Path
@@ -54,6 +56,39 @@ def _validate(config: dict) -> dict:
             'report':report,'language':language}
 
 
+def _sha256(path: Path, task: Cancellation) -> str:
+    h=hashlib.sha256()
+    with path.open('rb') as stream:
+        while chunk := stream.read(1024*1024):
+            task.check()
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _resume_signature(source, x, config, task):
+    stat=source.stat()
+    sha=_sha256(source,task)
+    if (stat.st_size,stat.st_mtime_ns)!=(source.stat().st_size,source.stat().st_mtime_ns):
+        raise ValueError('Source changed while checking its integrity')
+    settings={k:v for k,v in x.items() if k not in ('source','base')}
+    settings.update(zip_output=bool(config.get('zip_output',True)),
+                    local_summary=bool(config.get('local_summary',False)),
+                    preserve_cpu_quality=bool(config.get('preserve_cpu_quality',False)),
+                    provider=config.get('provider','chatgpt'),plan=config.get('plan','paid'),
+                    ollama_model=config.get('ollama_model','qwen3:4b'))
+    return {'schema':1,'source_sha256':sha,'source_bytes':stat.st_size,'settings':settings}
+
+
+def _verify_checkpoint(path, expected, task):
+    if not expected or not path.is_file() or path.is_symlink() or _sha256(path,task)!=expected:
+        raise ValueError('Checkpoint integrity failed; original files preserved: '+path.name)
+
+
+def _quarantine(path):
+    if path.exists() or path.is_symlink():
+        path.rename(path.with_name('.orphan-'+uuid.uuid4().hex+'-'+path.name))
+
+
 def _check_space(folder: Path, required: int) -> None:
     if shutil.disk_usage(folder).free < required:
         raise OSError(f'Insufficient disk space / Espacio insuficiente: {required} bytes required')
@@ -86,8 +121,28 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
     while folder.exists():
         folder=base/f'MeetingSplit-{slug}-{stamp}-{suffix}';suffix+=1
     _check_space(base, 128*1024**2)
-    folder.mkdir(parents=False,exist_ok=False)
-    manifest={
+    progress('Verificando integridad de la grabación / Checking source integrity',2)
+    signature=_resume_signature(src,x,config,task)
+    resume=config.get('resume_folder')
+    if resume:
+        folder=validate_local_folder(Path(resume))
+        if folder.parent!=base or not folder.name.startswith('MeetingSplit-'):
+            raise ValueError('Choose a MeetingSplit job inside the configured data folder')
+        manifest_path=folder/'manifest.json'
+        if manifest_path.is_symlink():
+            raise ValueError('Unsafe job manifest')
+        manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
+        if manifest.get('resume_signature')!=signature:
+            raise ValueError('Resume requires the same recording and settings')
+        if manifest.get('status')=='complete' and (not signature['settings']['zip_output'] or (folder/'RESULTADOS_COMPLETOS.zip').is_file()):
+            raise ValueError('This job is already complete')
+        if manifest.get('status') not in ('started','failed','cancelled','complete'):
+            raise ValueError('Invalid resumable job status')
+        manifest['status']='started'
+        manifest.pop('error',None)
+    else:
+        folder.mkdir(parents=False,exist_ok=False)
+        manifest={
         'version':'0.8.6', 'source_name':src.name,'source_bytes':src.stat().st_size,
         'created':datetime.now().isoformat(), 'status':'started',
         'mode':x['action'],'max_export_seconds':x['minutes']*60,
@@ -97,7 +152,8 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         'privacy':'Archivo original no modificado. Procesamiento en disco local.',
         'transcription_segments':0,'clips':[],'exports':[],
         'warnings':['Verifica cifras, nombres, fechas y cambios entre idiomas en el audio original.'],
-    }
+        'resume_signature':signature,'checkpoints':{},
+        }
     _write_json(folder/'manifest.json',manifest)
     model=None
     isolated=bool(config.get('isolated_inference',False))
@@ -133,7 +189,10 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                           max_seconds=max_core,overlap_seconds=x['overlap'])
         if any(c.export_end-c.export_start>target+.01 for c in clips):
             raise RuntimeError('Plan de cortes supera la duración máxima solicitada.')
-        manifest['clips']=[c.to_dict() for c in clips]
+        plan=[c.to_dict() for c in clips]
+        if resume and manifest.get('clips') and manifest['clips']!=plan:
+            raise ValueError('The saved clip plan differs; previous outputs preserved')
+        manifest['clips']=plan
         _write_json(folder/'manifest.json',manifest)
         (folder/'INSTRUCCIONES_CHATGPT_GEMINI.txt').write_text(
             instructions(x['report'],x['language'])+
@@ -142,10 +201,13 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             encoding='utf-8')
         do_transcribe=x['action'] in ('both','transcribe')
         do_export=x['action'] in ('both','split')
-        _check_space(folder, _estimated_output_bytes(clips,x['fmt'],do_export,bool(config.get('zip_output',True))))
+        checkpoints=manifest.setdefault('checkpoints',{})
+        saved_exports={entry['file']:entry for entry in manifest.get('exports',[])}
+        remaining=[c for c in clips if f'parte_{c.number:02}.{x["fmt"]}' not in saved_exports]
+        _check_space(folder, _estimated_output_bytes(remaining if do_export else clips,x['fmt'],do_export,bool(config.get('zip_output',True))))
         lines=[]
         model=None
-        if do_transcribe:
+        if do_transcribe and any(str(c.number) not in checkpoints for c in clips):
             task.check()
             if isolated:
                 progress('Preparing isolated Whisper worker / Preparando motor aislado',15)
@@ -172,9 +234,22 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
             file=folder/f'parte_{clip.number:02}.{x["fmt"]}'
             if do_export:
                 progress(f'Exportando audio {index+1} de {len(clips)}', int(17+71*index/len(clips)))
-                manifest['exports'].append(export_clip(src,file,clip,x['fmt'],cancel=task))
-                _write_json(folder/'manifest.json',manifest)
+                if file.name in saved_exports:
+                    _verify_checkpoint(file,saved_exports[file.name].get('sha256'),task)
+                else:
+                    if resume: _quarantine(file)
+                    entry=export_clip(src,file,clip,x['fmt'],cancel=task)
+                    entry['sha256']=_sha256(file,task)
+                    manifest['exports'].append(entry)
+                    _write_json(folder/'manifest.json',manifest)
             if do_transcribe:
+                part_path=folder/f'transcripcion_parte_{clip.number:02}.json'
+                if str(clip.number) in checkpoints:
+                    _verify_checkpoint(part_path,checkpoints[str(clip.number)],task)
+                    part=json.loads(part_path.read_text(encoding='utf-8'))['segments']
+                    lines.extend(part)
+                    continue
+                if resume: _quarantine(part_path)
                 if not do_export:
                     file=folder/f'.temporal_{clip.number:02}.mp3'
                     export_clip(src,file,clip,'mp3',cancel=task)
@@ -209,9 +284,9 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                         task.check()
                         part=infer(clip,file)
                     # Persist timestamped rows before marking this clip complete.
-                    _write_json(folder/f'transcripcion_parte_{clip.number:02}.json',
-                                {'segments':part,'device':device,
-                                 'model':manifest.get('actual_model',x['model'])})
+                    _write_json(part_path,{'segments':part,'device':device,
+                                          'model':manifest.get('actual_model',x['model'])})
+                    checkpoints[str(clip.number)]=_sha256(part_path,task)
                     lines.extend(part)
                     (folder/f'transcripcion_parte_{clip.number:02}.txt').write_text(
                         format_transcript(part),encoding='utf-8')
@@ -220,12 +295,16 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
                 finally:
                     if not do_export:file.unlink(missing_ok=True)
         if do_transcribe:
+            manifest['transcription_segments']=len(lines)
             lines.sort(key=lambda row:row['start'])
             transcript=format_transcript(lines)
             (folder/'TRANSCRIPCION_COMPLETA.txt').write_text(transcript,encoding='utf-8')
             (folder/'TRANSCRIPCION_SUBTITULOS.srt').write_text(format_srt(lines),encoding='utf-8')
             _write_json(folder/'TRANSCRIPCION_MARCAS_TIEMPO.json',{'segments':lines})
             if config.get('local_summary',False):
+                if resume:
+                    _quarantine(folder/'RESUMEN_Y_MINUTA_LOCAL.md')
+                    _quarantine(folder/'MINUTA_NO_GENERADA.txt')
                 # Release Whisper VRAM before asking Qwen to load on an 8 GB GPU.
                 close_model()
                 gc.collect()
@@ -259,6 +338,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
         manifest['status']='complete'
         _write_json(folder/'manifest.json',manifest)
         if bool(config.get('zip_output',True)):
+            if resume: _quarantine(folder/'RESULTADOS_COMPLETOS.zip')
             _check_space(folder, sum(f.stat().st_size for f in folder.iterdir()
                                      if f.is_file() and not f.name.startswith('.'))+16*1024**2)
             progress('Creando paquete ZIP de resultados',96)

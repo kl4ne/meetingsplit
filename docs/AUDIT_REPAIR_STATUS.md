@@ -140,3 +140,17 @@ upstream asset can expire again; do not use an unpinned latest alias. No install
 was produced in the failed run.
 
 Run #45558065925: dependency scan passed; engine 130 passed, 2 skipped, 1 failed because a second test retained the October archive pin. Update that assertion to the exact November asset URL, hash and size; preserve negative GPL checks. New CI and QA packaging still required. No application runtime change in this correction.
+
+## Patched runtime candidate
+
+Source compatibility run #45565932281: 26 focused tests passed with Python
+3.14.10, OpenSSL 3.5.9 and SQLite 3.50.4; same CTranslate2, PyAV and Qt versions.
+The previous compiled package contained Python 3.11.9, OpenSSL 3.0.13 and SQLite
+3.45.1, so a NEW frozen candidate is required. Pin the approved interpreter in
+CI/development setup, reject old build environments, record native version data
+in frozen self-check, preserve available Python runtime notices, and match native
+files to interpreter inputs. The previous package passed actual CPU inference
+(run #45564491156) and recovery (run #45565692456, recovery job); the latter used
+source orchestration and the exact frozen worker/FFmpeg. Those results remain
+historical and cannot certify a changed runtime. No change to release gate.
+Python advisory: https://www.python.org/downloads/release/python-31410/ .

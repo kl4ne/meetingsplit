@@ -8,6 +8,8 @@ import json
 import os
 from pathlib import Path
 import platform
+import ssl
+import sqlite3
 import sys
 
 
@@ -22,6 +24,12 @@ def run_checks() -> tuple[dict, int]:
         from PySide6.QtWebEngineWidgets import QWebEngineView
         from PySide6.QtWebChannel import QWebChannel
         record('qt_webengine',bool(QWebEngineView and QWebChannel),f'Qt {qVersion()}')
+        try:
+            from PySide6.QtWebEngineCore import qWebEngineVersion,qWebEngineChromiumVersion,qWebEngineChromiumSecurityPatchVersion
+            record('webengine_versions',True,
+                   f'WebEngine {qWebEngineVersion()}; Chromium {qWebEngineChromiumVersion()}; security patch {qWebEngineChromiumSecurityPatchVersion()}',False)
+        except (ImportError,AttributeError) as e:
+            record('webengine_versions',False,str(e)[:200],False)
     except Exception as e:
         record('qt_webengine',False,f'{type(e).__name__}: {e}'[:240])
     try:
@@ -56,6 +64,8 @@ def run_checks() -> tuple[dict, int]:
     report={
         'product':'MeetingSplit','version':'0.8.6','offline':True,
         'python':platform.python_version(),
+        'openssl':ssl.OPENSSL_VERSION,
+        'sqlite':sqlite3.sqlite_version,
         'packaged':bool(getattr(sys,'frozen',False)),
         'checks':checks,
     }

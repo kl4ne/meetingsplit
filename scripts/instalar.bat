@@ -2,39 +2,36 @@
 setlocal
 cd /d "%~dp0\.."
 echo.
-echo  MEETINGSPLIT 0.4 - Preparar entorno local de desarrollo
+echo MEETINGSPLIT 0.8.6 - Preparar entorno local de desarrollo
 where py >NUL 2>NUL
 if errorlevel 1 (
-  echo Python Launcher no disponible. Se necesita Python 3.11 o 3.12 de 64 bits.
-  pause
+  echo Se requiere el lanzador Python y Python 3.14.10 x64.
   exit /b 1
 )
-py -3.11 --version >NUL 2>NUL
-if not errorlevel 1 (
-  py -3.11 -m venv .venv
-) else (
-  py -3.12 --version >NUL 2>NUL
+py -3.14 -c "import sys,struct;sys.exit(0 if sys.version_info[:3]==(3,14,10) and struct.calcsize('P')==8 else 1)"
+if errorlevel 1 (
+  echo ERROR: se requiere Python 3.14.10 x64 exacto para este candidato.
+  exit /b 1
+)
+if exist .venv\Scripts\python.exe (
+  .venv\Scripts\python.exe qa\check_build_runtime.py
   if errorlevel 1 (
-    echo No hay Python 3.11/3.12 disponible. No se instalaron paquetes.
-    pause
+    echo ERROR: entorno anterior. Conserva .venv como respaldo y crea otro entorno.
     exit /b 1
   )
-  py -3.12 -m venv .venv
+) else (
+  py -3.14 -m venv .venv
+  if errorlevel 1 exit /b 1
 )
-if errorlevel 1 (
-  echo No se pudo crear un entorno local Python.
-  pause
-  exit /b 1
-)
-call .venv\Scripts\activate.bat
-python -m pip install -r requirements.txt
-if errorlevel 1 (
-  echo No se instalaron todas las dependencias; consulta la salida.
-  pause
-  exit /b 1
-)
+.venv\Scripts\python.exe qa\check_build_runtime.py
+if errorlevel 1 exit /b 1
+.venv\Scripts\python.exe -m pip install --upgrade pip==26.3
+if errorlevel 1 exit /b 1
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+if errorlevel 1 exit /b 1
+.venv\Scripts\python.exe -m pip check
+if errorlevel 1 exit /b 1
 echo.
-echo ATENCION: Debes contar con FFmpeg y FFprobe en bin\ o en el PATH.
+echo ATENCION: preparar FFmpeg LGPL y PyAV mediante scripts\prepare_lgpl_media.ps1 antes de empaquetar.
 echo La descarga inicial de un modelo Whisper requiere acceso a Internet.
-echo.
-pause
+exit /b 0

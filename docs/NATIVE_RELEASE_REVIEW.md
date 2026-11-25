@@ -42,3 +42,19 @@ for a different DLL included by a Python wheel.
 Do not use this checklist as legal advice. No gate may be marked passed based on
 a candidate notice filename, a PE version field, a successful Python scan, or a hash
 match alone. Do not generate or publish any installer without explicit QA authorization.
+
+## Exact package review, 2026-11-25
+
+Artifact #14997636321 from run #45558345248: 685 files, 211 native; 27
+unmatched and 107 without PE version. CTranslate2 4.6.2 wheel supplied
+_internal/ctranslate2/cudnn64_9.dll (PE file/product 9.1.0.70; SHA-256
+c07cc47f2fa4a566593c7af4aa7e57edf09a985a0fddd14cb8d6f456e252af05).
+The sole WebEngine candidate notice was LicenseRef-Qt-Commercial.txt; this
+is not complete Chromium notices. Python 3.11.9/OpenSSL 3.0.13 require
+refresh; updated source compatibility evidence is in run #45565932281.
+Qt's own licensing instructions require reviewing Chromium and Qt licenses:
+https://doc.qt.io/qtforpython-6/overviews/qtwebengine-licensing.html .
+NVIDIA's version-specific archive manifest is the starting point for vendor
+provenance, not a blanket redistribution license:
+https://docs.nvidia.com/deeplearning/cudnn/backend/v9.1.0/installation/windows.html .
+Keep the release gate false. The exact frozen candidate must be rechecked.

@@ -7,12 +7,20 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 
 ROOT=Path(__file__).resolve().parents[1]
 
 
 def main():
     target=ROOT/'build'/'legal';target.mkdir(parents=True,exist_ok=True)
+    # The Windows interpreter is itself a redistributed native dependency.
+    runtime_notices=target/'Python-runtime'
+    runtime_notices.mkdir(exist_ok=True)
+    for name in ('LICENSE.txt','LICENSE','NEWS.txt'):
+        source=Path(sys.base_prefix)/name
+        if source.is_file():
+            shutil.copyfile(source,runtime_notices/name)
     inventory=[]
     for dist in sorted(metadata.distributions(),key=lambda d:d.metadata.get('Name','').lower()):
         name=dist.metadata.get('Name','unknown')

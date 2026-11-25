@@ -10,6 +10,7 @@ import importlib.metadata as metadata
 import json
 from pathlib import Path
 import re
+import sys
 try:
     from .native_inventory import hash_file, inventory_package
 except ImportError:
@@ -97,6 +98,12 @@ def main(argv=None):
     inventory=inventory_package(args.package)
     names={Path(r['path']).name.casefold() for r in inventory['files'] if r['native']}
     candidates=list(distribution_candidates(names))
+    # Match the interpreter and its DLL/extension inputs as well as wheels.
+    for directory in (Path(sys.base_prefix),Path(sys.base_prefix)/'DLLs'):
+        for file in directory.iterdir() if directory.is_dir() else ():
+            if file.is_file() and file.name.casefold() in names:
+                candidates.append((file,{'kind':'python_runtime_input','version':sys.version.split()[0],
+                                        'entry':file.name}))
     for file in args.bin.glob('*'):
         if file.is_file() and file.name.casefold() in names:
             candidates.append((file,{'kind':'local_media_input','entry':file.name}))

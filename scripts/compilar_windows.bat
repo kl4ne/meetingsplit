@@ -11,9 +11,11 @@ if /I "%~1"=="--release" (
 echo.
 echo ========= MeetingSplit %RELEASE% - Windows Build =========
 if not exist .venv\Scripts\python.exe (
- echo ERROR: prepara Python 3.11 con scripts\instalar.bat antes de compilar.
+ echo ERROR: prepara Python 3.14.10 con scripts\instalar.bat antes de compilar.
  exit /b 1
 )
+.venv\Scripts\python.exe qa\check_build_runtime.py
+if errorlevel 1 exit /b 1
 if not exist bin\ffmpeg.exe (
  echo ERROR: no se encontro bin\ffmpeg.exe. No se permite un ejecutable incompleto.
  exit /b 1

@@ -7,7 +7,7 @@ el('setup-components').addEventListener('click',()=>{
 const screens = ['home','import','settings','process','results'];
 const names = {home:'Inicio',import:'Importar audio',settings:'Configuración',process:'Procesamiento',results:'Resultados'};
 const enDictionary=window.MeetingSplitLocales.englishBySpanish;
-let transcriptionDevice='';
+let transcriptionDevice='', liveTranscriptionDevice='';
 let uiLocale='en', currentPage='home', statusOriginal='', stateLabelOriginal='', currentNotice='';
 const staticText=[];
 const SKIP_DYNAMIC=new Set(['page-crumb','file-title','file-sub','folder-display','state-label','job-status',
@@ -19,6 +19,9 @@ function translate(text){
   let m;
   if((m=/^Exportando audio (\d+) de (\d+)$/.exec(text)))return `Exporting audio ${m[1]} of ${m[2]}`;
   if((m=/^Transcribiendo audio (\d+) de (\d+)$/.exec(text)))return `Transcribing audio ${m[1]} of ${m[2]}`;
+  if((m=/^Analizando evidencias \/ Checking evidence: (\d+)\/(\d+)$/.exec(text)))return `Checking evidence: ${m[1]}/${m[2]}`;
+  if((m=/^Dividiendo sección (\d+) \/ Splitting evidence section \d+$/.exec(text)))return `Splitting evidence section ${m[1]}`;
+  if((m=/^Reintentando con CPU y modelo ([\w-]+)\. Puede tardar varios minutos por fragmento\.$/.exec(text)))return `Retrying with CPU and the ${m[1]} model. Each clip may take several minutes.`;
   if(text.startsWith('Error: '))return 'Error: '+translate(text.slice(7));
   if(text.startsWith('CUDA no disponible ('))return text.replace('CUDA no disponible (','CUDA unavailable (').replace('Usando CPU en modo seguro.','Using CPU in safe mode.');
   return text;
@@ -93,6 +96,7 @@ function applyUILocale(lang,persist=true){
   if(resultIndexJSON)renderResults(resultIndexJSON);
   renderSummaryStatus(summaryStatus);
   renderTranscriptionDevice(transcriptionDevice);
+  renderLiveTranscriptionDevice(liveTranscriptionDevice);
   if(persist)saveUILocale(uiLocale);
 }
 window.meetingSplitSetUILanguage=applyUILocale;
@@ -114,7 +118,7 @@ function updateJobElapsed(){
   node.hidden=!working;
   if(working){const sec=Math.max(0,Math.floor((Date.now()-jobStarted)/1000));
     node.textContent=(uiLocale==='en'?'Time elapsed: ':'Tiempo transcurrido: ')+formatElapsed(sec)+
-      (uiLocale==='en'?' · Working locally. CPU may need several minutes per clip.':' · Trabajo local. En CPU cada fragmento puede tardar varios minutos.');}
+      (uiLocale==='en'?' · Working locally.':' · Trabajo local.');}
 }
 const navItems = Array.from(document.querySelectorAll('.nav-item'));
 
@@ -198,6 +202,7 @@ el('results-open-folder').addEventListener('click',openFolder);
 
 function finished(){
   working=false;
+  renderLiveTranscriptionDevice('');
   if(jobTimer!==null){clearInterval(jobTimer);jobTimer=null;}
   showWorking();updateJobElapsed();
   el('cancel-job').hidden=true;
@@ -218,6 +223,7 @@ function beginJob(resume=false,retryMinutes=false){
   data.zip_output=el('zip-output').checked;
   data.ollama_model='qwen3:4b';
   working=true;jobStarted=Date.now();
+  renderLiveTranscriptionDevice('');
   showWorking();updateJobElapsed();
   if(jobTimer!==null)clearInterval(jobTimer);
   jobTimer=setInterval(updateJobElapsed,1000);
@@ -253,6 +259,16 @@ function renderResults(index){
     container.appendChild(button);
   }
   container.hidden=container.children.length===0;
+}
+function renderLiveTranscriptionDevice(device){
+  liveTranscriptionDevice=device;
+  const status={
+    'NVIDIA GPU':'Dispositivo de transcripción: NVIDIA GPU',
+    'CPU':'Dispositivo de transcripción: CPU'
+  }[device];
+  const label=el('job-device');
+  label.hidden=!status;
+  label.textContent=status?translate(status):'';
 }
 function renderTranscriptionDevice(device){
   transcriptionDevice=device;
@@ -313,6 +329,7 @@ if(typeof QWebChannel!=='undefined' && typeof qt!=='undefined' && qt.webChannelT
     });
     bridge.folderSelected.connect(path=>{el('folder-display').textContent=path;});
     bridge.progress.connect((msg,pct)=>{setStatus(msg,pct);});
+    if(bridge.transcriptionDeviceChanged) bridge.transcriptionDeviceChanged.connect(renderLiveTranscriptionDevice);
     bridge.completed.connect((path)=>showResult(path));
     bridge.failed.connect((msg)=>{
       finished();

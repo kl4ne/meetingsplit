@@ -122,7 +122,9 @@ def test_lazy_cuda_dll_failure_retries_current_clip_using_cpu(monkeypatch,tmp_pa
           'minutes':5,'overlap':20,'model':'small','input_language':'auto',
           'report':'both','report_language':'both','zip_output':False,'local_summary':False}
     messages=[]
-    result=run_job(conf,lambda text,pct:messages.append(text))
+    devices=[]
+    result=run_job(conf,lambda text,pct:messages.append(text),on_transcription_device=devices.append)
+    assert devices==['NVIDIA GPU','CPU','']
     manifest=json.loads((result/'manifest.json').read_text(encoding='utf-8'))
     assert manifest['status']=='complete'
     assert manifest['device']=='CPU'

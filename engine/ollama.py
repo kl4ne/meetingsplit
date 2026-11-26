@@ -90,10 +90,12 @@ def _stream_open(endpoint, route, payload, cancel):
     try:
         connection.request('POST',route,json.dumps(payload).encode('utf-8'),{'Content-Type':'application/json'})
         connection.sock.settimeout(20)
-        deadline=time.monotonic()+180
+        # A cold 27B load and prompt evaluation may need CPU memory on Windows.
+        startup_limit=420 if route=='/api/chat' and payload.get('model')==MODEL else 180
+        deadline=time.monotonic()+startup_limit
         while not select.select([connection.sock],[],[],.25)[0]:
             cancel.check()
-            if time.monotonic()>deadline: raise TimeoutError('Ollama model did not begin responding in 180 seconds')
+            if time.monotonic()>deadline: raise TimeoutError(f'Ollama model did not begin responding in {startup_limit} seconds')
         cancel.check()
         response=connection.getresponse()
         if response.status!=200: raise OllamaHTTPError(response.status)
@@ -124,7 +126,7 @@ def chat(messages, endpoint=DEFAULT_ENDPOINT, model=MODEL, cancel=None, progress
     chunks=[]; total=0; done=False; last_update=0; thinking_chars=0
     # Structured extraction needs the completion budget for evidence, not reasoning.
     payload={'model':MODEL,'messages':[dict(m) for m in messages],'stream':True,
-             'think':not json_output if think is None else think,'keep_alive':0,'truncate':False,
+             'think':not json_output if think is None else think,'keep_alive':'2m','truncate':False,
              'options':{'temperature':0.6,'num_ctx':16384,'num_predict':8192,'repeat_penalty':1.1}}
     if cpu_only:
         payload['options']['num_gpu']=0

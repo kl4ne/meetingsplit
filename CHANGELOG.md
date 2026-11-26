@@ -1,6 +1,7 @@
 ## v0.8.16 - Windows rendering and minutes recovery
 
 - Paints the desktop interface in software on Windows to avoid GPU compositor blank frames.
+- Gives the local 27B model more time to start and keeps it warm between minutes stages.
 - Preserves validated minutes evidence when an individual model record needs review.
 
 ## v0.8.15 - Qwen3.8 local minutes

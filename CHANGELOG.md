@@ -1,3 +1,13 @@
+## v0.8.13 - Editorial meeting minutes
+
+- Builds a concise thematic overview from grounded evidence instead of printing each transcript fragment.
+- Retains decisions, assignments, dates and monetary details and the full evidence JSON.
+
+## v0.8.12 - Live transcription device and Ollama recovery
+
+- Adds a live transcription device indicator and completes English processing labels.
+- Retries a failed local minutes request on CPU after HTTP 500 without repeating transcription.
+
 ## v0.8.11 - Explicit result folders
 
 - Writes directory entries in the results ZIP for archive viewers.

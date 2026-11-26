@@ -163,7 +163,7 @@ def _estimated_output_bytes(clips, fmt: str, export: bool, zip_output: bool) -> 
                           max((math.ceil((c.export_end-c.export_start)*8000)+65536 for c in clips), default=0))
 
 
-def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
+def run_job(config: dict, progress, cancel:Cancellation|None=None, *, on_transcription_device=lambda _:None) -> Path:
     """Return project directory; errors/cancellation preserve auditable partial outputs."""
     task=cancel or Cancellation()
     notify=progress
@@ -192,7 +192,7 @@ def run_job(config: dict, progress, cancel:Cancellation|None=None) -> Path:
     else:
         folder.mkdir(parents=False,exist_ok=False)
     with _job_lock(folder):
-        return _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task)
+        return _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task,on_transcription_device)
 
 
 def _project_folder(folder, base):
@@ -319,7 +319,7 @@ def retry_minutes(folder, output, progress, cancel=None):
         return _retry_minutes_locked(folder,base,_read_manifest(folder),progress,cancel or Cancellation())
 
 
-def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task):
+def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task,on_transcription_device):
     if resume:
         manifest=_read_manifest(folder)
         if manifest.get('resume_signature')!=signature:
@@ -468,7 +468,8 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
                     _check_source(src,identity)
                 try:
                     task.check()
-                    progress(f'Transcribiendo audio {index+1} de {len(clips)}. En CPU el primer fragmento puede tardar varios minutos; el tiempo transcurrido se muestra en pantalla.',
+                    on_transcription_device(device)
+                    progress(f'Transcribiendo audio {index+1} de {len(clips)}',
                              int(17+71*(index+.5)/len(clips)))
                     try:
                         part=infer(clip,file)
@@ -492,6 +493,7 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
                         else: model = load_cpu_whisper(cpu_model,model_cache=base/'Modelos')
                         manifest['actual_model'] = cpu_model
                         device = 'CPU'
+                        on_transcription_device(device)
                         manifest['device'] = device
                         _write_json(folder/'manifest.json',manifest)
                         task.check()
@@ -506,6 +508,7 @@ def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task
                     _write_json(folder/'manifest.json',manifest)
                 finally:
                     if not do_export:file.unlink(missing_ok=True)
+        on_transcription_device('')
         _check_source(src,identity)
         if do_transcribe:
             manifest['transcription_segments']=len(lines)

@@ -91,3 +91,47 @@ def test_invalid_amount_uses_source_only_after_retry_and_caches_safe_result(monk
     sent.clear()
     assert summarize.summarize_local(source,'minutes','both',ollama.MODEL,**options)==report
     assert sent==[]
+
+
+def test_ollama_http_500_retries_only_once_on_cpu_and_stays_there(monkeypatch):
+    from engine import ollama, summarize
+
+    requests = []
+    status = []
+
+    def reply(messages, *args, cpu_only=False, **kwargs):
+        requests.append(cpu_only)
+        if not cpu_only:
+            raise ollama.OllamaHTTPError(500)
+        return '{"items":[]}'
+
+    monkeypatch.setattr(summarize, 'ollama_chat', reply)
+    transcript = '\n'.join([
+        '[00:00:01] La junta aprobó el presupuesto.',
+        '[00:00:03] ' + 'A' * 9000,
+        '[00:01:42] The board approved the archive pilot.',
+    ])
+    evidence = {}
+    summarize.summarize_local(transcript, 'minutes', 'both', ollama.MODEL,
+                              progress=status.append, evidence_sink=evidence.update)
+    assert requests[0:2] == [False, True] and len(requests) > 2
+    assert all(requests[1:]) and status.count('Ollama falló. Reintentando la minuta por CPU.') == 1
+    assert sum(item['category'] == 'decision' for item in evidence['items']) == 2
+
+
+def test_ollama_http_error_remains_visible_if_cpu_retry_also_fails(monkeypatch):
+    from engine import ollama, summarize
+
+    for status, expected in ((500, [False, True]), (404, [False])):
+        requests = []
+
+        def fail(*args, cpu_only=False, **kwargs):
+            requests.append(cpu_only)
+            raise ollama.OllamaHTTPError(status)
+
+        monkeypatch.setattr(summarize, 'ollama_chat', fail)
+        evidence = {}
+        with pytest.raises(ollama.OllamaHTTPError, match=f'HTTP error {status}'):
+            summarize.summarize_local('[00:00:01] Synthetic meeting.', 'minutes', 'en', ollama.MODEL,
+                                      evidence_sink=evidence.update)
+        assert requests == expected and not evidence

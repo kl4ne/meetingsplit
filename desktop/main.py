@@ -25,6 +25,7 @@ class BlockNetwork(QWebEngineUrlRequestInterceptor):
 
 class JobWorker(QObject):
     progress=Signal(str,int)
+    transcriptionDeviceChanged=Signal(str)
     complete=Signal(str)
     error=Signal(str)
     finished=Signal()
@@ -38,7 +39,8 @@ class JobWorker(QObject):
             if folder:=self.configuration.get('retry_minutes_folder'):
                 output=retry_minutes(folder,self.configuration['output'],progress,self.control)
             else:
-                output=run_job(self.configuration,progress,self.control)
+                output=run_job(self.configuration,progress,self.control,
+                               on_transcription_device=self.transcriptionDeviceChanged.emit)
             self.complete.emit(str(output))
         except JobCancelled as exc:
             self.cancelled.emit(str(exc))
@@ -51,6 +53,7 @@ class DesktopBridge(QObject):
     fileSelected=Signal(str)
     folderSelected=Signal(str)
     progress=Signal(str,int)
+    transcriptionDeviceChanged=Signal(str)
     completed=Signal(str)
     failed=Signal(str)
     cancelled=Signal(str)
@@ -228,6 +231,7 @@ class DesktopBridge(QObject):
         self._worker.moveToThread(self._thread)
         self._thread.started.connect(self._worker.run)
         self._worker.progress.connect(self.progress.emit)
+        self._worker.transcriptionDeviceChanged.connect(self.transcriptionDeviceChanged.emit)
         self._worker.complete.connect(self._completed)
         self._worker.cancelled.connect(self.cancelled.emit)
         self._worker.error.connect(self.failed.emit)

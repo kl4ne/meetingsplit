@@ -1,4 +1,4 @@
-// MeetingSplit v0.8.11 — UI translations. Spanish originals are the keys; English is the initial UI locale.
+// MeetingSplit v0.8.13 — UI translations. Spanish originals are the keys; English is the initial UI locale.
 // This UI language preference does NOT change meeting audio language or report language.
 window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   'Opcional. Necesita transcripción, Ollama y qwen3:4b.':'Optional. Requires transcription, Ollama and qwen3:4b.',
@@ -9,7 +9,15 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   'Solo dividir no genera una minuta local.':'Split only does not generate local minutes.',
 
   "CONTINUAR TRABAJO ↗":"RESUME JOB ↗",
+  "Preparando la síntesis temática / Preparing the thematic overview": "Preparing the thematic overview",
   "Configurar NVIDIA CUDA / Ollama": "Set up NVIDIA CUDA / Ollama",
+  "PREPARAR UNA REUNIÓN ↗": "PREPARE A MEETING ↗",
+  "Dispositivo de transcripción: NVIDIA GPU": "Transcription device: NVIDIA GPU",
+  "Dispositivo de transcripción: CPU": "Transcription device: CPU",
+  "Ollama falló. Reintentando la minuta por CPU.": "Ollama failed. Retrying the minutes on CPU.",
+  "Verificando integridad de la grabación / Checking source integrity": "Checking source integrity",
+  "Preparing isolated Whisper worker / Preparando motor aislado": "Preparing the isolated Whisper worker",
+  "Fallo de bibliotecas NVIDIA/CUDA. Reintentando el audio por CPU.": "NVIDIA CUDA failed. Retrying the audio on CPU.",
   "La transcripción usa NVIDIA automáticamente cuando CUDA está listo en tu carpeta de datos. Si falta CUDA, usa CPU.": "Transcription uses NVIDIA automatically when CUDA is ready in your data folder. If CUDA is missing, it uses the CPU.",
   "Transcripción procesada con NVIDIA GPU.": "Transcription processed on the NVIDIA GPU.",
   "Transcripción procesada con CPU.": "Transcription processed on the CPU.",
@@ -24,7 +32,7 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "ARCHIVOS EN TU EQUIPO": "FILES STAY ON YOUR PC",
   "Privacidad por diseño. Tus grabaciones no se envían a servidores.": "Private by design. Your recordings never leave your device.",
   "PROCESAMIENTO LOCAL": "LOCAL PROCESSING",
-  "EDICIÓN PRIVADA · v0.8.11": "PRIVATE EDITION · v0.8.11",
+  "EDICIÓN PRIVADA · v0.8.13": "PRIVATE EDITION · v0.8.13",
   "TU VOZ. TU INFORMACIÓN. TU CONTROL.": "YOUR VOICE. YOUR DATA. YOUR CONTROL.",
   "Cada palabra cuenta.": "Every word matters.",
   "Cada decisión permanece.": "Every decision stays.",

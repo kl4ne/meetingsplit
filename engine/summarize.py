@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from .ollama import chat, DEFAULT_ENDPOINT, OutputLimitError
+from .ollama import chat, DEFAULT_ENDPOINT, OllamaHTTPError, OutputLimitError
 
 _TIMESTAMP=re.compile(r'\[(\d{2}:\d{2}:\d{2})\]')
 
@@ -62,6 +62,21 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         raise ValueError('Invalid report mode or language')
     blocks=list(source_blocks(transcript))
     items=[];seen=set();empty=[]
+    cpu_only=False
+
+    def request(messages, schema):
+        nonlocal cpu_only
+        try:
+            return ollama_chat(messages,model,endpoint=endpoint,cancel=cancel,progress=progress,
+                               json_output=schema,cpu_only=cpu_only)
+        except OllamaHTTPError as exc:
+            if exc.status!=500 or cpu_only:
+                raise
+            if cancel: cancel.check()
+            cpu_only=True
+            progress('Ollama falló. Reintentando la minuta por CPU.')
+            return ollama_chat(messages,model,endpoint=endpoint,cancel=cancel,progress=progress,
+                               json_output=schema,cpu_only=True)
 
     def extract(rows, number):
         if cancel: cancel.check()
@@ -79,7 +94,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         for attempt in range(2):
             if cancel: cancel.check()
             try:
-                raw=ollama_chat(messages,model,endpoint=endpoint,cancel=cancel,progress=progress,json_output=schema)
+                raw=request(messages,schema)
             except OutputLimitError:
                 if len(rows)==1:
                     raise
@@ -120,9 +135,24 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     rows=[row for block in blocks for row in block]
     items=reconcile_source_items(items,explicit_source_items(rows,language))
     coverage_gaps=find_coverage_gaps(rows,items)
-    report=render_minutes(items,mode,language,empty,coverage_gaps)
+    from .control import JobCancelled
+    from .minutes_brief import editorial_input, editorial_request, validate_editorial
+    editorial=[]
+    sources=editorial_input(items)
+    if sources:
+        if cancel: cancel.check()
+        progress('Preparando la síntesis temática / Preparing the thematic overview')
+        messages,schema=editorial_request(sources,language)
+        try:
+            editorial=validate_editorial(request(messages,schema),sources,language)
+        except JobCancelled:
+            raise
+        except (OSError,RuntimeError,ValueError):
+            # The cited extraction remains available even if the optional synthesis fails.
+            pass
+    report=render_minutes(items,mode,language,empty,coverage_gaps,editorial=editorial)
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,
-                       'coverage_gaps':coverage_gaps,'items':items})
+                       'coverage_gaps':coverage_gaps,'editorial_themes':editorial,'items':items})
     return report

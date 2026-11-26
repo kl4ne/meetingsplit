@@ -60,7 +60,7 @@ _LOCALES = {
         'owner':'Person mentioned as responsible','due':'Date or deadline mentioned',
         'evidence':'Verbatim source','unknown':'Not specified',
         'source_only':'See the original wording in the source quotation.' ,
-        'review_warning':'AI-generated draft. Source quotations were checked mechanically. Verify classifications, translations, dates, responsibilities and completeness against the recording.',
+        'review_warning':'Draft — review required. Check decisions, dates and responsibilities against the recording.',
         'empty':'No items extracted; this does not establish that nothing was discussed. Review the transcript.',
         'heading':'AI interpretation — review required',
         'coverage':'Sections with no extracted items (review these sections in the transcript)',
@@ -75,7 +75,7 @@ _LOCALES = {
         'owner':'Persona mencionada como responsable','due':'Fecha o plazo mencionado',
         'evidence':'Cita literal de la fuente','unknown':'No especificado',
         'source_only':'Consulta las palabras originales en la cita.' ,
-        'review_warning':'Borrador generado por IA. Las citas se comprobaron mecánicamente. Verifica clasificaciones, traducciones, fechas, responsables y exhaustividad contra la grabación.',
+        'review_warning':'Borrador para revisión. Contrasta los acuerdos, plazos y responsables con la grabación.',
         'empty':'No se extrajeron elementos; esto no demuestra que no se discutiera nada. Revisa la transcripción.',
         'heading':'Interpretación de IA — requiere revisión',
         'coverage':'Secciones sin elementos extraídos (revisa estas secciones en la transcripción)',
@@ -400,43 +400,90 @@ def find_coverage_gaps(rows, items):
 def _markdown(value):
     # Render model/transcript text as text, not links, HTML or headings.
     value=' '.join(value.split())
-    return re.sub(r'([\\\x60*_{}\[\]()<>#+.!|&~-])',r'\\\1',value)
+    return re.sub(r'([\\\x60*_{}\[\]()<>#+!|&~-])',r'\\\1',value)
 
 
-def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=()) -> str:
+def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=()) -> str:
     documents=[]
+    topics=[item for item in items if item['category']=='topic']
+    substantive=[item for item in items if item['category'] in ('decision','action','pending')]
+    facts=[item for item in topics if any(_AMOUNT.search(ref['quote']) for ref in item['sources'])]
+    review_count=sum(item['category']=='review' for item in items)
+
+    def times(sources):
+        return ', '.join(f"[{stamp}]" for stamp in dict.fromkeys(ref['timestamp'] for ref in sources))
+
     for lang in ('es','en') if language=='both' else (language,):
         loc=_LOCALES[lang]
         title=loc['summary'] if mode=='summary' else loc['minutes']
+        field='text_'+lang
         lines=['# '+title,'','**'+loc['review_warning']+'**','']
-        if empty_blocks:
-            lines+=['**'+loc['coverage']+':** '+', '.join(map(str,empty_blocks)),'']
-        if coverage_gaps:
-            lines+=['## '+loc['gaps'],'']
-            for gap in coverage_gaps:
-                lines.append(f"- {loc['missing_'+gap['kind']]} [{gap['timestamp']}] "
-                             f"“{_markdown(gap['text'])}”")
-            lines.append('')
         if not items:
-            lines.append(loc['empty'])
-        if mode=='both' and items:
-            lines+=['## '+loc['summary'],'']
-            for category in ('decision','action','pending'):
-                selected=[i for i in items if i['category']==category]
-                if selected: lines.append(f'- {loc[category]}: {len(selected)}')
-            lines.append('')
+            lines += [loc['empty'],'']
+        elif editorial:
+            lines += ['## '+loc['summary'],'']
+            for theme in editorial:
+                lines += [f"**{_markdown(theme['title_'+lang])}.** {_markdown(theme['summary_'+lang])} {times(theme['sources'])}",'']
+        else:
+            # Use a few dated facts when no validated editorial overview is available.
+            highlights=substantive or topics
+            highlights=sorted(highlights,key=lambda item:item['sources'][0]['source_id'])
+            distinct={}
+            for item in highlights:
+                if item[field]!=loc['source_only']:
+                    distinct.setdefault(item[field].casefold().rstrip('.'),item)
+            highlights=list(distinct.values())
+            if highlights:
+                lines += ['## '+loc['summary'],'']
+                for item in highlights[:5]:
+                    lines.append(f"- {_markdown(item[field])} {times(item['sources'])}")
+                lines.append('')
+
         for category in _CATEGORIES:
-            selected=[i for i in items if i['category']==category]
-            if not selected: continue
+            if category=='review':
+                continue
+            selected=facts if category=='topic' else [i for i in items if i['category']==category]
+            if not selected:
+                continue
             lines+=['## '+loc[category],'']
+            grouped=[]
+            repeated={}
             for item in selected:
-                lines.append('- **'+loc['heading']+':** '+_markdown(item['text_'+lang]))
+                if category in ('proposal','topic'):
+                    key=(tuple(sorted(ref['quote'] for ref in item['sources'])),item['owner'],item['due'])
+                    if key in repeated:
+                        repeated[key]['sources'].extend(item['sources'])
+                        continue
+                    item={**item,'sources':list(item['sources'])}
+                    repeated[key]=item
+                grouped.append(item)
+            for item in grouped:
+                lines.append('- '+_markdown(item[field]))
                 if category=='action':
                     lines.append('  - '+loc['owner']+': '+_markdown(item['owner'] or loc['unknown']))
                     lines.append('  - '+loc['due']+': '+_markdown(item['due'] or loc['unknown']))
+                quotations={}
                 for ref in item['sources']:
-                    lines.append('  - '+loc['evidence']+': ['+ref['timestamp']+'] “'+_markdown(ref['quote'])+'”')
+                    quotations.setdefault(ref['quote'],[]).append(ref)
+                for quote,refs in quotations.items():
+                    lines.append('  - '+loc['evidence']+': '+times(refs)+' "'+_markdown(quote)+'"')
                 lines.append('')
+        if review_count or coverage_gaps or empty_blocks:
+            lines += ['## '+loc['review'],'']
+        if review_count:
+            if lang=='en':
+                note=('One item is' if review_count==1 else f'{review_count} items are')+' marked for review in the evidence JSON.'
+            else:
+                note=('Un elemento quedó marcado' if review_count==1 else f'{review_count} elementos quedaron marcados')+' para revisión en el JSON de evidencias.'
+            lines += [note,'']
+        if empty_blocks:
+            lines+=['**'+loc['coverage']+':** '+', '.join(map(str,empty_blocks)),'']
+        if coverage_gaps:
+            lines+=['**'+loc['gaps']+'**','']
+            for gap in coverage_gaps:
+                lines.append(f"- {loc['missing_'+gap['kind']]} [{gap['timestamp']}] "
+                             f"\"{_markdown(gap['text'])}\"")
+            lines.append('')
         documents.append('\n'.join(lines).strip())
     return '\n\n---\n\n'.join(documents)+'\n'
 

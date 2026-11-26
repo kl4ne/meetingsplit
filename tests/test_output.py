@@ -23,8 +23,9 @@ def test_zip_groups_files_and_preserves_contents_on_reexport(tmp_path):
         pack_result(tmp_path, target)
         with ZipFile(target) as archive:
             assert archive.testzip() is None
-            dirs = {name.split('/')[0] + '/' for name in names}
+            root = 'RESULTADOS_COMPLETOS/'
+            dirs = {root + name.split('/')[0] + '/' for name in names} | {root}
             assert {entry.filename for entry in archive.infolist() if entry.is_dir()} == dirs
-            assert {entry.filename for entry in archive.infolist() if not entry.is_dir()} == set(names)
-            assert all(archive.read(name) == name.encode() for name in names)
+            assert {entry.filename for entry in archive.infolist() if not entry.is_dir()} == {root + name for name in names}
+            assert all(archive.read(root + name) == name.encode() for name in names)
     assert all((tmp_path / name.split('/')[-1]).read_bytes() == name.encode() for name in names)

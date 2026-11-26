@@ -155,9 +155,9 @@ def test_minutes_retries_only_failed_block_using_verified_transcript(tmp_path, m
     evidence = json.loads((folder / 'MINUTA_EVIDENCIAS.json').read_text(encoding='utf-8'))
     assert {item['sources'][0]['quote'] for item in evidence['items']} == {row['text'] for row in rows}
     with ZipFile(folder / 'RESULTADOS_COMPLETOS.zip') as archive:
-        assert 'Minutas/RESUMEN_Y_MINUTA_LOCAL.md' in archive.namelist()
+        assert 'RESULTADOS_COMPLETOS/Minutas/RESUMEN_Y_MINUTA_LOCAL.md' in archive.namelist()
         assert not any('/.minutes-' in name for name in archive.namelist())
-        assert 'Minutas/MINUTA_NO_GENERADA.txt' not in archive.namelist()
+        assert 'RESULTADOS_COMPLETOS/Minutas/MINUTA_NO_GENERADA.txt' not in archive.namelist()
 
 
 def test_whisper_cpu_keeps_word_timestamps_and_discards_out_of_bounds_padding(tmp_path):

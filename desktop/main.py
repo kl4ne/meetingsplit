@@ -4,9 +4,13 @@ import json
 import os
 from pathlib import Path
 import sys
-from PySide6.QtCore import QObject, QThread, Qt, QUrl, QSettings, Signal, Slot
-from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
+from desktop.web_rendering import configure_web_rendering
+
+configure_web_rendering()
+
+from PySide6.QtCore import QEvent, QObject, QThread, QTimer, Qt, QUrl, QSettings, Signal, Slot
+from PySide6.QtGui import QColor, QDesktopServices
+from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import QWebEngineUrlRequestInterceptor, QWebEngineProfile
 from PySide6.QtWebEngineWidgets import QWebEngineView
@@ -301,19 +305,49 @@ class DesktopBridge(QObject):
         if self._last_folder and Path(self._last_folder).is_dir():
             QDesktopServices.openUrl(QUrl.fromLocalFile(self._last_folder))
 
-class MainWindow(QWebEngineView):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f'MeetingSplit | Private Audio Studio | v{VERSION}')
         self.resize(1366,880)
         self.setMinimumSize(920,670)
+        self.web=QWebEngineView(self)
+        self.setCentralWidget(self.web)
+        self.page().setBackgroundColor(QColor("#f3f1ec"))
         self._interceptor=BlockNetwork(self)
         self.page().profile().setUrlRequestInterceptor(self._interceptor)
         self.bridge=DesktopBridge(self)
         self.channel=QWebChannel(self.page())
         self.channel.registerObject('desktop',self.bridge)
         self.page().setWebChannel(self.channel)
-        self.load(QUrl.fromLocalFile(str(ROOT/'ui'/'index.html')))
+        self.web.loadFinished.connect(self._page_loaded)
+        self.web.load(QUrl.fromLocalFile(str(ROOT/'ui'/'index.html')))
+
+    def page(self):
+        return self.web.page()
+
+    def _page_loaded(self, ok):
+        if ok and sys.platform=='win32':
+            # Refresh the embedded surface once after navigation. Resizing the
+            # viewport invalidates the Chromium frame even before mouse input.
+            self.setContentsMargins(0,0,1,0)
+            QTimer.singleShot(50,self._restore_viewport)
+        self._refresh_frame()
+
+    def _restore_viewport(self):
+        self.setContentsMargins(0,0,0,0)
+        self._refresh_frame()
+
+    def _refresh_frame(self):
+        self.web.update()
+        delegate=self.web.focusProxy()
+        if delegate is not None:
+            delegate.update()
+
+    def changeEvent(self,event):
+        super().changeEvent(event)
+        if event.type()==QEvent.Type.WindowStateChange:
+            QTimer.singleShot(0,self._refresh_frame)
 
     def closeEvent(self, event):
         thread=self.bridge._thread

@@ -14,7 +14,7 @@ from urllib.request import build_opener, ProxyHandler, HTTPRedirectHandler, Requ
 from desktop.storage import validate_local_folder
 from engine.control import Cancellation, JobCancelled
 
-MODEL = 'qwen3:4b'
+MODEL = 'qwen3.8:27b'
 DEFAULT_ENDPOINT = 'http://127.0.0.1:11434'
 MANAGED_ENDPOINT = 'http://127.0.0.1:11435'
 
@@ -90,10 +90,12 @@ def _stream_open(endpoint, route, payload, cancel):
     try:
         connection.request('POST',route,json.dumps(payload).encode('utf-8'),{'Content-Type':'application/json'})
         connection.sock.settimeout(20)
-        deadline=time.monotonic()+180
+        # A cold 27B load and prompt evaluation may need CPU memory on Windows.
+        startup_limit=420 if route=='/api/chat' and payload.get('model')==MODEL else 180
+        deadline=time.monotonic()+startup_limit
         while not select.select([connection.sock],[],[],.25)[0]:
             cancel.check()
-            if time.monotonic()>deadline: raise TimeoutError('Ollama model did not begin responding in 180 seconds')
+            if time.monotonic()>deadline: raise TimeoutError(f'Ollama model did not begin responding in {startup_limit} seconds')
         cancel.check()
         response=connection.getresponse()
         if response.status!=200: raise OllamaHTTPError(response.status)
@@ -118,13 +120,13 @@ def stream_json(endpoint, route, payload, cancel, progress, deadline_seconds=900
             yield data
 
 
-def chat(messages, endpoint=DEFAULT_ENDPOINT, model=MODEL, cancel=None, progress=lambda _:None, timeout=900, json_output=False, *, cpu_only=False):
-    if model!=MODEL: raise ValueError('Only the local qwen3:4b model is supported')
+def chat(messages, endpoint=DEFAULT_ENDPOINT, model=MODEL, cancel=None, progress=lambda _:None, timeout=900, json_output=False, *, cpu_only=False, think=None):
+    if model!=MODEL: raise ValueError('Only the local qwen3.8:27b model is supported')
     control=cancel or Cancellation()
     chunks=[]; total=0; done=False; last_update=0; thinking_chars=0
     # Structured extraction needs the completion budget for evidence, not reasoning.
     payload={'model':MODEL,'messages':[dict(m) for m in messages],'stream':True,
-             'think':not json_output,'keep_alive':0,'truncate':False,
+             'think':not json_output if think is None else think,'keep_alive':'2m','truncate':False,
              'options':{'temperature':0.6,'num_ctx':16384,'num_predict':8192,'repeat_penalty':1.1}}
     if cpu_only:
         payload['options']['num_gpu']=0
@@ -214,12 +216,12 @@ class LocalService:
                 raise RuntimeError('Remote Ollama model aliases are not allowed')
             return status['model']
         if not allow_download or not self.process:
-            raise RuntimeError('qwen3:4b is missing. Use optional component setup to download it.')
+            raise RuntimeError('qwen3.8:27b is missing. Use optional component setup to download it.')
         import shutil
-        if shutil.disk_usage(self.root).free<6*1024**3: raise OSError('At least 6 GiB free is required for the model download')
+        if shutil.disk_usage(self.root).free<24*1024**3: raise OSError('At least 24 GiB free is required for the model download')
         success=False
         for row in stream_json(self.endpoint,'/api/pull',{'model':MODEL,'stream':True},self.cancel,
-                               lambda r:self.progress(f"qwen3:4b: {r.get('status','')} {r.get('completed',0)//1048576}/{r.get('total',0)//1048576} MiB"),3600):
+                               lambda r:self.progress(f"qwen3.8:27b: {r.get('status','')} {r.get('completed',0)//1048576}/{r.get('total',0)//1048576} MiB"),3600):
             if row.get('status')=='success': success=True
         model=existing_status(self.endpoint)['model']
         if not success or not model: raise RuntimeError('Model download was not confirmed by Ollama')

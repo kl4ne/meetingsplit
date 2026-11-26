@@ -62,7 +62,7 @@ class ComponentDialog(QDialog):
         self.folder.setWordWrap(True);layout.addWidget(self.folder)
         self.choose=QPushButton(self.tr('Choose folder…','Elegir carpeta…'));self.choose.clicked.connect(self.pick);layout.addWidget(self.choose)
         self.gpu=QCheckBox(self.tr('NVIDIA CUDA 12 + cuDNN 9 (~1.1 GiB download)','NVIDIA CUDA 12 + cuDNN 9 (~1.1 GiB de descarga)'))
-        self.ollama=QCheckBox(self.tr('Ollama + qwen3:4b (~4 GiB download if missing)','Ollama + qwen3:4b (~4 GiB de descarga si faltan)'))
+        self.ollama=QCheckBox(self.tr('Ollama + qwen3.8:27b (~18 GB download if missing)','Ollama + qwen3.8:27b (~18 GB de descarga si faltan)'))
         layout.addWidget(self.gpu);layout.addWidget(self.ollama)
         self.repair=QCheckBox(self.tr('Repair selected MeetingSplit components (keep old copies; close other instances first)',
                                      'Reparar componentes seleccionados (conservar copias anteriores; cerrar otras instancias primero)'))
@@ -78,7 +78,7 @@ class ComponentDialog(QDialog):
         notices.setPlainText(notice_text)
         self.notices_present=notice_path.is_file()
         layout.addWidget(notices);layout.addWidget(self.terms)
-        self.status=QLabel(self.tr('Nothing will download until you click Prepare. Allow at least 12 GiB free.','No se descargará nada hasta pulsar Preparar. Necesitas al menos 12 GiB libres.'))
+        self.status=QLabel(self.tr('Nothing will download until you click Prepare. Allow at least 24 GiB free.','No se descargará nada hasta pulsar Preparar. Necesitas al menos 24 GiB libres.'))
         self.status.setWordWrap(True);layout.addWidget(self.status)
         buttons=QHBoxLayout();layout.addLayout(buttons)
         self.prepare=QPushButton(self.tr('Prepare selected components','Preparar componentes seleccionados'))
@@ -100,7 +100,7 @@ class ComponentDialog(QDialog):
         try:
             root=validate_local_folder(Path(self.root))
             import shutil
-            if shutil.disk_usage(root).free<12*1024**3: raise OSError(self.tr('At least 12 GiB free is required.','Se necesitan al menos 12 GiB libres.'))
+            if shutil.disk_usage(root).free<24*1024**3: raise OSError(self.tr('At least 24 GiB free is required.','Se necesitan al menos 24 GiB libres.'))
         except Exception as exc: self.status.setText(str(exc));return
         self.control=Cancellation();self.thread=QThread(self)
         self.worker=SetupWorker(root,self.gpu.isChecked(),self.ollama.isChecked(),self.control,repair=self.repair.isChecked())

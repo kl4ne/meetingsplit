@@ -20,6 +20,10 @@ on:
         description: 'Build development installer for QA only (no release)'
         type: boolean
         default: false
+      portable_for_qa:
+        description: 'Build and upload the complete Windows portable ZIP (no release)'
+        type: boolean
+        default: false
 
 concurrency:
   group: windows-qa-${{ github.ref }}
@@ -61,12 +65,12 @@ jobs:
           .\bin\ffmpeg.exe -version | Select-Object -First 1
           .\bin\ffprobe.exe -version | Select-Object -First 1
       - name: Prepare verified LGPL FFmpeg and source-built PyAV (QA packaging only)
-        if: github.event_name == 'workflow_dispatch' && inputs.package_for_qa
+        if: github.event_name == 'workflow_dispatch' && (inputs.package_for_qa || inputs.portable_for_qa)
         shell: pwsh
         run: ./scripts/prepare_lgpl_media.ps1
       - name: Python engine and integration tests
         # The packaging script runs this same suite itself; avoid running it twice.
-        if: github.event_name != 'workflow_dispatch' || !inputs.package_for_qa
+        if: github.event_name != 'workflow_dispatch' || (!inputs.package_for_qa && !inputs.portable_for_qa)
         shell: pwsh
         run: .\.venv\Scripts\python.exe -m pytest -q --ignore=tests/test_ui_language.py --ignore=tests/test_ui_navigation.py
       - name: Browser UI regression tests (PR only)
@@ -77,6 +81,38 @@ jobs:
           .\.venv\Scripts\python.exe -m playwright install chromium
           $env:CHROMIUM_BINARY = .\.venv\Scripts\python.exe -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()"
           .\.venv\Scripts\python.exe -m pytest -q tests/test_ui_language.py tests/test_ui_navigation.py tests/test_paypal_support.py
+      - name: Compile Windows portable for QA
+        if: github.event_name == 'workflow_dispatch' && inputs.portable_for_qa
+        shell: cmd
+        run: scripts\compilar_windows.bat --portable-only
+      - name: Verify extracted Windows portable and record checksum
+        if: github.event_name == 'workflow_dispatch' && inputs.portable_for_qa
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $packages = @(Get-ChildItem dist -File -Filter 'MeetingSplit-v*-Windows-portable-candidate.zip')
+          if ($packages.Count -ne 1) { throw "Expected exactly one portable ZIP, found $($packages.Count)" }
+          $zip = $packages[0]
+          $root = Join-Path $env:RUNNER_TEMP 'meetingsplit-portable'
+          Expand-Archive -LiteralPath $zip.FullName -DestinationPath $root
+          $exe = Join-Path $root 'MeetingSplit.exe'
+          $result = Join-Path $env:RUNNER_TEMP 'meetingsplit-portable-self-check.json'
+          $process = Start-Process -FilePath $exe -ArgumentList @('--self-check', ('"' + $result + '"')) -Wait -PassThru -WindowStyle Hidden
+          if ($process.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $result)) { throw 'Extracted executable self-check failed' }
+          $check = Get-Content -LiteralPath $result -Raw | ConvertFrom-Json
+          if ($zip.Name -ne "MeetingSplit-v$($check.version)-Windows-portable-candidate.zip") { throw 'Version mismatch between ZIP and EXE' }
+          $hash = (Get-FileHash -LiteralPath $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -LiteralPath ($zip.FullName + '.sha256') -Value "$hash  $($zip.Name)" -Encoding ascii
+      - name: Upload complete Windows portable ZIP and checksum
+        if: github.event_name == 'workflow_dispatch' && inputs.portable_for_qa
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-Windows-portable-${{ github.sha }}
+          path: |
+            dist/MeetingSplit-v*-Windows-portable-candidate.zip
+            dist/MeetingSplit-v*-Windows-portable-candidate.zip.sha256
+          if-no-files-found: error
+          retention-days: 14
       - name: Install optional packaging tool
         if: github.event_name == 'workflow_dispatch' && inputs.package_for_qa
         shell: pwsh

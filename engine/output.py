@@ -47,6 +47,8 @@ def pack_result(folder: Path, target: Path, cancel: Cancellation|None=None) -> d
     tmp = target.with_suffix('.zip.partial')
     try:
         with ZipFile(tmp, 'w', ZIP_STORED, allowZip64=True) as zipped:
+            root = 'RESULTADOS_COMPLETOS/'
+            zipped.mkdir(root)
             directories = set()
             for path in sorted(folder.iterdir()):
                 if cancel: cancel.check()
@@ -54,9 +56,9 @@ def pack_result(folder: Path, target: Path, cancel: Cancellation|None=None) -> d
                     member = _archive_path(path)
                     directory = member.split('/', 1)[0] + '/'
                     if directory not in directories:
-                        zipped.mkdir(directory)
+                        zipped.mkdir(root + directory)
                         directories.add(directory)
-                    with path.open('rb') as source, zipped.open(member,'w',force_zip64=True) as sink:
+                    with path.open('rb') as source, zipped.open(root + member,'w',force_zip64=True) as sink:
                         while chunk := source.read(1024*1024):
                             if cancel: cancel.check()
                             sink.write(chunk)

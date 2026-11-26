@@ -1,3 +1,21 @@
+## v0.8.16 - Windows rendering and minutes recovery
+
+- Paints the desktop interface in software on Windows to avoid GPU compositor blank frames.
+- Gives the local 27B model more time to start and keeps it warm between minutes stages.
+- Preserves validated minutes evidence when an individual model record needs review.
+
+## v0.8.15 - Qwen3.8 local minutes
+
+- Uses Qwen3.8 27B for minute generation.
+- Keeps timecodes in the transcript and evidence, outside the readable minutes.
+- Distinguishes explanations from confirmed decisions and preserves deadline wording.
+
+## v0.8.14 - Local Ollama guidance and organized meeting results
+
+- Applies the bundled Owll-inspired minutes guide automatically, with text-only formatting.
+- Synthesizes distinct evidence in sections and exposes passages needing review in the report.
+- Opens the meeting results ZIP with one RESULTADOS_COMPLETOS folder containing the existing categories.
+
 ## v0.8.13 - Editorial meeting minutes
 
 - Builds a concise thematic overview from grounded evidence instead of printing each transcript fragment.

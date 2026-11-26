@@ -77,8 +77,9 @@ def test_export_transcript_srt_zip_integration(monkeypatch,tmp_path,fail_optiona
     assert 'Hola, welcome.' in (folder/'TRANSCRIPCION_COMPLETA.txt').read_text()
     assert '00:00:00,200 --> 00:00:01,200' in (folder/'TRANSCRIPCION_SUBTITULOS.srt').read_text()
     with ZipFile(folder/'RESULTADOS_COMPLETOS.zip') as z:
-        assert {'Audio/parte_01.mp3','Transcripciones/TRANSCRIPCION_COMPLETA.txt',
-                'Transcripciones/TRANSCRIPCION_SUBTITULOS.srt','Datos_JSON/manifest.json'}.issubset(z.namelist())
+        names = {'Audio/parte_01.mp3','Transcripciones/TRANSCRIPCION_COMPLETA.txt',
+                 'Transcripciones/TRANSCRIPCION_SUBTITULOS.srt','Datos_JSON/manifest.json'}
+        assert {'RESULTADOS_COMPLETOS/' + name for name in names}.issubset(z.namelist())
     assert progress[-1][1]==100
 
 

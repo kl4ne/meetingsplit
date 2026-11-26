@@ -18,6 +18,7 @@ from .output import format_srt, pack_result
 from .planning import Clip, plan_clips
 from .inference_worker import InferenceWorker, NativeInferenceError
 from .summarize import instructions, summarize_local
+from .ollama import MODEL
 from .transcription import (format_transcript, load_whisper, load_cpu_whisper,
                             is_cuda_runtime_error, transcribe_clip)
 from desktop.storage import validate_local_folder
@@ -136,7 +137,7 @@ def _resume_signature(source, x, config, task):
                     local_summary=bool(config.get('local_summary',False)),
                     preserve_cpu_quality=bool(config.get('preserve_cpu_quality',False)),
                     provider=config.get('provider','chatgpt'),plan=config.get('plan','paid'),
-                    ollama_model=config.get('ollama_model','qwen3:4b'))
+                    ollama_model=MODEL)
     return {'schema':1,'source_sha256':sha,'source_bytes':stat.st_size,'settings':settings}
 
 
@@ -235,7 +236,7 @@ def _generate_minutes(folder, base, manifest, settings, transcript, progress, ta
         with LocalService(base,task,lambda msg:progress(msg,92)) as service:
             service.ensure_model()
             report=summarize_local(transcript,settings['report'],settings['language'],
-                                   settings.get('ollama_model','qwen3:4b'),
+                                   MODEL,
                                    progress=lambda msg:progress(msg,92),endpoint=service.endpoint,
                                    cancel=task,evidence_sink=evidence.update,read_block=read_block,
                                    write_block=lambda key,raw:_write_text(folder/f'.minutes-{key}.json',raw))

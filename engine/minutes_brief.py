@@ -2,7 +2,7 @@
 import json
 import re
 
-from .minutes_evidence import _NUMBER, _PERSONAL_TENTATIVE, _SENTENCE_BREAK, _amount_keys, _field, _unique_keys
+from .minutes_evidence import _NUMBER, _PERSONAL_TENTATIVE, _SENTENCE_BREAK, _amount_keys, _field, _unique_keys, changes_operational_meaning
 
 
 _COMMON_WORDS = {
@@ -58,6 +58,7 @@ def editorial_request(sources, language):
          'idiomatic English for _en, never mix languages. Never add names, decisions, obligations, dates or amounts. '
          'Distinguish what a speaker taught, discussed or announced from what a group agreed to. '
          'Check that each cited passage supports the entire claim, including relationships between named people. '
+         'State that a process was explained when that is all the source says. Preserve all temporal conditions exactly. '
          'Use plain prose without tables. Leave monetary amounts, dates and tasks in the main minutes sections. '
          'Cite the supporting IDs and return only the schema.'},
         {'role':'user','content':json.dumps(
@@ -92,6 +93,8 @@ def validate_editorial(raw, sources, language, *, rejected=None):
             if any(not _language_matches(texts[f'summary_{lang}'],lang) for lang in languages):
                 raise ValueError('Editorial theme is in the wrong language')
             for value in texts.values():
+                if changes_operational_meaning(value,quotes):
+                    raise ValueError('Editorial theme changed a deadline or implementation claim')
                 if set(_NUMBER.findall(value))-set(_NUMBER.findall(quotes)) or _amount_keys(value)-_amount_keys(quotes):
                     raise ValueError('Unsupported number in editorial theme')
             key = tuple(texts[f'title_{lang}'].casefold() for lang in languages)

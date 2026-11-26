@@ -15,7 +15,7 @@
 </div>
 
 > [!IMPORTANT]
-> **Private Windows portable · v0.8.14 · Public release on hold.** The preceding private candidates displayed v0.8.6. A public release and installer delivery remain gated on CUDA, optional Ollama, installer QA, regressions and licensing. Source CUDA inference now works in short synthetic EN/ES tests on the ASUS RTX 4070 Laptop; frozen installer acceptance remains separate. See [current status](MASTER_STATUS.md).
+> **Private Windows portable · v0.8.15 · Public release on hold.** The preceding private candidates displayed v0.8.6. A public release and installer delivery remain gated on CUDA, optional Ollama, installer QA, regressions and licensing. Source CUDA inference now works in short synthetic EN/ES tests on the ASUS RTX 4070 Laptop; frozen installer acceptance remains separate. See [current status](MASTER_STATUS.md).
 
 ---
 
@@ -189,7 +189,7 @@ MeetingSplit es una aplicación de escritorio para **Windows 11** que divide gra
 
 ### ¿Ya puedo instalarlo?
 
-**El portable privado es v0.8.14.** Los candidatos privados anteriores mostraban v0.8.6. La publicación y entrega del instalador siguen bloqueadas hasta evaluar CUDA, Ollama opcional, instalador, regresiones, seguridad y licencias. CUDA ya ejecutó voz sintética EN/ES en el ASUS real; eso no sustituye la aceptación del instalador completo. Consulta [`MASTER_STATUS.md`](MASTER_STATUS.md) para el estado comprobado.
+**El portable privado es v0.8.15.** Los candidatos privados anteriores mostraban v0.8.6. La publicación y entrega del instalador siguen bloqueadas hasta evaluar CUDA, Ollama opcional, instalador, regresiones, seguridad y licencias. CUDA ya ejecutó voz sintética EN/ES en el ASUS real; eso no sustituye la aceptación del instalador completo. Consulta [`MASTER_STATUS.md`](MASTER_STATUS.md) para el estado comprobado.
 
 ### Privacidad
 
@@ -211,7 +211,7 @@ This project depends on software with **separate licenses** (including Qt/PySide
 
 **Designed & Developed by Roberto S. Macfie**
 
-<sub>MeetingSplit · Independent Windows desktop software · Private Windows portable v0.8.14</sub>
+<sub>MeetingSplit · Independent Windows desktop software · Private Windows portable v0.8.15</sub>
 
 </div>
 

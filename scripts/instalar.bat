@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0\.."
 echo.
-echo MEETINGSPLIT 0.8.14 - Preparar entorno local de desarrollo
+echo MEETINGSPLIT 0.8.15 - Preparar entorno local de desarrollo
 where py >NUL 2>NUL
 if errorlevel 1 (
   echo Se requiere el lanzador Python y Python 3.14.10 x64.

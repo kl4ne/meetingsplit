@@ -122,7 +122,8 @@ def test_revised_prose_uses_draft_history_and_preserves_original_evidence(monkey
     assert prose_calls[1][2]=={'role':'assistant','content':draft}
     assert not any(line.lstrip().startswith('|') for line in report.splitlines())
     assert 'USD 2,400' in report and 'Ana Ruiz' in report and 'viernes' in report
-    assert '## Avisos' in report and '[00:08:02]' in report
+    assert '## Avisos' in report and '[00:08:02]' not in report
+    assert any(ref['timestamp']=='00:08:02' for item in evidence['items'] for ref in item['sources'])
     assert '## Propuestas' not in report
     assert any(item['category']=='review' for item in evidence['items'])
     if accepted:
@@ -151,3 +152,18 @@ def test_standalone_decision_stays_in_record_and_does_not_displace_later_topics(
     assert [ref['source_id'] for ref in sources]==[2,3,4,5,6,7]
     _,schema=editorial_request(sources,'es')
     assert schema['properties']['themes']['maxItems']==6
+
+
+@pytest.mark.parametrize('wording',[
+    'El inventario se enviará antes del viernes.',
+    'Se implementará el registro de incidentes.',
+])
+def test_edited_prose_cannot_invent_deadline_or_implementation(wording):
+    from engine.minutes_narrative import narrative_sections, validate_narrative
+
+    source={'source_id':1, 'timestamp':'00:01:02',
+            'quote':'Ana enviará el inventario el viernes. Se explicó cómo registrar incidentes.'}
+    theme={'title_es':'Seguimiento','summary_es':source['quote'],'sources':[source]}
+    section=next(narrative_sections([theme],'es'))
+    with pytest.raises(ValueError,match='deadline or implementation'):
+        validate_narrative(wording+' [E1]',section,'es')

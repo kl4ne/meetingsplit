@@ -1,3 +1,9 @@
+## v0.8.15 - Qwen3.8 local minutes
+
+- Uses Qwen3.8 27B for minute generation.
+- Keeps timecodes in the transcript and evidence, outside the readable minutes.
+- Distinguishes explanations from confirmed decisions and preserves deadline wording.
+
 ## v0.8.14 - Local Ollama guidance and organized meeting results
 
 - Applies the bundled Owll-inspired minutes guide automatically, with text-only formatting.

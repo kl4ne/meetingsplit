@@ -21,6 +21,16 @@ _NEGATED_AGREEMENT = re.compile(
     re.IGNORECASE,
 )
 _CONFIRMED_HEADING = re.compile(r'^(?:confirmed agreement|acuerdo confirmado)\s*:', re.IGNORECASE)
+_DEADLINE_QUALIFIERS = (
+    re.compile(r'\b(?:antes de(?:l)?|before)\b', re.IGNORECASE),
+    re.compile(r'\b(?:después de(?:l)?|after)\b', re.IGNORECASE),
+    re.compile(r'\b(?:a más tardar|no later than)\b', re.IGNORECASE),
+)
+_IMPLEMENTATION = re.compile(
+    r'\b(?:se (?:implementará|aplicará|adoptará|pondrá en marcha)|'
+    r'(?:will|shall) be (?:implemented|applied|adopted)|(?:will|shall) implement)\b', re.IGNORECASE,
+)
+_PRINTED_TIME_MARK = re.compile(r'\\?\[\d{2}:\d{2}:\d{2}\\?\]')
 _CATEGORIES = ('topic','decision','action','notice','proposal','disagreement','pending','review')
 _SENTENCE_BREAK = re.compile(r'(?<=[.!?])\s+|\n+')
 _UNCERTAIN = re.compile(
@@ -137,6 +147,8 @@ def _field(value, maximum, allow_none=False):
 
 
 def _literal(value, quotes):
+    if isinstance(value,str) and value.strip().casefold() in ('','null'):
+        value=None
     value=_field(value,240,allow_none=True)
     if value is not None:
         # Prevent substring matches inside a longer name or number.
@@ -206,6 +218,14 @@ def _evidence_category(requested, evidence, by_id, owner):
     return ('topic' if requested=='topic' else 'review'),None
 
 
+def changes_operational_meaning(value, quotes):
+    """Catch newly imposed time conditions and unsupported implementation claims."""
+    if any(pattern.search(value) and not pattern.search(quotes) for pattern in _DEADLINE_QUALIFIERS):
+        return True
+    return bool(_IMPLEMENTATION.search(value) and not (
+        _IMPLEMENTATION.search(quotes) or _AGREEMENT.search(quotes)))
+
+
 def validate_items(raw: str, rows: list[dict], language: str, *, source_only_on_mismatch=False) -> list[dict]:
     try: document=json.loads(raw,object_pairs_hook=_unique_keys)
     except (TypeError,ValueError) as exc: raise ValueError('Invalid evidence JSON') from exc
@@ -227,6 +247,9 @@ def validate_items(raw: str, rows: list[dict], language: str, *, source_only_on_
                 raise ValueError('Invalid evidence source ID')
             row=by_id.get(ref['id'])
             quote=_field(ref['quote'],1800)
+            if (row and quote not in row['text'] and len(quote)>=3
+                    and (quote[0],quote[-1]) in {('"','"'),('“','”'),('«','»')}):
+                quote=quote[1:-1]
             if row is None or quote not in row['text']:
                 raise ValueError('Quotation is not verbatim from the specified source')
             evidence.append({'source_id':row['id'],'timestamp':row['timestamp'],'quote':quote})
@@ -244,7 +267,9 @@ def validate_items(raw: str, rows: list[dict], language: str, *, source_only_on_
         cited_amounts={amount for quote in quotes for amount in _amount_keys(quote)}
         for lang in languages:
             text=descriptions['text_'+lang]
-            if set(_NUMBER.findall(text))-cited_numbers:
+            if changes_operational_meaning(text,' '.join(quotes)):
+                descriptions['text_'+lang]=_LOCALES[lang]['source_only']
+            elif set(_NUMBER.findall(text))-cited_numbers:
                 if not source_only_on_mismatch:
                     raise ValueError('Numeric claims must appear literally in cited evidence')
                 descriptions['text_'+lang]=_LOCALES[lang]['source_only']
@@ -416,7 +441,7 @@ def _markdown(value):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=()) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -424,6 +449,8 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
     review_count=sum(item['category']=='review' for item in items)
 
     def times(sources):
+        if not show_timestamps:
+            return ""
         return ', '.join(f"[{stamp}]" for stamp in dict.fromkeys(ref['timestamp'] for ref in sources))
 
     for lang in ('es','en') if language=='both' else (language,):
@@ -519,10 +546,12 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         if coverage_gaps:
             lines+=['**'+loc['gaps']+'**','']
             for gap in coverage_gaps:
-                lines.append(f"- {loc['missing_'+gap['kind']]} [{gap['timestamp']}] "
+                lines.append(f"- {loc['missing_'+gap['kind']]} {times([gap])} "
                              f"\"{_markdown(gap['text'])}\"")
             lines.append('')
-        documents.append('\n'.join(lines).strip())
+        if not show_timestamps:
+            lines=[_PRINTED_TIME_MARK.sub('',line) for line in lines]
+        documents.append('\n'.join(line.rstrip() for line in lines).strip())
     return '\n\n---\n\n'.join(documents)+'\n'
 
 
@@ -557,6 +586,8 @@ def extraction_prompt(rows, language):
          'agreements (including Acuerdo confirmado). A named person committing to do something is an action. '
          'An amount stated as a fact is a topic. Use notice for an explicit announcement or reminder. '
          'Use proposal only for an explicitly suggested idea. Use review for ambiguity and tentative personal remarks. '
+         'Explaining how to do something is not approval, implementation or an assigned task. '
+         'Copy time conditions exactly: el viernes is not antes del viernes. Use JSON null for missing fields. '
          'Return one JSON object with only an items array. Each item must contain exactly category (one of topic, '
          'decision, action, notice, proposal, disagreement, pending, review), sources (1-3 objects with integer id and quote '
          'copied verbatim from that source text), owner and due (null or exact contiguous text from its quotations), '

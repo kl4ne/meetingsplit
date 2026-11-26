@@ -5,7 +5,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from .ollama import chat, DEFAULT_ENDPOINT, OllamaHTTPError, OutputLimitError
+from .ollama import chat, DEFAULT_ENDPOINT, MODEL, OllamaHTTPError, OutputLimitError
 
 _TIMESTAMP=re.compile(r'\[(\d{2}:\d{2}:\d{2})\]')
 
@@ -49,7 +49,7 @@ Devuelve SOLO el documento final en Markdown, empezando por un título #.
 No muestres razonamiento, instrucciones ni comentarios sobre cómo redactarlo.'''
 
 
-def ollama_chat(messages: list[dict], model: str='qwen3:4b', timeout: int=900, **kwargs) -> str:
+def ollama_chat(messages: list[dict], model: str=MODEL, timeout: int=900, **kwargs) -> str:
     """Talk ONLY to loopback Ollama, not the public Internet."""
     return chat(messages, model=model, timeout=timeout, **kwargs)
 
@@ -190,7 +190,8 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             narratives[lang]=paragraphs
     report=render_minutes(items,mode,language,empty,coverage_gaps,
                           editorial=editorial,editorial_gaps=editorial_gaps,
-                          narratives=narratives,narrative_fallbacks=narrative_fallbacks)
+                          narratives=narratives,narrative_fallbacks=narrative_fallbacks,
+                          show_timestamps=False)
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,

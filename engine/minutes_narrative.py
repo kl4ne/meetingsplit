@@ -5,7 +5,7 @@ import json
 import re
 
 from .minutes_brief import _language_matches
-from .minutes_evidence import _AGREEMENT, _NUMBER, _amount_keys
+from .minutes_evidence import _AGREEMENT, _NUMBER, _amount_keys, changes_operational_meaning
 
 
 _INPUT_BYTES = 5500
@@ -46,6 +46,8 @@ def narrative_request(section, language):
          'Cover every substantive topic represented by the evidence IDs. Retain concrete notices, even if mentioned only once. '
          'Distinguish teachings, notices and proposals. Leave formal agreements, tasks and monetary details for separate evidence sections. '
          'Preserve uncertainty and never add dates, people, responsibilities or facts. '
+         'Never turn an explanation into a decision to implement it. Preserve date qualifiers literally in meaning: '
+         'on Friday is not before Friday. Leave exact deadlines to the separate task section. Do not print timestamps. '
          'Return only paragraphs separated by blank lines, with no headings, lists, tables, columns or HTML. '
          'End every paragraph with its supporting IDs, for example [E1] [E2]. Use only IDs from the supplied evidence.'},
         {'role':'user','content':json.dumps({f'E{key}':record for key,(_,record) in section.items()}, ensure_ascii=False)},
@@ -58,7 +60,9 @@ def review_request(messages, draft):
     return [*messages, {'role':'assistant','content':draft},
             {'role':'user','content':
              'Review your draft against the original evidence above. Correct unsupported claims and restore missing topics or notices. '
-             'Merge repetitive passages and remove any tables, lists, headings or column separators. '
+             'Check that descriptions stay descriptive and never turn a discussion into a confirmed decision. '
+             'Check that on, before, after and by preserve the exact meaning of time conditions. '
+             'Merge repetitive passages and remove tables, lists, headings, timestamps or column separators. '
              'Keep supporting evidence IDs at the end of every paragraph, use the requested language, '
              'and return only the complete revised prose, without explaining your edits.'}]
 
@@ -86,6 +90,8 @@ def validate_narrative(raw, section, language):
         if _AGREEMENT.search(body):
             raise ValueError('Formal decisions belong in the separate evidence section')
         quotes = ' '.join(quote for key in keys for quote in section[key][1]['quotes'])
+        if changes_operational_meaning(body,quotes):
+            raise ValueError('Narrative changed a deadline or implementation claim')
         if set(_NUMBER.findall(body))-set(_NUMBER.findall(quotes)) or _amount_keys(body)-_amount_keys(quotes):
             raise ValueError('Unsupported number or amount in narrative')
         normalized = body.casefold().rstrip('.')

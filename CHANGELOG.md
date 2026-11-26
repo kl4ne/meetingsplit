@@ -1,3 +1,8 @@
+## v0.8.11 - Explicit result folders
+
+- Writes directory entries in the results ZIP for archive viewers.
+- Opens the organized ZIP directly from Results and labels the work folder separately.
+
 ## v0.8.10 - Organized private Windows results
 
 - Groups ZIP results by file type.

@@ -20,10 +20,7 @@ def main(output_path):
     result={'ok':False,'test':'isolated MainWindow paint on open, maximize and restore'}
     timer=QTimer();timer.setSingleShot(True);timer.timeout.connect(app.quit);timer.start(30000)
     def rendered():
-        if app.platformName()=='windows':
-            image=view.screen().grabWindow(view.winId()).toImage()
-        else:
-            image=view.grab().toImage()
+        image=view.web.grab().toImage()
         if image.isNull():
             return False
         samples={image.pixelColor(x*image.width()//10,y*image.height()//10).name()
@@ -53,7 +50,7 @@ def main(output_path):
                               and data.get('version_label','').endswith('v'+VERSION))
             QTimer.singleShot(700,lambda:inspect_window('initial_frame'))
         view.page().runJavaScript('JSON.stringify({screens:document.querySelectorAll(".screen").length,active:document.querySelectorAll(".active-screen").length,language:document.documentElement.lang,version_label:document.querySelector(".version-chip").textContent.trim()})',inspect)
-    view.loadFinished.connect(done)
+    view.web.loadFinished.connect(done)
     view.show()
     app.exec()
     view.close();view.deleteLater()

@@ -7,10 +7,11 @@ el('setup-components').addEventListener('click',()=>{
 const screens = ['home','import','settings','process','results'];
 const names = {home:'Inicio',import:'Importar audio',settings:'Configuración',process:'Procesamiento',results:'Resultados'};
 const enDictionary=window.MeetingSplitLocales.englishBySpanish;
+let transcriptionDevice='';
 let uiLocale='en', currentPage='home', statusOriginal='', stateLabelOriginal='', currentNotice='';
 const staticText=[];
 const SKIP_DYNAMIC=new Set(['page-crumb','file-title','file-sub','folder-display','state-label','job-status',
-'result-eyebrow','result-heading','result-description','result-path','result-files','result-minutes-status','provider-hint']);
+'result-eyebrow','result-heading','result-description','result-path','result-files','result-minutes-status','result-device','provider-hint']);
 function translate(text){
   if(uiLocale==='es')return text;
   const direct=enDictionary[text];if(direct)return direct;
@@ -91,6 +92,7 @@ function applyUILocale(lang,persist=true){
   if(stateLabelOriginal)el('state-label').textContent=translate(stateLabelOriginal);
   if(resultIndexJSON)renderResults(resultIndexJSON);
   renderSummaryStatus(summaryStatus);
+  renderTranscriptionDevice(transcriptionDevice);
   if(persist)saveUILocale(uiLocale);
 }
 window.meetingSplitSetUILanguage=applyUILocale;
@@ -248,6 +250,16 @@ function renderResults(index){
   }
   container.hidden=container.children.length===0;
 }
+function renderTranscriptionDevice(device){
+  transcriptionDevice=device;
+  const message={
+    'NVIDIA GPU':'Transcripción procesada con NVIDIA GPU.',
+    'CPU':'Transcripción procesada con CPU.'
+  }[device];
+  const label=el('result-device');
+  label.hidden=!message;
+  label.textContent=message?translate(message):'';
+}
 function renderSummaryStatus(state){
   summaryStatus=state;
   const message={
@@ -277,6 +289,8 @@ function showResult(folder){
   el('result-path').textContent=folder;
   el('result-path').hidden=false;
   el('results-open-folder').hidden=false;
+  renderTranscriptionDevice('');
+  if(bridge && typeof bridge.getTranscriptionDevice==='function') bridge.getTranscriptionDevice(renderTranscriptionDevice);
   renderSummaryStatus('');
   if(bridge && typeof bridge.getSummaryStatus==='function') bridge.getSummaryStatus(renderSummaryStatus);
   if(bridge && typeof bridge.getResultIndex==='function') bridge.getResultIndex(renderResults);

@@ -196,6 +196,19 @@ class DesktopBridge(QObject):
             self._start_worker({'retry_minutes_folder':self._last_folder,'output':self._output})
 
     @Slot(result=str)
+    def getTranscriptionDevice(self):
+        if self._last_folder:
+            path = Path(self._last_folder) / 'manifest.json'
+            try:
+                if not path.is_symlink():
+                    device = json.loads(path.read_text(encoding='utf-8')).get('device')
+                    if device in ('CPU', 'NVIDIA GPU'):
+                        return device
+            except (OSError, ValueError, AttributeError):
+                pass
+        return ''
+
+    @Slot(result=str)
     def getSummaryStatus(self):
         if self._last_folder:
             path=Path(self._last_folder)/'manifest.json'

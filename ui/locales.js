@@ -1,4 +1,4 @@
-// MeetingSplit v0.8.9 — UI translations. Spanish originals are the keys; English is the initial UI locale.
+// MeetingSplit v0.8.10 — UI translations. Spanish originals are the keys; English is the initial UI locale.
 // This UI language preference does NOT change meeting audio language or report language.
 window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   'Opcional. Necesita transcripción, Ollama y qwen3:4b.':'Optional. Requires transcription, Ollama and qwen3:4b.',
@@ -9,7 +9,10 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   'Solo dividir no genera una minuta local.':'Split only does not generate local minutes.',
 
   "CONTINUAR TRABAJO ↗":"RESUME JOB ↗",
-  "Preparar CUDA / Ollama opcionales": "Set up optional CUDA / Ollama",
+  "Configurar NVIDIA CUDA / Ollama": "Set up NVIDIA CUDA / Ollama",
+  "La transcripción usa NVIDIA automáticamente cuando CUDA está listo en tu carpeta de datos. Si falta CUDA, usa CPU.": "Transcription uses NVIDIA automatically when CUDA is ready in your data folder. If CUDA is missing, it uses the CPU.",
+  "Transcripción procesada con NVIDIA GPU.": "Transcription processed on the NVIDIA GPU.",
+  "Transcripción procesada con CPU.": "Transcription processed on the CPU.",
   "MeetingSplit · Estudio privado de reuniones": "MeetingSplit · Private Meeting Studio",
   "ESTUDIO": "STUDIO",
   "Inicio": "Home",
@@ -21,7 +24,7 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "ARCHIVOS EN TU EQUIPO": "FILES STAY ON YOUR PC",
   "Privacidad por diseño. Tus grabaciones no se envían a servidores.": "Private by design. Your recordings never leave your device.",
   "PROCESAMIENTO LOCAL": "LOCAL PROCESSING",
-  "EDICIÓN PRIVADA · v0.8.9": "PRIVATE EDITION · v0.8.9",
+  "EDICIÓN PRIVADA · v0.8.10": "PRIVATE EDITION · v0.8.10",
   "TU VOZ. TU INFORMACIÓN. TU CONTROL.": "YOUR VOICE. YOUR DATA. YOUR CONTROL.",
   "Cada palabra cuenta.": "Every word matters.",
   "Cada decisión permanece.": "Every decision stays.",
@@ -109,7 +112,7 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "Minuta automática local con Ollama": "Local automatic meeting minutes with Ollama",
   "Opcional. Necesita Ollama y qwen3:4b instalados.": "Optional. Requires Ollama and qwen3:4b installed.",
   "Exportar un ZIP con resultados": "Export results as ZIP",
-  "Incluye los archivos generados.": "Includes generated files.",
+  "Organiza los archivos por tipo dentro del ZIP.": "Organizes files by type inside the ZIP.",
   "Las suscripciones de ChatGPT/Gemini no equivalen a acceso API automático.": "ChatGPT/Gemini subscriptions do not automatically provide API access.",
   "CONTINUAR AL ESTUDIO": "CONTINUE TO STUDIO",
   "03 / MOTOR DE PROCESAMIENTO": "03 / PROCESSING ENGINE",

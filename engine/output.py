@@ -24,6 +24,24 @@ def format_srt(rows: list[dict]) -> str:
     return '\n'.join(pieces) + ('\n' if pieces else '')
 
 
+def _archive_path(path: Path) -> str:
+    name = path.name
+    extension = path.suffix.casefold()
+    if extension == '.json':
+        folder = 'Datos_JSON'
+    elif name in ('RESUMEN_Y_MINUTA_LOCAL.md', 'MINUTA_NO_GENERADA.txt'):
+        folder = 'Minutas'
+    elif name.startswith('parte_') and extension in ('.mp3', '.m4a', '.wav'):
+        folder = 'Audio'
+    elif name.casefold().startswith('transcripci') and extension in ('.txt', '.srt'):
+        folder = 'Transcripciones'
+    elif name.startswith('INSTRUCCIONES_'):
+        folder = 'Instrucciones'
+    else:
+        folder = 'Otros'
+    return f'{folder}/{name}'
+
+
 def pack_result(folder: Path, target: Path, cancel: Cancellation|None=None) -> dict:
     """ZIP is stored (audio is already compressed), assembled with atomic replacement."""
     tmp = target.with_suffix('.zip.partial')
@@ -32,7 +50,7 @@ def pack_result(folder: Path, target: Path, cancel: Cancellation|None=None) -> d
             for path in sorted(folder.iterdir()):
                 if cancel: cancel.check()
                 if path.is_file() and not path.is_symlink() and not path.name.startswith('.') and path.name != target.name and not path.name.endswith('.partial'):
-                    with path.open('rb') as source, zipped.open(path.name,'w',force_zip64=True) as sink:
+                    with path.open('rb') as source, zipped.open(_archive_path(path),'w',force_zip64=True) as sink:
                         while chunk := source.read(1024*1024):
                             if cancel: cancel.check()
                             sink.write(chunk)

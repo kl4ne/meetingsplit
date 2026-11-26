@@ -1,3 +1,8 @@
+## v0.8.10 - Organized private Windows results
+
+- Groups ZIP results by file type.
+- Shows the transcription device and places NVIDIA setup by the voice model.
+
 ## v0.8.9 - Private Windows portable QA
 
 - Recovers explicit approvals and commitments omitted by local extraction.

@@ -48,7 +48,8 @@ def editorial_request(sources, language):
          'idiomatic English for _en, never mix languages. Never add names, decisions, obligations, dates or amounts. '
          'Distinguish what a speaker taught, discussed or announced from what a group agreed to. '
          'Check that each cited passage supports the entire claim, including relationships between named people. '
-         'Use plain prose without tables. Cite the supporting IDs and return only the schema.'},
+         'Use plain prose without tables. Leave monetary amounts, dates and tasks in the main minutes sections. '
+         'Cite the supporting IDs and return only the schema.'},
         {'role':'user','content':json.dumps(
             {'sources':[{'id':row['source_id'],'quote':row['quote']} for row in sources]},
             ensure_ascii=False)}
@@ -56,7 +57,7 @@ def editorial_request(sources, language):
     return messages, schema
 
 
-def validate_editorial(raw, sources, language):
+def validate_editorial(raw, sources, language, *, rejected=None):
     document = json.loads(raw, object_pairs_hook=_unique_keys)
     if not isinstance(document,dict) or set(document)!={'themes'}:
         raise ValueError('Invalid editorial document')
@@ -69,23 +70,30 @@ def validate_editorial(raw, sources, language):
     result = []
     seen = set()
     for theme in themes:
-        if not isinstance(theme,dict) or set(theme)!=fields|{'source_ids'}:
-            raise ValueError('Invalid editorial theme fields')
-        ids = theme['source_ids']
-        if not isinstance(ids,list) or not 1<=len(ids)<=5 or any(type(key) is not int or key not in by_id for key in ids):
-            raise ValueError('Invalid editorial citations')
-        refs = [by_id[key] for key in sorted(set(ids))]
-        quotes = ' '.join(ref['quote'] for ref in refs)
-        texts = {key:_field(theme[key],80 if key.startswith('title_') else 430) for key in fields}
-        if any(not _language_matches(texts[f'summary_{lang}'],lang) for lang in languages):
-            raise ValueError('Editorial theme is in the wrong language')
-        for value in texts.values():
-            if set(_NUMBER.findall(value))-set(_NUMBER.findall(quotes)) or _amount_keys(value)-_amount_keys(quotes):
-                raise ValueError('Unsupported number in editorial theme')
-        key = tuple(texts[f'title_{lang}'].casefold() for lang in languages)
-        if key in seen:
-            raise ValueError('Duplicate editorial theme')
-        seen.add(key)
-        result.append({'sources':refs,**texts})
+        try:
+            if not isinstance(theme,dict) or set(theme)!=fields|{'source_ids'}:
+                raise ValueError('Invalid editorial theme fields')
+            ids = theme['source_ids']
+            if not isinstance(ids,list) or not 1<=len(ids)<=5 or any(type(key) is not int or key not in by_id for key in ids):
+                raise ValueError('Invalid editorial citations')
+            refs = [by_id[key] for key in sorted(set(ids))]
+            quotes = ' '.join(ref['quote'] for ref in refs)
+            texts = {key:_field(theme[key],80 if key.startswith('title_') else 430) for key in fields}
+            if any(not _language_matches(texts[f'summary_{lang}'],lang) for lang in languages):
+                raise ValueError('Editorial theme is in the wrong language')
+            for value in texts.values():
+                if set(_NUMBER.findall(value))-set(_NUMBER.findall(quotes)) or _amount_keys(value)-_amount_keys(quotes):
+                    raise ValueError('Unsupported number in editorial theme')
+            key = tuple(texts[f'title_{lang}'].casefold() for lang in languages)
+            if key in seen:
+                raise ValueError('Duplicate editorial theme')
+            seen.add(key)
+            result.append({'sources':refs,**texts})
+        except ValueError:
+            if rejected is None:
+                raise
+            ids = theme.get('source_ids') if isinstance(theme, dict) else None
+            refs = [by_id[key] for key in ids if type(key) is int and key in by_id] if isinstance(ids, list) else []
+            rejected.extend(refs or sources)
     return sorted(result,key=lambda theme:theme['sources'][0]['source_id'])
 

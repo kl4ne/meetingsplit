@@ -69,7 +69,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     def with_guide(messages):
         return [dict(messages[0], content=messages[0]['content'] +
                      '\n\nGuía editorial. Mantén el esquema JSON solicitado; aplica la guía a las descripciones.\n' +
-                     guide), *messages[1:]]
+                     guide + '\n\nPara esta etapa, sigue el encargo y el esquema específicos del comienzo.'), *messages[1:]]
 
     blocks=list(source_blocks(transcript))
     items=[];seen=set();empty=[]
@@ -156,7 +156,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         progress('Preparando la síntesis temática / Preparing the thematic overview')
         messages,schema=editorial_request(section,language)
         try:
-            editorial.extend(validate_editorial(request(with_guide(messages),schema),section,language))
+            editorial.extend(validate_editorial(request(with_guide(messages),schema),section,language, rejected=editorial_gaps))
         except JobCancelled:
             raise
         except (OSError,RuntimeError,ValueError):

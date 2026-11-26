@@ -103,4 +103,3 @@ def test_announced_start_and_current_schedule_are_separate_notices():
     assert [item['category'] for item in notices]==['notice','notice']
     assert [[ref['timestamp'] for ref in item['sources']] for item in notices]==[
         ['00:01:10'],['00:01:17','00:01:20']]
-

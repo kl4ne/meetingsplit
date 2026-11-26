@@ -47,10 +47,16 @@ def pack_result(folder: Path, target: Path, cancel: Cancellation|None=None) -> d
     tmp = target.with_suffix('.zip.partial')
     try:
         with ZipFile(tmp, 'w', ZIP_STORED, allowZip64=True) as zipped:
+            directories = set()
             for path in sorted(folder.iterdir()):
                 if cancel: cancel.check()
                 if path.is_file() and not path.is_symlink() and not path.name.startswith('.') and path.name != target.name and not path.name.endswith('.partial'):
-                    with path.open('rb') as source, zipped.open(_archive_path(path),'w',force_zip64=True) as sink:
+                    member = _archive_path(path)
+                    directory = member.split('/', 1)[0] + '/'
+                    if directory not in directories:
+                        zipped.mkdir(directory)
+                        directories.add(directory)
+                    with path.open('rb') as source, zipped.open(member,'w',force_zip64=True) as sink:
                         while chunk := source.read(1024*1024):
                             if cancel: cancel.check()
                             sink.write(chunk)

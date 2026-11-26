@@ -57,7 +57,7 @@ function updateLocalizedDynamicFields(){
   }else{
     el('result-eyebrow').textContent=translate('PROCESAMIENTO COMPLETADO');
     el('result-heading').innerHTML=translate('Reunión lista.')+'<br><em>'+translate('Información organizada.')+'</em>';
-    el('result-description').textContent=translate('Abre la carpeta para acceder a tus audios, transcripción y otros resultados disponibles según la configuración.');
+    el('result-description').textContent=translate('El ZIP organizado reúne tus archivos por tipo. La carpeta de trabajo contiene los archivos que usa la app.');
   }
 }
 function saveUILocale(lang){try{localStorage.setItem('meetingsplit-ui-language',lang);}catch(_){} if(bridge && typeof bridge.setUILanguage==='function')bridge.setUILanguage(lang);}
@@ -190,7 +190,10 @@ function openFolder(){
   if(bridge&&resultPath) bridge.openResult();
   else {navigate('results');el('result-description').textContent=translate('La carpeta de resultados se abrirá desde MeetingSplit en Windows después de procesar una grabación.');}
 }
-el('open-result').addEventListener('click',openFolder);
+el('open-result').addEventListener('click',()=>navigate('results'));
+el('results-open-zip').addEventListener('click',()=>{
+  if(bridge && resultPath) bridge.openOutputFile('RESULTADOS_COMPLETOS.zip');
+});
 el('results-open-folder').addEventListener('click',openFolder);
 
 function finished(){
@@ -241,8 +244,9 @@ function renderResults(index){
   let items=[];
   try { items=JSON.parse(index); }catch(_){ return; }
   if(!Array.isArray(items))return;
+  el('results-open-zip').hidden=!items.some(item=>item?.name==='RESULTADOS_COMPLETOS.zip');
   for(const item of items){
-    if(!item || !allowed.has(item.name) || typeof item.label!=='string')continue;
+    if(!item || item.name==='RESULTADOS_COMPLETOS.zip' || !allowed.has(item.name) || typeof item.label!=='string')continue;
     const button=document.createElement('button');
     button.type='button';button.className='result-file';button.textContent=translate(item.label)+' ↗';
     button.addEventListener('click',()=>{if(bridge)bridge.openOutputFile(item.name);});
@@ -285,10 +289,11 @@ function showResult(folder){
   setStatus('Resultados listos. Puedes abrir la carpeta local.',100);
   el('result-eyebrow').textContent=translate('PROCESAMIENTO COMPLETADO');
   el('result-heading').innerHTML=translate('Reunión lista.')+'<br><em>'+translate('Información organizada.')+'</em>';
-  el('result-description').textContent=translate('Abre la carpeta para acceder a tus audios, transcripción y otros resultados disponibles según la configuración.');
+  el('result-description').textContent=translate('El ZIP organizado reúne tus archivos por tipo. La carpeta de trabajo contiene los archivos que usa la app.');
   el('result-path').textContent=folder;
   el('result-path').hidden=false;
   el('results-open-folder').hidden=false;
+  renderResults('[]');
   renderTranscriptionDevice('');
   if(bridge && typeof bridge.getTranscriptionDevice==='function') bridge.getTranscriptionDevice(renderTranscriptionDevice);
   renderSummaryStatus('');

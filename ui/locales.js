@@ -1,4 +1,4 @@
-// MeetingSplit v0.8.10 — UI translations. Spanish originals are the keys; English is the initial UI locale.
+// MeetingSplit v0.8.11 — UI translations. Spanish originals are the keys; English is the initial UI locale.
 // This UI language preference does NOT change meeting audio language or report language.
 window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   'Opcional. Necesita transcripción, Ollama y qwen3:4b.':'Optional. Requires transcription, Ollama and qwen3:4b.',
@@ -24,7 +24,7 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "ARCHIVOS EN TU EQUIPO": "FILES STAY ON YOUR PC",
   "Privacidad por diseño. Tus grabaciones no se envían a servidores.": "Private by design. Your recordings never leave your device.",
   "PROCESAMIENTO LOCAL": "LOCAL PROCESSING",
-  "EDICIÓN PRIVADA · v0.8.10": "PRIVATE EDITION · v0.8.10",
+  "EDICIÓN PRIVADA · v0.8.11": "PRIVATE EDITION · v0.8.11",
   "TU VOZ. TU INFORMACIÓN. TU CONTROL.": "YOUR VOICE. YOUR DATA. YOUR CONTROL.",
   "Cada palabra cuenta.": "Every word matters.",
   "Cada decisión permanece.": "Every decision stays.",
@@ -132,7 +132,7 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "Importa una grabación para comenzar.": "Import a recording to get started.",
   "INICIAR PROCESAMIENTO": "START PROCESSING",
   "CANCELAR PROCESAMIENTO ✕": "CANCEL PROCESSING ✕",
-  "ABRIR RESULTADOS ↗": "OPEN RESULTS ↗",
+  "VER RESULTADOS ↗": "VIEW RESULTS ↗",
   "El modelo de voz puede requerir Internet únicamente la primera vez para su descarga. Los análisis posteriores son locales.": "The speech model may require Internet for its first download only. Later analyses are local.",
   "04 / ENTREGA Y EXPORTACIÓN": "04 / DELIVERY & EXPORT",
   "Tus": "Your",
@@ -143,7 +143,8 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "Tu información,": "Your information,",
   "organizada con claridad.": "clearly organized.",
   "Cuando termine una reunión, podrás abrir la carpeta elegida y consultar los archivos generados sin salir de MeetingSplit.": "When processing finishes, open your chosen folder and access the generated files without leaving MeetingSplit.",
-  "ABRIR CARPETA DE RESULTADOS ↗": "OPEN RESULTS FOLDER ↗",
+  "ABRIR ZIP ORGANIZADO": "OPEN ORGANIZED ZIP",
+  "ABRIR CARPETA DE TRABAJO": "OPEN WORK FOLDER",
   "DISEÑADO PARA CLARIDAD · CREADO PARA PRIVACIDAD": "DESIGNED FOR CLARITY · BUILT FOR PRIVACY",
   "Perfil conservador: 5 minutos por fragmento. Verifica el límite total de audio de tu plan; también puedes entregar la transcripción de texto.": "Conservative profile: 5 minutes per chunk. Check your plan’s total audio limit; you can also submit the text transcript.",
   "ChatGPT Free puede tener restricciones para audios. MeetingSplit produce texto local para utilizarlo como alternativa.": "ChatGPT Free may restrict audio files. MeetingSplit produces local text as an alternative.",
@@ -161,7 +162,7 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "Resultados listos. Puedes abrir la carpeta local.": "Results are ready. You can open the local folder.",
   "Reunión lista.": "Meeting complete.",
   "Información organizada.": "Information organized.",
-  "Abre la carpeta para acceder a tus audios, transcripción y otros resultados disponibles según la configuración.": "Open the folder to access your audio, transcript, and any other results from your selected settings.",
+  "El ZIP organizado reúne tus archivos por tipo. La carpeta de trabajo contiene los archivos que usa la app.": "The organized ZIP groups your files by type. The work folder contains the files used by the app.",
   "REVISAR PROCESAMIENTO": "CHECK PROCESSING",
   "CANCELADO": "CANCELLED",
   "Grabación cargada. Revisa las opciones e inicia el procesamiento.": "Recording loaded. Review your options and start processing.",

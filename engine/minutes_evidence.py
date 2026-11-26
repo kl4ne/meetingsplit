@@ -74,6 +74,13 @@ _RESERVED_SCHEDULE = re.compile(
     r'(?:mondays|tuesdays|wednesdays|thursdays|fridays|saturdays|sundays))\b',
     re.IGNORECASE,
 )
+_ANNOUNCED_START = re.compile(
+    r'\b(?:empezaremos|comenzaremos|iniciaremos) (?:el mes de |en )'
+    r'(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b'
+    r'|\bwe (?:will|shall) (?:begin|start) in '
+    r'(?:january|february|march|april|may|june|july|august|september|october|november|december)\b',
+    re.IGNORECASE,
+)
 _NOTICE_PURPOSE = re.compile(
     r'^(?:para (?:estar|reunirnos|asistir|realizar|participar|celebrar|llevar a cabo)\b|'
     r'to (?:meet|attend|hold|participate|gather)\b)', re.IGNORECASE,
@@ -191,7 +198,7 @@ def _amount_keys(text):
 
 
 def _is_notice(quote):
-    return bool(_NOTICE.match(quote) or _RESERVED_SCHEDULE.search(quote))
+    return bool(_NOTICE.match(quote) or _RESERVED_SCHEDULE.search(quote) or _ANNOUNCED_START.search(quote))
 
 
 def _evidence_category(requested, evidence, by_id, owner):

@@ -67,6 +67,17 @@ _NOTICE = re.compile(
     r'(?:les (?:recuerdo|recordamos|informo|informamos) que|recuerden que|se anuncia que)\b|aviso\s*:)',
     re.IGNORECASE,
 )
+_RESERVED_SCHEDULE = re.compile(
+    r'\b(?:(?:separamos|reservamos|apartamos) (?:todos )?los '
+    r'(?:lunes|martes|miércoles|jueves|viernes|sábados|domingos)|'
+    r'we (?:reserved|set aside) (?:all |the )?'
+    r'(?:mondays|tuesdays|wednesdays|thursdays|fridays|saturdays|sundays))\b',
+    re.IGNORECASE,
+)
+_NOTICE_PURPOSE = re.compile(
+    r'^(?:para (?:estar|reunirnos|asistir|realizar|participar|celebrar|llevar a cabo)\b|'
+    r'to (?:meet|attend|hold|participate|gather)\b)', re.IGNORECASE,
+)
 _DISAGREEMENT = re.compile(r'\b(?:disagreed?|opposed|objected|en desacuerdo|se opuso|objetó)\b', re.IGNORECASE)
 _PENDING = re.compile(r'\b(?:pending|awaiting|unresolved|pendiente|sin resolver|queda por)\b', re.IGNORECASE)
 _LOCALES = {
@@ -179,6 +190,10 @@ def _amount_keys(text):
     return keys
 
 
+def _is_notice(quote):
+    return bool(_NOTICE.match(quote) or _RESERVED_SCHEDULE.search(quote))
+
+
 def _evidence_category(requested, evidence, by_id, owner):
     categories=set()
     owners=set()
@@ -201,7 +216,7 @@ def _evidence_category(requested, evidence, by_id, owner):
                 continue
         if _PROPOSAL.search(quote):
             categories.add('proposal')
-        if _NOTICE.match(quote):
+        if _is_notice(quote):
             categories.add('notice')
         if _DISAGREEMENT.search(quote):
             categories.add('disagreement')
@@ -376,6 +391,10 @@ def explicit_source_items(rows, language):
             # Quoted or hypothetical speech cannot create confirmed evidence.
             if _UNCERTAIN.search(quote) or _UNSAFE_STATEMENT.search(quote) or _PERSONAL_TENTATIVE.search(quote):
                 continue
+            if (prior and prior['category']=='notice' and _NOTICE_PURPOSE.match(quote)
+                    and 0<=seconds(source['timestamp'])-seconds(prior['sources'][-1]['timestamp'])<=12):
+                items[-1]=create('notice',[*prior['sources'],source])
+                continue
             if _PROPOSAL_REFERENCE.fullmatch(quote):
                 if prior and prior['category']=='proposal':
                     items[-1]=create('decision',[*prior['sources'],source])
@@ -395,7 +414,7 @@ def explicit_source_items(rows, language):
                     previous=create('action',[source],actor['actor'],date['date'] if date else None)
             elif _DIRECT_DECISION.match(quote) and not _PROPOSAL.search(quote):
                 previous=create('decision',[source])
-            elif _NOTICE.match(quote) and not (_AGREEMENT.search(quote) or _PROPOSAL.search(quote)):
+            elif _is_notice(quote) and not (_AGREEMENT.search(quote) or _PROPOSAL.search(quote)):
                 previous=create('notice',[source])
             elif _PROPOSAL.search(quote) and not _AGREEMENT.search(quote):
                 previous=create('proposal',[source])

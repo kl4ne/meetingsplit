@@ -76,7 +76,7 @@ def test_local_extraction_receives_bundled_guide(monkeypatch):
 
 
 @pytest.mark.parametrize('revision, accepted', [
-    ('La sesión trató la preparación del equipo [E1].\n\nSe anunció la orientación. [E2]', True),
+    ('La sesión trató la preparación del equipo [E1].\n\nSe habló de cómo explicar la orientación. [E2]', True),
     ('La sesión trató la preparación del equipo. [E1]', False),
     ('Equipo | Preparación [E1] [E2]', False),
     ('La sesión trató la preparación de 200 equipos. [E1] [E2]', False),
@@ -87,7 +87,7 @@ def test_revised_prose_uses_draft_history_and_preserves_original_evidence(monkey
 
     transcript = '\n'.join((
         '[00:00:01] Se habló de la preparación del equipo.',
-        '[00:08:02] Les recordamos que la orientación es el sábado.',
+        '[00:08:02] Les recordamos que la orientación es el sábado. Se habló de cómo explicar la orientación.',
         '[00:17:03] El comité aprobó USD 2,400 para materiales.',
         '[00:23:04] Ana Ruiz se comprometió a enviar el inventario el viernes.',
         '[00:29:05] Yo debería hablar de otra actividad más adelante.',
@@ -108,7 +108,7 @@ def test_revised_prose_uses_draft_history_and_preserves_original_evidence(monkey
                 {'source_ids':[1], 'title_es':'Preparación del equipo',
                  'summary_es':'Se habló de la preparación del equipo.'},
                 {'source_ids':[2], 'title_es':'Orientación',
-                 'summary_es':'Se recordó que la orientación es el sábado.'},
+                 'summary_es':'Se habló de cómo explicar la orientación.'},
             ]})
         prose_calls.append(messages)
         assert 'Owll' in messages[0]['content']
@@ -128,11 +128,11 @@ def test_revised_prose_uses_draft_history_and_preserves_original_evidence(monkey
     assert any(item['category']=='review' for item in evidence['items'])
     if accepted:
         assert 'La sesión trató la preparación del equipo.' in report
-        assert 'Se anunció la orientación.' in report
+        assert 'Se habló de cómo explicar la orientación.' in report
         assert not evidence['narrative_fallbacks']
     else:
         assert 'Se habló de la preparación del equipo.' in report
-        assert 'Se recordó que la orientación es el sábado.' in report
+        assert 'Se habló de cómo explicar la orientación.' in report
         assert evidence['narrative_fallbacks']==[{'language':'es','theme_ids':[1,2]}]
         assert 'Parte de la revisión editorial no se completó.' in report
 
@@ -167,3 +167,68 @@ def test_edited_prose_cannot_invent_deadline_or_implementation(wording):
     section=next(narrative_sections([theme],'es'))
     with pytest.raises(ValueError,match='deadline or implementation'):
         validate_narrative(wording+' [E1]',section,'es')
+
+
+@pytest.mark.parametrize(('language', 'rows', 'titles', 'merged', 'heading'), [
+    ('es', (
+        'Ya empezaremos el mes de abril con talleres de lectura. Se habló de la distribución de libros.',
+        'Se revisó el material de apoyo.',
+        'Este mes reservamos los sábados.',
+        'Para realizar las prácticas en la biblioteca.',
+    ), ('Distribución de libros', 'Material de apoyo'),
+        'Las prácticas en la biblioteca serán los sábados de abril.', '## Avisos'),
+    ('en', (
+        'We will start in April with reading workshops. The team discussed distributing books.',
+        'The team reviewed the reference materials.',
+        'This month we reserved the Saturdays.',
+        'To hold the practice sessions in the library.',
+    ), ('Book distribution', 'Reference materials'),
+        'Library practice will take place on Saturdays in April.', '## Announcements'),
+])
+def test_local_minutes_keep_calendar_notices_out_of_prose_rewriting(
+    monkeypatch, language, rows, titles, merged, heading
+):
+    from engine import summarize
+
+    start, discussion = rows[0].split('. ', 1)
+    start += '.'
+    evidence = {}
+    editorial_sources = []
+    prose_input = []
+
+    def stub(messages, *args, json_output, **kwargs):
+        if json_output:
+            if 'items' in json_output['properties']:
+                return '{"items": []}'
+            sources = json.loads(messages[1]['content'])['sources']
+            editorial_sources.extend(sources)
+            quotes = {source['id']: source['quote'] for source in sources}
+            themes = [
+                {'source_ids':[key], f'title_{language}':title, f'summary_{language}':quotes[key]}
+                for key,title in zip((1,2),titles)
+            ]
+            if 3 in quotes and 4 in quotes:
+                themes.insert(0, {'source_ids':[1,3,4], f'title_{language}':'Calendario' if language=='es' else 'Calendar',
+                                  f'summary_{language}':merged})
+            return json.dumps({'themes':themes})
+        prose = json.loads(messages[1]['content'])
+        prose_input.extend(prose.values())
+        return '\n\n'.join(f"{entry['summary']} [{key}]" for key,entry in prose.items())
+
+    transcript = '\n'.join(f'[00:00:{i:02d}] {row}' for i,row in enumerate(rows,1))
+    monkeypatch.setattr(summarize,'ollama_chat',stub)
+    report = summarize.summarize_local(
+        transcript, 'both', language, 'qwen3.8:27b', evidence_sink=evidence.update,
+    )
+    summary, notices = report.split(heading, 1)
+    assert editorial_sources == [{'id':1,'quote':discussion}, {'id':2,'quote':rows[1]}]
+    assert len(prose_input) == 4
+    assert all(entry['quotes'] in ([rows[1]], [discussion]) for entry in prose_input)
+    assert not evidence['narrative_fallbacks']
+    assert rows[1] in summary and discussion in summary
+    assert merged not in report
+    assert all(report.count(quote) == 1 and quote in notices for quote in (start, rows[2], rows[3]))
+    assert '00:00:' not in report and '|' not in report
+    assert all(item['category'] == 'notice' for item in evidence['items'])
+    assert [[ref['source_id'] for ref in item['sources']] for item in evidence['items']] == [[1], [3,4]]
+

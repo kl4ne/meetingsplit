@@ -73,3 +73,81 @@ def test_local_extraction_receives_bundled_guide(monkeypatch):
 
     monkeypatch.setattr(summarize, 'ollama_chat', stub)
     summarize.summarize_local('[00:00:01] Bienvenidos.', 'both', 'es', 'qwen3:4b')
+
+
+@pytest.mark.parametrize('revision, accepted', [
+    ('La sesión trató la preparación del equipo [E1].\n\nSe anunció la orientación. [E2]', True),
+    ('La sesión trató la preparación del equipo. [E1]', False),
+    ('Equipo | Preparación [E1] [E2]', False),
+    ('La sesión trató la preparación de 200 equipos. [E1] [E2]', False),
+    ('El comité aprobó la orientación. [E1] [E2]', False),
+])
+def test_revised_prose_uses_draft_history_and_preserves_original_evidence(monkeypatch, revision, accepted):
+    from engine import summarize
+
+    transcript = '\n'.join((
+        '[00:00:01] Se habló de la preparación del equipo.',
+        '[00:08:02] Les recordamos que la orientación es el sábado.',
+        '[00:17:03] El comité aprobó USD 2,400 para materiales.',
+        '[00:23:04] Ana Ruiz se comprometió a enviar el inventario el viernes.',
+        '[00:29:05] Yo debería hablar de otra actividad más adelante.',
+    ))
+    draft = 'Equipo | Preparación [E1] [E2]'
+    prose_calls = []
+
+    def stub(messages, *args, json_output, **kwargs):
+        if json_output:
+            if 'items' in json_output['properties']:
+                return json.dumps({'items':[{
+                    'category':'proposal',
+                    'sources':[{'id':5,'quote':'Yo debería hablar de otra actividad más adelante.'}],
+                    'text_es':'Se propuso conversar sobre otra actividad.',
+                    'owner':None, 'due':None,
+                }]})
+            return json.dumps({'themes':[
+                {'source_ids':[1], 'title_es':'Preparación del equipo',
+                 'summary_es':'Se habló de la preparación del equipo.'},
+                {'source_ids':[2], 'title_es':'Orientación',
+                 'summary_es':'Se recordó que la orientación es el sábado.'},
+            ]})
+        prose_calls.append(messages)
+        assert 'Owll' in messages[0]['content']
+        return draft if len(messages)==2 else revision
+
+    monkeypatch.setattr(summarize,'ollama_chat',stub)
+    evidence = {}
+    report = summarize.summarize_local(transcript,'both','es','qwen3:4b',evidence_sink=evidence.update)
+    assert len(prose_calls)==2
+    assert prose_calls[1][:2]==prose_calls[0]
+    assert prose_calls[1][2]=={'role':'assistant','content':draft}
+    assert not any(line.lstrip().startswith('|') for line in report.splitlines())
+    assert 'USD 2,400' in report and 'Ana Ruiz' in report and 'viernes' in report
+    assert '## Avisos' in report and '[00:08:02]' in report
+    assert '## Propuestas' not in report
+    assert any(item['category']=='review' for item in evidence['items'])
+    if accepted:
+        assert 'La sesión trató la preparación del equipo.' in report
+        assert 'Se anunció la orientación.' in report
+        assert not evidence['narrative_fallbacks']
+    else:
+        assert 'Se habló de la preparación del equipo.' in report
+        assert 'Se recordó que la orientación es el sábado.' in report
+        assert evidence['narrative_fallbacks']==[{'language':'es','theme_ids':[1,2]}]
+        assert 'Parte de la revisión editorial no se completó.' in report
+
+
+def test_standalone_decision_stays_in_record_and_does_not_displace_later_topics():
+    from engine.minutes_brief import editorial_request
+
+    items=[make_item(1,'decision'),make_item(2,'decision')]
+    original=items[0]['sources'][0]['quote']='Se aprobó la compra.'
+    items[1]['sources'][0]['quote']=original
+    block=[
+        {'id':1,'timestamp':'00:00:01','text':original},
+        {'id':2,'timestamp':'00:00:02','text':original+' Luego trataron atención a visitantes.'},
+        *({'id':i,'timestamp':f'00:00:{i:02d}','text':f'Se habló del tema {i}.'} for i in range(3,8)),
+    ]
+    sources=next(editorial_input([block],items))
+    assert [ref['source_id'] for ref in sources]==[2,3,4,5,6,7]
+    _,schema=editorial_request(sources,'es')
+    assert schema['properties']['themes']['maxItems']==6

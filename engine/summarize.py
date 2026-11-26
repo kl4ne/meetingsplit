@@ -57,7 +57,7 @@ def ollama_chat(messages: list[dict], model: str='qwen3:4b', timeout: int=900, *
 def summarize_local(transcript: str, mode: str, language: str, model: str,
                     progress=lambda msg:None, *, endpoint=DEFAULT_ENDPOINT, cancel=None,
                     evidence_sink=None, read_block=None, write_block=None) -> str:
-    """Extract bounded structured candidates, validate literal evidence, then render."""
+    """Extract evidence, draft and review prose, then render the minutes."""
     from .minutes_evidence import (source_blocks, validate_items, render_minutes,
                                    extraction_prompt, extraction_schema, find_coverage_gaps,
                                    explicit_source_items, reconcile_source_items)
@@ -66,20 +66,23 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     guide_path = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[1])) / 'docs' / 'Guia_Owll_y_Minutas_para_Ollama.md'
     guide = guide_path.read_text(encoding='utf-8')
 
-    def with_guide(messages):
+    def with_guide(messages, *, prose=False):
+        instruction = ('Redacta y revisa en prosa, según el formato solicitado.' if prose else
+                       'Mantén el esquema JSON solicitado; aplica la guía a las descripciones.')
         return [dict(messages[0], content=messages[0]['content'] +
-                     '\n\nGuía editorial. Mantén el esquema JSON solicitado; aplica la guía a las descripciones.\n' +
+                     '\n\nGuía editorial. ' + instruction + '\n' +
                      guide + '\n\nPara esta etapa, sigue el encargo y el esquema específicos del comienzo.'), *messages[1:]]
 
     blocks=list(source_blocks(transcript))
     items=[];seen=set();empty=[]
     cpu_only=False
 
-    def request(messages, schema):
+    def request(messages, schema=False):
         nonlocal cpu_only
+        options={} if schema else {'think':False}
         try:
             return ollama_chat(messages,model,endpoint=endpoint,cancel=cancel,progress=progress,
-                               json_output=schema,cpu_only=cpu_only)
+                               json_output=schema,cpu_only=cpu_only,**options)
         except OllamaHTTPError as exc:
             if exc.status!=500 or cpu_only:
                 raise
@@ -87,7 +90,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             cpu_only=True
             progress('Ollama falló. Reintentando la minuta por CPU.')
             return ollama_chat(messages,model,endpoint=endpoint,cancel=cancel,progress=progress,
-                               json_output=schema,cpu_only=True)
+                               json_output=schema,cpu_only=True,**options)
 
     def extract(rows, number):
         if cancel: cancel.check()
@@ -150,7 +153,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     from .minutes_brief import editorial_input, editorial_request, validate_editorial
     editorial=[]
     editorial_gaps=[]
-    sections=editorial_input(blocks) if len(rows)>=4 else ()
+    sections=editorial_input(blocks,items) if len(rows)>=4 else ()
     for section in sections:
         if cancel: cancel.check()
         progress('Preparando la síntesis temática / Preparing the thematic overview')
@@ -161,11 +164,36 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             raise
         except (OSError,RuntimeError,ValueError):
             editorial_gaps.extend(section)
+    from .minutes_narrative import (narrative_sections, narrative_request,
+                                    review_request, validate_narrative)
+    narratives={}
+    narrative_fallbacks=[]
+    if len(editorial)>=2:
+        for lang in ('es','en') if language=='both' else (language,):
+            paragraphs=[]
+            for section in narrative_sections(editorial,lang):
+                if cancel: cancel.check()
+                progress('Redactando la minuta / Drafting the minutes')
+                messages=with_guide(narrative_request(section,lang),prose=True)
+                try:
+                    draft=request(messages)
+                    if cancel: cancel.check()
+                    progress('Revisando la minuta / Reviewing the minutes')
+                    revised=request(review_request(messages,draft))
+                    paragraphs.extend(validate_narrative(revised,section,lang))
+                except JobCancelled:
+                    raise
+                except (OSError,RuntimeError,ValueError):
+                    narrative_fallbacks.append({'language':lang,'theme_ids':list(section)})
+                    paragraphs.extend({'text':theme[f'summary_{lang}'],'title':theme[f'title_{lang}'],
+                                       'sources':theme['sources']} for theme,_ in section.values())
+            narratives[lang]=paragraphs
     report=render_minutes(items,mode,language,empty,coverage_gaps,
-                          editorial=editorial,editorial_gaps=editorial_gaps)
+                          editorial=editorial,editorial_gaps=editorial_gaps,
+                          narratives=narratives,narrative_fallbacks=narrative_fallbacks)
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,
                        'coverage_gaps':coverage_gaps,'editorial_themes':editorial,
-                       'editorial_gaps':editorial_gaps,'items':items})
+                       'editorial_gaps':editorial_gaps,'narrative_fallbacks':narrative_fallbacks,'items':items})
     return report

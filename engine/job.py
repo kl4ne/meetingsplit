@@ -245,7 +245,8 @@ def _generate_minutes(folder, base, manifest, settings, transcript, progress, ta
         diagnostic.unlink(missing_ok=True)
         gaps=len(evidence.get('coverage_gaps',[]))
         items=evidence.get('items',[])
-        needs_review=bool(gaps or not items or any(item.get('category')=='review' for item in items))
+        needs_review=bool(gaps or not items or evidence.get('editorial_gaps') or evidence.get('narrative_fallbacks')
+                          or any(item.get('category')=='review' for item in items))
         manifest.update(summary_status='needs_review' if needs_review else 'complete',
                         summary_review_required=True,summary_evidence='MINUTA_EVIDENCIAS.json',
                         summary_evidence_items=len(evidence.get('items',[])),

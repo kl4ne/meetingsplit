@@ -118,13 +118,13 @@ def stream_json(endpoint, route, payload, cancel, progress, deadline_seconds=900
             yield data
 
 
-def chat(messages, endpoint=DEFAULT_ENDPOINT, model=MODEL, cancel=None, progress=lambda _:None, timeout=900, json_output=False, *, cpu_only=False):
+def chat(messages, endpoint=DEFAULT_ENDPOINT, model=MODEL, cancel=None, progress=lambda _:None, timeout=900, json_output=False, *, cpu_only=False, think=None):
     if model!=MODEL: raise ValueError('Only the local qwen3:4b model is supported')
     control=cancel or Cancellation()
     chunks=[]; total=0; done=False; last_update=0; thinking_chars=0
     # Structured extraction needs the completion budget for evidence, not reasoning.
     payload={'model':MODEL,'messages':[dict(m) for m in messages],'stream':True,
-             'think':not json_output,'keep_alive':0,'truncate':False,
+             'think':not json_output if think is None else think,'keep_alive':0,'truncate':False,
              'options':{'temperature':0.6,'num_ctx':16384,'num_predict':8192,'repeat_penalty':1.1}}
     if cpu_only:
         payload['options']['num_gpu']=0

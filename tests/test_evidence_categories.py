@@ -65,3 +65,27 @@ def test_unclear_category_uses_the_original_quote_under_review(source,quote,cate
     assert '## Classification pending review' in report and '## Clasificación pendiente de revisión' in report
     assert '## Possible confirmed agreements' not in report
     assert '## Proposals' not in report
+
+
+def test_reserved_schedule_and_its_purpose_stay_together_as_a_notice():
+    from engine.minutes_evidence import explicit_source_items
+
+    transcript=(
+        '[00:03:10] En abril empiezan los talleres de lectura.\n'
+        '[00:03:16] Como saben, este mes reservamos los sábados.\n'
+        '[00:03:20] Para realizar las prácticas en la biblioteca.'
+    )
+    rows=[row for block in source_blocks(transcript) for row in block]
+    items=explicit_source_items(rows,'es')
+    assert len(items)==1 and items[0]['category']=='notice'
+    assert [ref['timestamp'] for ref in items[0]['sources']]==['00:03:16','00:03:20']
+    report=render_minutes(items,'minutes','es',show_timestamps=False)
+    assert '## Avisos' in report and 'prácticas en la biblioteca' in report
+    assert '## Posibles acuerdos confirmados' not in report and '## Posibles tareas' not in report
+    assert '00:03' not in report
+
+
+def test_conditional_calendar_idea_is_not_an_announcement():
+    item=classify('Si reservamos los sábados, podríamos usar el salón.','notice')
+    assert item['category']=='review'
+

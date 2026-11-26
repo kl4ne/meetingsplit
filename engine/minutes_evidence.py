@@ -568,8 +568,10 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 quotations={}
                 for ref in item['sources']:
                     quotations.setdefault(ref['quote'],[]).append(ref)
-                for quote,refs in quotations.items():
-                    lines.append('  - '+loc['evidence']+': '+times(refs)+' "'+_markdown(quote)+'"')
+                # A verbatim notice is already readable evidence in the local report.
+                if show_timestamps or category != 'notice' or item[field] != ' '.join(quotations):
+                    for quote,refs in quotations.items():
+                        lines.append('  - '+loc['evidence']+': '+times(refs)+' "'+_markdown(quote)+'"')
                 lines.append('')
         incomplete_prose=any(entry['language']==lang for entry in narrative_fallbacks)
         if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose:

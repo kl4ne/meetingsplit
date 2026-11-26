@@ -15,7 +15,7 @@
 </div>
 
 > [!IMPORTANT]
-> **Private Windows portable · v0.8.16 · Public release on hold.** The preceding private candidates displayed v0.8.6. A public release and installer delivery remain gated on CUDA, optional Ollama, installer QA, regressions and licensing. Source CUDA inference now works in short synthetic EN/ES tests on the ASUS RTX 4070 Laptop; frozen installer acceptance remains separate. See [current status](MASTER_STATUS.md).
+> **Windows development candidate · v0.8.16.** The public release and installer remain gated. See [current status](MASTER_STATUS.md).
 
 ---
 
@@ -25,7 +25,7 @@ The app accepts folders on **verified internal C: or D:** drives, and deliberate
 
 NVIDIA GPU transcription requires **CUDA 12 cuBLAS and cuDNN 9**, beyond the driver. Optional setup downloads pinned official NVIDIA archives into a validated internal folder, registers them only for this process, and tests lazy inference in an isolated child. CPU fallback remains available. No driver, System32 or global PATH changes occur. The base installer does not contain these archives.
 
-**Optional local minutes:** the installer and Settings offer an unchecked component wizard for Ollama and `qwen3:4b`. It detects a ready existing local model, otherwise downloads a checksum verified standalone runtime and stores models in the chosen internal folder. Download/generation progress, cancellation, loopback validation and a synthetic minutes test are included. Original vendor/model licenses are retained. See [optional components and storage details](docs/OPTIONAL_COMPONENTS.md). This implementation remains under development QA; it is not a new published version.
+**Optional local minutes.** Meeting Split uses `qwen3.8:27b` through the local Ollama service. The readable minutes omit timecodes and tables. Source timecodes remain in the transcript and evidence JSON. The meeting export opens with one `RESULTADOS_COMPLETOS` folder containing categorized files.
 
 **Verified baseline:** the user confirmed internal D: and six CPU transcripts in about 11 minutes. Current read-only ASUS checks accept internal C:/D: and reject USB J:. Without working CUDA, CPU uses `small` when Medium or Large was selected; accuracy may be lower. Enlarged typography, five EN/ES pages and elapsed-time feedback remain in place.
 
@@ -189,7 +189,13 @@ MeetingSplit es una aplicación de escritorio para **Windows 11** que divide gra
 
 ### ¿Ya puedo instalarlo?
 
-**El portable privado es v0.8.16.** Los candidatos privados anteriores mostraban v0.8.6. La publicación y entrega del instalador siguen bloqueadas hasta evaluar CUDA, Ollama opcional, instalador, regresiones, seguridad y licencias. CUDA ya ejecutó voz sintética EN/ES en el ASUS real; eso no sustituye la aceptación del instalador completo. Consulta [`MASTER_STATUS.md`](MASTER_STATUS.md) para el estado comprobado.
+**La versión de desarrollo en Windows es 0.8.16.** La minuta local usa `qwen3.8:27b` y se presenta sin tablas ni marcas de tiempo. La transcripción y el JSON conservan las referencias. El ZIP de la reunión agrupa los resultados en una sola carpeta `RESULTADOS_COMPLETOS`.
+
+### Compilación y estado de la minuta
+
+El flujo [Windows build](https://github.com/kl4ne/meetingsplit/actions/workflows/windows-build.yml) ejecuta pruebas automatizadas. La opción manual de portable para QA compila el ZIP completo, verifica el ejecutable extraído y publica el artefacto con su SHA-256.
+
+En la prueba con el 27B, la sección de avisos conservó dos anuncios distintos. El resumen ejecutivo volvió a agruparlos y resultó demasiado extenso. La calidad de la minuta completa sigue pendiente de validación para una nueva entrega portátil.
 
 ### Privacidad
 

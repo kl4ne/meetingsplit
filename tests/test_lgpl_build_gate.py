@@ -12,7 +12,12 @@ def test_packaging_requires_pinned_lgpl_media_and_remains_manual():
     assert 'qa/consolidated-20261021' not in workflow
     assert marker in workflow
     prep = workflow.split(marker, 1)[1].split('      - name:', 1)[0]
-    assert "github.event_name == 'workflow_dispatch' && inputs.package_for_qa" in prep
+    assert "github.event_name == 'workflow_dispatch' && (inputs.package_for_qa || inputs.portable_for_qa)" in prep
+    portable_marker = 'Compile Windows portable for QA'
+    portable = workflow.split(portable_marker, 1)[1].split('      - name:', 1)[0]
+    assert "github.event_name == 'workflow_dispatch' && inputs.portable_for_qa" in portable
+    assert '--portable-only' in portable
+    assert workflow.index(marker) < workflow.index(portable_marker)
     assert './scripts/prepare_lgpl_media.ps1' in prep
     assert workflow.index(marker) < workflow.index('Compile native Windows EXE')
     assert 'build/lgpl-wheel/lgpl-media-receipt.json' in workflow

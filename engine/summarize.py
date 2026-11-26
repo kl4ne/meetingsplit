@@ -149,11 +149,9 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     from .control import JobCancelled
     from .minutes_brief import editorial_input, editorial_request, validate_editorial
     editorial=[]
-    sources=editorial_input(items)
     editorial_gaps=[]
-    batch_size=16
-    for offset in range(0,len(sources),batch_size):
-        section=sources[offset:offset+batch_size]
+    sections=editorial_input(blocks) if len(rows)>=4 else ()
+    for section in sections:
         if cancel: cancel.check()
         progress('Preparando la síntesis temática / Preparing the thematic overview')
         messages,schema=editorial_request(section,language)

@@ -2,7 +2,7 @@
 import json
 import re
 
-from .minutes_evidence import _AMOUNT, _NUMBER, _amount_keys, _field, _unique_keys
+from .minutes_evidence import _NUMBER, _amount_keys, _field, _unique_keys
 
 
 _COMMON_WORDS = {
@@ -18,20 +18,17 @@ def _language_matches(value, language):
     return other < 3 or own >= other
 
 
-def editorial_input(items):
-    by_id = {}
-    for item in items:
-        if item['category'] != 'topic' or any(_AMOUNT.search(ref['quote']) for ref in item['sources']):
-            continue
-        for source in item['sources']:
-            current = by_id.get(source['source_id'])
-            if current is None or len(source['quote']) > len(current['quote']):
-                by_id[source['source_id']] = source
-    distinct = {}
-    for key in sorted(by_id):
-        source = by_id[key]
-        distinct.setdefault(source['quote'].casefold().strip(), source)
-    return list(distinct.values()) if len(by_id) >= 7 else []
+def editorial_input(blocks):
+    seen = set()
+    for block in blocks:
+        sources = []
+        for row in block:
+            key = ' '.join(row['text'].casefold().split())
+            if key not in seen:
+                seen.add(key)
+                sources.append({'source_id':row['id'], 'timestamp':row['timestamp'], 'quote':row['text']})
+        if sources:
+            yield sources
 
 
 def editorial_request(sources, language):
@@ -53,7 +50,7 @@ def editorial_request(sources, language):
          'Check that each cited passage supports the entire claim, including relationships between named people. '
          'Use plain prose without tables. Cite the supporting IDs and return only the schema.'},
         {'role':'user','content':json.dumps(
-            {'sources':[{'id':row['source_id'],'quote':row['quote'][:280]} for row in sources]},
+            {'sources':[{'id':row['source_id'],'quote':row['quote']} for row in sources]},
             ensure_ascii=False)}
     ]
     return messages, schema
@@ -78,7 +75,7 @@ def validate_editorial(raw, sources, language):
         if not isinstance(ids,list) or not 1<=len(ids)<=5 or any(type(key) is not int or key not in by_id for key in ids):
             raise ValueError('Invalid editorial citations')
         refs = [by_id[key] for key in sorted(set(ids))]
-        quotes = ' '.join(ref['quote'][:280] for ref in refs)
+        quotes = ' '.join(ref['quote'] for ref in refs)
         texts = {key:_field(theme[key],80 if key.startswith('title_') else 430) for key in fields}
         if any(not _language_matches(texts[f'summary_{lang}'],lang) for lang in languages):
             raise ValueError('Editorial theme is in the wrong language')

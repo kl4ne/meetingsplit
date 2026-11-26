@@ -17,7 +17,7 @@ def test_editorial_groups_repeated_topics_and_keeps_verified_actions():
     action.update(owner='Ana Ruiz', due='viernes')
     action['sources'][0]['quote']='Ana Ruiz se comprometió a enviar el inventario el viernes.'
     items.extend((action, make_item(21, 'review')))
-    sources = editorial_input(items)
+    sources = next(editorial_input([[{'id':1,'timestamp':'00:00:01','text':items[0]['sources'][0]['quote']}]]))
     theme = {'source_ids':[1], 'title_es':'Formación de voluntarios',
              'summary_es':'El equipo revisó la preparación de los nuevos voluntarios.'}
     overview = validate_editorial(json.dumps({'themes':[theme]}), sources, 'es')
@@ -35,7 +35,7 @@ def test_editorial_groups_repeated_topics_and_keeps_verified_actions():
     ({'summary_es':'The team reviewed the program and discussed support for the new volunteers.'}, True),
 ])
 def test_editorial_rejects_unsupported_citations_amounts_and_wrong_language(changes, english):
-    sources=editorial_input([make_item(i) for i in range(1,9)])
+    sources=next(editorial_input([[{'id':1,'timestamp':'00:00:01','text':make_item(1)['sources'][0]['quote']}]]))
     theme={'source_ids':[1], 'title_es':'Formación de voluntarios',
            'summary_es':'El equipo revisó la preparación de los nuevos voluntarios.'}
     theme.update(changes)
@@ -57,11 +57,9 @@ def test_identical_repeated_proposals_use_one_entry_with_all_timestamps():
 
 
 def test_editorial_input_retains_distinct_middle_and_late_evidence():
-    items = [make_item(i) for i in range(1, 61)]
-    for item in items:
-        ref = item['sources'][0]
-        ref['quote'] = f"El equipo trató el tema {ref['source_id']}."
-    assert [ref['source_id'] for ref in editorial_input(items)] == list(range(1, 61))
+    blocks = [[{'id':i, 'timestamp':'00:00:01', 'text':f'El equipo trató el tema {i}.'}
+               for i in range(first, first+20)] for first in (1,21,41)]
+    assert [ref['source_id'] for section in editorial_input(blocks) for ref in section] == list(range(1,61))
 
 
 def test_local_extraction_receives_bundled_guide(monkeypatch):

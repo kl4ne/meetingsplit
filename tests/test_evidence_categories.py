@@ -89,3 +89,18 @@ def test_conditional_calendar_idea_is_not_an_announcement():
     item=classify('Si reservamos los sábados, podríamos usar el salón.','notice')
     assert item['category']=='review'
 
+
+def test_announced_start_and_current_schedule_are_separate_notices():
+    from engine.minutes_evidence import explicit_source_items
+
+    transcript=(
+        '[00:01:10] En el anuncio, ya empezaremos el mes de abril con talleres de lectura.\n'
+        '[00:01:17] Para este mes reservamos los sábados.\n'
+        '[00:01:20] Para realizar las prácticas en la biblioteca.'
+    )
+    rows=[row for block in source_blocks(transcript) for row in block]
+    notices=explicit_source_items(rows,'es')
+    assert [item['category'] for item in notices]==['notice','notice']
+    assert [[ref['timestamp'] for ref in item['sources']] for item in notices]==[
+        ['00:01:10'],['00:01:17','00:01:20']]
+

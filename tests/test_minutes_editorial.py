@@ -18,11 +18,11 @@ def test_editorial_groups_repeated_topics_and_keeps_verified_actions():
     action['sources'][0]['quote']='Ana Ruiz se comprometió a enviar el inventario el viernes.'
     items.extend((action, make_item(21, 'review')))
     sources = editorial_input(items)
-    theme = {'source_ids':[2,8], 'title_es':'Formación de voluntarios',
+    theme = {'source_ids':[1], 'title_es':'Formación de voluntarios',
              'summary_es':'El equipo revisó la preparación de los nuevos voluntarios.'}
     overview = validate_editorial(json.dumps({'themes':[theme]}), sources, 'es')
     report = render_minutes(items, 'minutes', 'es', editorial=overview)
-    assert 'Formación de voluntarios' in report and '[00:00:08]' in report
+    assert 'Formación de voluntarios' in report and '[00:00:01]' in report
     assert 'Ana Ruiz' in report and 'viernes' in report
     assert 'Un elemento' in report and 'JSON' in report
     assert 'Preparación de equipos' not in report
@@ -54,3 +54,24 @@ def test_identical_repeated_proposals_use_one_entry_with_all_timestamps():
     report=render_minutes([make_item(i,'proposal','Revisar los horarios') for i in (1,2,3)],'minutes','es')
     assert report.count('Revisar los horarios') == 1
     assert '[00:00:01], [00:00:02], [00:00:03]' in report
+
+
+def test_editorial_input_retains_distinct_middle_and_late_evidence():
+    items = [make_item(i) for i in range(1, 61)]
+    for item in items:
+        ref = item['sources'][0]
+        ref['quote'] = f"El equipo trató el tema {ref['source_id']}."
+    assert [ref['source_id'] for ref in editorial_input(items)] == list(range(1, 61))
+
+
+def test_local_extraction_receives_bundled_guide(monkeypatch):
+    from engine import summarize
+
+    def stub(messages, *args, **kwargs):
+        assert 'Owll' in messages[0]['content']
+        assert 'No uses tablas en ninguna sección' in messages[0]['content']
+        assert json.loads(messages[1]['content'])['source_rows']
+        return '{"items": []}'
+
+    monkeypatch.setattr(summarize, 'ollama_chat', stub)
+    summarize.summarize_local('[00:00:01] Bienvenidos.', 'both', 'es', 'qwen3:4b')

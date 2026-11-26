@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sys
+from pathlib import Path
 from .ollama import chat, DEFAULT_ENDPOINT, OllamaHTTPError, OutputLimitError
 
 _TIMESTAMP=re.compile(r'\[(\d{2}:\d{2}:\d{2})\]')
@@ -41,6 +43,7 @@ No inventes nombres de oradores: usa «Participante no identificado».
 Marca [REVISAR AUDIO] ante palabras dudosas, cortes o fechas ambiguas.
 Encabezados: fecha (si se conoce), título, participantes (si constan),
 resumen, temas, acuerdos confirmados, tareas, pendientes y seguimiento.
+Redacta con títulos, párrafos y listas breves. No uses tablas.
 No agregues hechos que no estén en el texto.
 Devuelve SOLO el documento final en Markdown, empezando por un título #.
 No muestres razonamiento, instrucciones ni comentarios sobre cómo redactarlo.'''
@@ -60,6 +63,14 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                                    explicit_source_items, reconcile_source_items)
     if mode not in ('summary','minutes','both') or language not in ('es','en','both'):
         raise ValueError('Invalid report mode or language')
+    guide_path = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[1])) / 'docs' / 'Guia_Owll_y_Minutas_para_Ollama.md'
+    guide = guide_path.read_text(encoding='utf-8')
+
+    def with_guide(messages):
+        return [dict(messages[0], content=messages[0]['content'] +
+                     '\n\nGuía editorial. Mantén el esquema JSON solicitado; aplica la guía a las descripciones.\n' +
+                     guide), *messages[1:]]
+
     blocks=list(source_blocks(transcript))
     items=[];seen=set();empty=[]
     cpu_only=False
@@ -80,7 +91,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
 
     def extract(rows, number):
         if cancel: cancel.check()
-        messages=extraction_prompt(rows,language)
+        messages=with_guide(extraction_prompt(rows,language))
         key=hashlib.sha256(json.dumps([1,model,language,messages],ensure_ascii=False).encode()).hexdigest()
         cached=read_block(key) if read_block else None
         if cached is not None:
@@ -139,20 +150,24 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     from .minutes_brief import editorial_input, editorial_request, validate_editorial
     editorial=[]
     sources=editorial_input(items)
-    if sources:
+    editorial_gaps=[]
+    batch_size=16
+    for offset in range(0,len(sources),batch_size):
+        section=sources[offset:offset+batch_size]
         if cancel: cancel.check()
         progress('Preparando la síntesis temática / Preparing the thematic overview')
-        messages,schema=editorial_request(sources,language)
+        messages,schema=editorial_request(section,language)
         try:
-            editorial=validate_editorial(request(messages,schema),sources,language)
+            editorial.extend(validate_editorial(request(with_guide(messages),schema),section,language))
         except JobCancelled:
             raise
         except (OSError,RuntimeError,ValueError):
-            # The cited extraction remains available even if the optional synthesis fails.
-            pass
-    report=render_minutes(items,mode,language,empty,coverage_gaps,editorial=editorial)
+            editorial_gaps.extend(section)
+    report=render_minutes(items,mode,language,empty,coverage_gaps,
+                          editorial=editorial,editorial_gaps=editorial_gaps)
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,
-                       'coverage_gaps':coverage_gaps,'editorial_themes':editorial,'items':items})
+                       'coverage_gaps':coverage_gaps,'editorial_themes':editorial,
+                       'editorial_gaps':editorial_gaps,'items':items})
     return report

@@ -1,6 +1,6 @@
 ; Inno Setup 6.5+; development QA only while release_gate.json remains blocked.
 #define MyAppName "MeetingSplit"
-#define MyAppVersion "0.8.13"
+#define MyAppVersion "0.8.14"
 [Setup]
 AppId={{DB612738-836F-4524-B199-FACE68AF3D52}
 AppName={#MyAppName}

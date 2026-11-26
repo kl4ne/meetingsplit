@@ -1,4 +1,4 @@
-// MeetingSplit v0.8.13 — UI translations. Spanish originals are the keys; English is the initial UI locale.
+// MeetingSplit v0.8.14 — UI translations. Spanish originals are the keys; English is the initial UI locale.
 // This UI language preference does NOT change meeting audio language or report language.
 window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   'Opcional. Necesita transcripción, Ollama y qwen3:4b.':'Optional. Requires transcription, Ollama and qwen3:4b.',
@@ -32,7 +32,7 @@ window.MeetingSplitLocales = Object.freeze({englishBySpanish: Object.freeze({
   "ARCHIVOS EN TU EQUIPO": "FILES STAY ON YOUR PC",
   "Privacidad por diseño. Tus grabaciones no se envían a servidores.": "Private by design. Your recordings never leave your device.",
   "PROCESAMIENTO LOCAL": "LOCAL PROCESSING",
-  "EDICIÓN PRIVADA · v0.8.13": "PRIVATE EDITION · v0.8.13",
+  "EDICIÓN PRIVADA · v0.8.14": "PRIVATE EDITION · v0.8.14",
   "TU VOZ. TU INFORMACIÓN. TU CONTROL.": "YOUR VOICE. YOUR DATA. YOUR CONTROL.",
   "Cada palabra cuenta.": "Every word matters.",
   "Cada decisión permanece.": "Every decision stays.",

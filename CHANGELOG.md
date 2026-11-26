@@ -1,3 +1,9 @@
+## v0.8.14 - Local Ollama guidance and organized meeting results
+
+- Applies the bundled Owll-inspired minutes guide automatically, with text-only formatting.
+- Synthesizes distinct evidence in sections and exposes passages needing review in the report.
+- Opens the meeting results ZIP with one RESULTADOS_COMPLETOS folder containing the existing categories.
+
 ## v0.8.13 - Editorial meeting minutes
 
 - Builds a concise thematic overview from grounded evidence instead of printing each transcript fragment.

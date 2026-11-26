@@ -403,7 +403,7 @@ def _markdown(value):
     return re.sub(r'([\\\x60*_{}\[\]()<>#+!|&~-])',r'\\\1',value)
 
 
-def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=()) -> str:
+def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=()) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -435,7 +435,7 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
             highlights=list(distinct.values())
             if highlights:
                 lines += ['## '+loc['summary'],'']
-                for item in highlights[:5]:
+                for item in highlights:
                     lines.append(f"- {_markdown(item[field])} {times(item['sources'])}")
                 lines.append('')
 
@@ -468,7 +468,7 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 for quote,refs in quotations.items():
                     lines.append('  - '+loc['evidence']+': '+times(refs)+' "'+_markdown(quote)+'"')
                 lines.append('')
-        if review_count or coverage_gaps or empty_blocks:
+        if review_count or coverage_gaps or empty_blocks or editorial_gaps:
             lines += ['## '+loc['review'],'']
         if review_count:
             if lang=='en':
@@ -476,6 +476,19 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
             else:
                 note=('Un elemento quedó marcado' if review_count==1 else f'{review_count} elementos quedaron marcados')+' para revisión en el JSON de evidencias.'
             lines += [note,'']
+            reviewed_quotes={}
+            for item in items:
+                if item['category']=='review':
+                    for ref in item['sources']:
+                        reviewed_quotes.setdefault(ref['quote'],[]).append(ref)
+            for quote,refs in reviewed_quotes.items():
+                lines.append('- '+times(refs)+' "'+_markdown(quote)+'"')
+            lines.append('')
+        if editorial_gaps:
+            lines += [('Pasajes sin síntesis' if lang=='es' else 'Passages without a synthesis'),'']
+            for ref in editorial_gaps:
+                lines.append('- '+times([ref])+' "'+_markdown(ref['quote'])+'"')
+            lines.append('')
         if empty_blocks:
             lines+=['**'+loc['coverage']+':** '+', '.join(map(str,empty_blocks)),'']
         if coverage_gaps:

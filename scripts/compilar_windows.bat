@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0\.."
-set "RELEASE=0.8.13"
+set "RELEASE=0.8.14"
 set "PORTABLE_BASENAME=MeetingSplit-v%RELEASE%-Windows-portable"
 if /I "%~1"=="--portable-only" set "PORTABLE_BASENAME=%PORTABLE_BASENAME%-candidate"
 rem Only this build process: avoid harvesting unrelated Poppler/ICU DLLs from host PATH.

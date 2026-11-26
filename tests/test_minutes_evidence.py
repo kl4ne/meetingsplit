@@ -46,12 +46,28 @@ def test_retry_then_emit_verified_sidecar(monkeypatch):
     assert sidecar['verification']=='literal_source_match_only'
     assert {item['owner'] for item in sidecar['items']}=={'Ana','Luis'} and 'Invented' not in result
 
-def test_invalid_evidence_twice_does_not_emit_report(monkeypatch):
-    monkeypatch.setattr(summarize,'ollama_chat',lambda *a,**k:payload(record(due='Wednesday')))
+def test_invalid_record_preserves_minutes_and_places_original_passage_under_review(monkeypatch):
+    valid=record(owner='Luis',due='Monday',sources=[{'id':2,'quote':'Luis agreed to review it on Monday.'}])
+    tentative='They talked about training.'
+    invalid=record(owner=None,due='Wednesday',sources=[{'id':3,'quote':tentative}])
+    monkeypatch.setattr(summarize,'ollama_chat',lambda *a,**k:payload(invalid,valid))
+    sidecar={}
+    report=summarize.summarize_local(SOURCE+'\n[00:00:09] '+tentative,'minutes','both','qwen3.8:27b',
+                                     evidence_sink=sidecar.update)
+    assert 'Wednesday' not in report
+    assert 'Luis' in report and 'Monday' in report
+    reviews=[item for item in sidecar['items'] if item['category']=='review']
+    assert any(item['sources'][0]['quote']==tentative for item in reviews)
+    assert '## Classification pending review' in report
+
+
+def test_malformed_evidence_twice_still_does_not_emit_report(monkeypatch):
+    monkeypatch.setattr(summarize,'ollama_chat',lambda *a,**k:'not JSON')
     sidecar={}
     with pytest.raises(RuntimeError,match='Invalid source evidence'):
-        summarize.summarize_local(SOURCE,'minutes','both','qwen3:4b',evidence_sink=sidecar.update)
+        summarize.summarize_local(SOURCE,'minutes','both','qwen3.8:27b',evidence_sink=sidecar.update)
     assert sidecar=={}
+
 
 def test_chunking_preserves_source_ids_and_timestamps():
     text='[00:00:01] '+'x'*9000+'\n[00:00:02] next'

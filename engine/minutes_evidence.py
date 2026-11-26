@@ -290,6 +290,36 @@ def validate_items(raw: str, rows: list[dict], language: str, *, source_only_on_
     return result
 
 
+def recover_evidence_items(raw, rows, language):
+    """Retain valid records and mark suspect ones using only the original source."""
+    try:
+        document=json.loads(raw,object_pairs_hook=_unique_keys)
+    except (TypeError,ValueError):
+        return None
+    if (not isinstance(document,dict) or set(document)!={'items'}
+            or not isinstance(document['items'],list) or len(document['items'])>100):
+        return None
+    known={row['id']:row for row in rows}
+    languages=('es','en') if language=='both' else (language,)
+    verified=[]
+    review_ids=set()
+    for item in document['items']:
+        try:
+            verified.extend(validate_items(json.dumps({'items':[item]}),rows,language,
+                                          source_only_on_mismatch=True))
+        except ValueError:
+            refs=item.get('sources') if isinstance(item,dict) else None
+            ids={ref['id'] for ref in refs if isinstance(ref,dict)
+                 and type(ref.get('id')) is int and ref['id'] in known} if isinstance(refs,list) else set()
+            review_ids.update(ids or known.keys())
+    for key in sorted(review_ids):
+        row=known[key]
+        verified.append({'category':'review','owner':None,'due':None,
+                         'sources':[{'source_id':key,'timestamp':row['timestamp'],'quote':row['text']}],
+                         **{'text_'+lang:_LOCALES[lang]['source_only'] for lang in languages}})
+    return verified
+
+
 # Recognize only direct statements. Indirect speech and ambiguous references still
 # need model extraction and review; a proposal is never itself proof of approval.
 _DIRECT_DECISION = re.compile(

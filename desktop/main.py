@@ -4,8 +4,12 @@ import json
 import os
 from pathlib import Path
 import sys
+from desktop.web_rendering import configure_web_rendering
+
+configure_web_rendering()
+
 from PySide6.QtCore import QObject, QThread, Qt, QUrl, QSettings, Signal, Slot
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtGui import QColor, QDesktopServices
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import QWebEngineUrlRequestInterceptor, QWebEngineProfile
@@ -307,6 +311,7 @@ class MainWindow(QWebEngineView):
         self.setWindowTitle(f'MeetingSplit | Private Audio Studio | v{VERSION}')
         self.resize(1366,880)
         self.setMinimumSize(920,670)
+        self.page().setBackgroundColor(QColor("#f3f1ec"))
         self._interceptor=BlockNetwork(self)
         self.page().profile().setUrlRequestInterceptor(self._interceptor)
         self.bridge=DesktopBridge(self)

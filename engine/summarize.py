@@ -60,7 +60,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     """Extract evidence, draft and review prose, then render the minutes."""
     from .minutes_evidence import (source_blocks, validate_items, render_minutes,
                                    extraction_prompt, extraction_schema, find_coverage_gaps,
-                                   explicit_source_items, reconcile_source_items)
+                                   explicit_source_items, reconcile_source_items, recover_evidence_items)
     if mode not in ('summary','minutes','both') or language not in ('es','en','both'):
         raise ValueError('Invalid report mode or language')
     guide_path = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[1])) / 'docs' / 'Guia_Owll_y_Minutas_para_Ollama.md'
@@ -117,6 +117,10 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                 extracted=validate_items(raw,rows,language,source_only_on_mismatch=bool(attempt))
             except ValueError as exc:
                 if attempt:
+                    recovered=recover_evidence_items(raw,rows,language)
+                    if recovered is not None:
+                        progress('Conservando evidencias válidas / Keeping verified evidence')
+                        return recovered
                     if len(rows)==1:
                         raise RuntimeError(f'Invalid source evidence in section {number}; review transcript') from exc
                     break

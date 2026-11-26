@@ -47,10 +47,11 @@ def test_submillisecond_wav_duration_keeps_coverage_and_original(tmp_path):
 @pytest.mark.skipif(not shutil.which('ffmpeg'), reason='FFmpeg required')
 @pytest.mark.parametrize('offset', [0, 1])
 def test_mp4_uses_first_audio_stream_instead_of_video_duration(tmp_path, offset):
+    # At 48 kHz an AAC frame is about 21 ms. Keep the same assertion across FFmpeg muxer versions.
     source = tmp_path / 'sample.mp4'
     subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i',
                     'color=size=32x32:rate=5:duration=3', '-itsoffset', str(offset), '-f', 'lavfi', '-i',
-                    'sine=frequency=400:sample_rate=16000:duration=1.5',
+                    'sine=frequency=400:sample_rate=48000:duration=1.5',
                     '-c:v', 'mpeg4', '-c:a', 'aac', str(source)], check=True)
     original = source.read_bytes()
     result = run_split(source, tmp_path)
@@ -154,9 +155,9 @@ def test_minutes_retries_only_failed_block_using_verified_transcript(tmp_path, m
     evidence = json.loads((folder / 'MINUTA_EVIDENCIAS.json').read_text(encoding='utf-8'))
     assert {item['sources'][0]['quote'] for item in evidence['items']} == {row['text'] for row in rows}
     with ZipFile(folder / 'RESULTADOS_COMPLETOS.zip') as archive:
-        assert 'RESUMEN_Y_MINUTA_LOCAL.md' in archive.namelist()
-        assert not any(name.startswith('.minutes-') for name in archive.namelist())
-        assert 'MINUTA_NO_GENERADA.txt' not in archive.namelist()
+        assert 'Minutas/RESUMEN_Y_MINUTA_LOCAL.md' in archive.namelist()
+        assert not any('/.minutes-' in name for name in archive.namelist())
+        assert 'Minutas/MINUTA_NO_GENERADA.txt' not in archive.namelist()
 
 
 def test_whisper_cpu_keeps_word_timestamps_and_discards_out_of_bounds_padding(tmp_path):

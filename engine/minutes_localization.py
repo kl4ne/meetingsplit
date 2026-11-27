@@ -53,6 +53,19 @@ _DAY_RELATION=re.compile(
     re.IGNORECASE)
 
 def _normalize_weekday_relations(text):
+    # Schedule expansion and a deadline are not interchangeable. In a phrase
+    # explicitly about extending opening/support hours to a weekday, retain
+    # inclusion of that day. "Hasta el domingo" is NOT a safe equivalent.
+    weekdays='|'.join(map(str.lower,_DAYS))
+    dias='|'.join(_DAYS.values())
+    def include(match):
+        day=match['day'].casefold()
+        day=next((en.casefold() for en,es in _DAYS.items() if es==day),day)
+        return match['lead']+' RELATION_include_'+day+' '
+    text=re.sub(r'\b(?P<lead>extend(?:ing)?\s+[^.!?;]{0,100}?\bhours)\s+to\s+(?P<day>'+weekdays+r')\b',
+                include,text,flags=re.IGNORECASE)
+    text=re.sub(r'\b(?P<lead>ampliar\s+[^.!?;]{0,100}?\bhorarios?[^.!?;]{0,60}?)\s+(?:para\s+)?incluir\s+el\s+(?P<day>'+dias+r')\b',
+                include,text,flags=re.IGNORECASE)
     text=re.sub(r'\b(?:the )?deadline (?:for [^.!?]{1,80} )?is\s+(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b',r'deadline by \1',text,flags=re.IGNORECASE)
     text=re.sub(r'\b(?:el )?(?:plazo(?: límite)?|fecha límite) (?:para [^.!?]{1,80} )?es el\s+(lunes|martes|miércoles|jueves|viernes|sábado|domingo)\b',r'plazo a más tardar el \1',text,flags=re.IGNORECASE)
     def replace(match):
@@ -109,6 +122,7 @@ def translation_request(items,indices,lang):
         'Preserve approval, non-approval, proposals and uncertainty. Do not turn on a day into before or by that day. '
         'For by Friday use a más tardar el viernes, for before Friday use antes del viernes, for on Friday use el viernes; '
         'in English preserve the distinction by/before/on. Preserve the named actor and commitment verb. '
+        'When a proposal extends opening or reception hours to include a weekday, express inclusion of that day, not an end date or deadline (Spanish: ampliar el horario para incluir el domingo, not hasta el domingo). '
         'Translate day names, retain the original relative-date meaning. Return a complete sentence or sentences for each ID. '
         'Do not invent who, what, when or why. Use plain text, no headings, timecodes or Markdown. Return only the schema.'},
         {'role':'user','content':json.dumps({'records':records},ensure_ascii=False)}]

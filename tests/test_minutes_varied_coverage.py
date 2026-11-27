@@ -67,3 +67,18 @@ def test_full_literal_due_relation(text,valid):
     assert bool(accepted)==valid and bool(rejected)!=valid
     assert copies[0]['due']=='by Friday' and original['due']=='by Friday'
     assert local_day('by Friday','es')=='a más tardar el viernes'
+
+
+@pytest.mark.parametrize('text,valid',[
+    ('Propuesta únicamente: ampliar el horario de recepción para incluir el domingo. No se aprobó.',True),
+    ('Propuesta únicamente: ampliar el horario de recepción hasta el domingo. No se aprobó.',False),
+    ('Propuesta únicamente: ampliar el horario de recepción para incluir el lunes. No se aprobó.',False),
+    ('Propuesta únicamente: ampliar el horario de recepción para incluir el domingo. Se aprobó.',False),
+])
+def test_proposal_schedule_inclusion_not_deadline(text,valid):
+    item={'category':'proposal','owner':None,'due':None,'text_es':'Consulta las palabras originales en la cita.',
+          'sources':[{'source_id':9,'timestamp':'00:12:30','quote':'Proposal only: extend reception hours to Sunday.'},
+                     {'source_id':9,'timestamp':'00:12:30','quote':'Not approved.'}]}
+    copies,todo=prepare_presentation([item],'es')
+    good,bad=apply_translations(json.dumps({'translations':[{'id':0,'text':text}]}),copies,todo,'es')
+    assert bool(good)==valid and bool(bad)!=valid

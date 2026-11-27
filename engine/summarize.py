@@ -197,7 +197,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             trace('editorial','section_rejected',scope,error_type=type(exc).__name__,reason=str(exc))
             editorial_gaps.extend(section)
     from .minutes_narrative import (narrative_sections, narrative_request,
-                                    review_request, validate_narrative)
+                                    review_request, validate_narrative, recover_narrative)
     narratives={}
     narrative_fallbacks=[]
     if len(editorial)>=2:
@@ -209,6 +209,8 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                 messages=with_guide(narrative_request(section,lang),prose=True)
                 scope={'language':lang,'theme_ids':list(section)}
                 validated_draft=None
+                draft=None
+                revised=None
                 stage='draft'
                 try:
                     draft=request(messages,stage=stage,scope=scope)
@@ -237,9 +239,11 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                         paragraphs.extend(validated_draft)
                         trace(stage,'fallback',scope,reason=str(exc),error_type=type(exc).__name__,retained='validated_draft')
                     else:
-                        paragraphs.extend({'text':theme[f'summary_{lang}'],'title':theme[f'title_{lang}'],
-                                           'sources':theme['sources']} for theme,_ in section.values())
-                        trace(stage,'fallback',scope,reason=str(exc),error_type=type(exc).__name__,retained='editorial_themes')
+                        recovered,selection=recover_narrative(section,lang,draft=draft,revised=revised)
+                        paragraphs.extend(recovered)
+                        trace(stage,'fallback',scope,reason=str(exc),error_type=type(exc).__name__,
+                              retained='partial_narrative' if selection['review'] or selection['draft'] else 'editorial_themes',
+                              selection=selection)
             narratives[lang]=paragraphs
     report=render_minutes(items,mode,language,empty,coverage_gaps,
                           editorial=editorial,editorial_gaps=editorial_gaps,

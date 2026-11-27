@@ -112,3 +112,7 @@ CI #46073912935 verde (336 motor, 2 omitidas, 11 navegador y auditoría). Replay
 ## 13. Detalle de fuente focalizado (2026-11-27)
 
 CI #46075602257 verde (353 motor, 2 omitidas, 11 navegador, auditoría). Candidato aislado 16abf0da9e3d825316c7df50f0c0d2b0ae7d10cc, #46076686990 en progreso: 3 unidades literales ES, 2 traducciones de frases EN en una solicitud, para los cuatro pasajes concretos, sin reescritura ni repetir reuniones. Es un suplemento de revisión, no certificación editorial ni detección semántica automática; conservar temas y gaps anteriores. Evaluar artefacto y decidir utilidad sin ciclos repetitivos. NO-GO y demás fases intactos.
+
+## 14. Recuperación focal y revisión de citas compuestas (2026-11-27)
+
+#46076686990 verde, seis tests y una solicitud 19.171 s; cuatro fuentes fieles en suplemento manual, ZIP 15234809448 verificado. Nuevo aviso general de revisión de citas compuestas por idioma, original visible, cero llamadas adicionales, no certifica semántica ni sustituye síntesis. CI pendiente. Evaluar implementación exacta sobre artefactos existentes, luego decidir camino de calidad con evidencia. NO-GO de numeración/empaquetado y gate público intactos.

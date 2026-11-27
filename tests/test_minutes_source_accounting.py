@@ -60,3 +60,50 @@ def test_integrated_pipeline_retains_unique_filtered_aside_no_new_calls(monkeypa
     assert len(calls)==1
     assert 'Quizá yo podría revisar el archivo.' in report
     assert evidence['source_accounting']['uncited_passages']==[{'source_id':2,'timestamp':'00:00:02','quote':'Quizá yo podría revisar el archivo.'}]
+
+def test_compound_citation_flags_clause_not_whole_theme():
+    from engine.minutes_source_accounting import audit_compound_citations
+    a='La información sobre accesibilidad debe estar disponible en el mostrador; la conversación distinguió la bienvenida del registro administrativo.'
+    t=theme(1,a)
+    t['summary_es']='La conversación distinguió claramente la bienvenida del registro en el mostrador.'
+    out=audit_compound_citations([t],[],'es')
+    assert out['es'][0]['source']==ref(1,a)
+    assert len(out['es'][0]['clauses'])==1
+    assert out['es'][0]['clauses'][0]['reason']=='low_literal_overlap'
+    assert t['summary_es'].startswith('La conversación')
+
+def test_compound_cross_language_keeps_original_without_claiming_error():
+    from engine.minutes_source_accounting import audit_compound_citations
+    a='Visitors who need assistance can use the entrance ramp. The discussion covered how to describe accessible routes without disclosing private contact information.'
+    t=theme(2,a)
+    t['summary_es']='Se habló de las rutas accesibles y la privacidad.'
+    t['summary_en']=a
+    out=audit_compound_citations([t],[],'both')
+    assert len(out['es'])==1 and not out['en']
+    assert all(c['reason']=='cross_language_unverified' for c in out['es'][0]['clauses'])
+    r=render_minutes([],'both','both',show_timestamps=False,respect_mode=True,compound_review=out)
+    es,en=r.split('\n\n---\n\n')
+    assert a in es and a not in en
+    assert 'no implican un error confirmado' in es and '[00:00:' not in r
+
+def test_compound_complete_literal_or_structured_source_not_duplicated():
+    from engine.minutes_source_accounting import audit_compound_citations
+    a='Se explicó la ubicación de la biblioteca; el equipo revisó la disponibilidad de los materiales.'
+    t=theme(1,a)
+    assert audit_compound_citations([t],[],'es')=={'es':[]}
+    t['summary_es']='Se examinó la organización.'
+    assert audit_compound_citations([t],[item(1,a)],'es')=={'es':[]}
+    assert audit_compound_citations([t],[],'es',already_visible=[ref(1,a)])=={'es':[]}
+
+def test_single_sentence_is_not_a_compound_review_claim():
+    from engine.minutes_source_accounting import audit_compound_citations
+    t=theme(1,'Se examinó la orientación de las familias.')
+    t['summary_es']='Se revisaron los documentos.'
+    assert audit_compound_citations([t],[],'es')=={'es':[]}
+
+def test_multiple_citations_for_one_source_do_not_repeat_review_quote():
+    from engine.minutes_source_accounting import audit_compound_citations
+    a='Se explicó la ubicación de las salidas; el equipo examinó la señalización de la entrada.'
+    t=theme(1,a);t['summary_es']='Se revisó el archivo de actas.'
+    assert len(audit_compound_citations([t,t],[],'es')['es'])==1
+

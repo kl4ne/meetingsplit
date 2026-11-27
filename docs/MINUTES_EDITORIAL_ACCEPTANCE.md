@@ -53,3 +53,7 @@ CI a13c474ac7b4182cf613720630dea1aceae7469b verde #46074876355 (340 + 11; 2 omit
 ## Actualización: plazos y cuatro fuentes
 
 CI 6cb0dcd36459889984213e3f518a8aa8c2945626 #46075602257 verde, 353 motor, 2 omitidas, 11 navegador, auditoría. Revisión directa del ZIP 15234354072 confirma que fuente 4 comparte tema con 18; no descartar esa información. Candidato aislado 16abf0da9e3d825316c7df50f0c0d2b0ae7d10cc / #46076686990 prepara detalles literales para 2/33/63 y traducción de 4 por frases. No es detección automática ni reescritura profesional; no elimina las alertas. Resultado pendiente. Puerta editorial NO-GO.
+
+## Actualización: recuperación focal de cuatro fuentes
+
+Run #46076686990 verde: artefacto 15234809448, SHA-256 ba8d3e74ec2577717c75ccae71275c6756dc3378e55e0b36980c5610175b1522 verificado. Revisión manual de 3 citas ES y 2 traducciones de frases EN confirma recuperación de los cuatro pasajes seleccionados; una solicitud, 19.171 s, 17 hechos archivados. Es suplemento de revisión, no detector automático ni minuta profesional regenerada. Nuevo guard genérico de citas compuestas conserva originales cuando coincidencia léxica baja o idioma distinto; pendiente de CI y evaluación exacta. No garantiza significado ni repara prosa, NO-GO se mantiene.

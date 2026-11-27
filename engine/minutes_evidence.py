@@ -813,7 +813,7 @@ def _presentation_text(item, lang):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=(), respect_mode=False, uncited_passages=()) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=(), respect_mode=False, uncited_passages=(), compound_review=None) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -917,7 +917,8 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 lines.append('')
         incomplete_prose=any(entry['language']==lang for entry in narrative_fallbacks)
         localization_failed=sum(len(entry['rejected']) for entry in localization if entry['language']==lang)
-        if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose or localization_failed or uncited_passages:
+        compound_findings=(compound_review or {}).get(lang,())
+        if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose or localization_failed or uncited_passages or compound_findings:
             lines += ['## '+loc['review'],'']
         if localization_failed:
             lines += [('No se pudo traducir fielmente toda la información. Se conservan las citas originales para revisión.'
@@ -958,6 +959,15 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                        'These quotations are retained for review; their substantive relevance has not been determined.'),'']
             for ref in uncited_passages:
                 lines.append('- '+times([ref])+' "'+_markdown(ref['quote'])+'"')
+            lines.append('')
+        if compound_findings:
+            lines += [('Citas compuestas para revisión de contenido' if lang=='es' else
+                       'Compound quotations for content review'),'']
+            lines += [('La coincidencia de palabras no permite comprobar todas las cláusulas; estas citas no implican un error confirmado.' if lang=='es' else
+                       'Word overlap cannot verify every clause; these quotations do not establish a confirmed error.'),'']
+            for finding in compound_findings:
+                ref=finding['source']
+                lines.append('- '+loc['evidence']+': '+times([ref])+' "'+_markdown(ref['quote'])+'"')
             lines.append('')
         if empty_blocks:
             lines+=['**'+loc['coverage']+':** '+', '.join(map(str,empty_blocks)),'']

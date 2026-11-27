@@ -268,6 +268,7 @@ def _generate_minutes(folder, base, manifest, settings, transcript, progress, ta
         needs_review=bool(gaps or not items or unresolved_empty or evidence.get('editorial_gaps')
                           or evidence.get('narrative_fallbacks')
                           or (evidence.get('source_accounting') or {}).get('uncited_passages')
+                          or any((evidence.get('source_accounting') or {}).get('compound_review',{}).values())
                           or any(entry.get('rejected') for entry in evidence.get('localization',[]))
                           or any(item.get('category')=='review' for item in items))
         manifest.update(summary_status='needs_review' if needs_review else 'complete',

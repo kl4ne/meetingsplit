@@ -232,3 +232,32 @@ def test_local_minutes_keep_calendar_notices_out_of_prose_rewriting(
     assert all(item['category'] == 'notice' for item in evidence['items'])
     assert [[ref['source_id'] for ref in item['sources']] for item in evidence['items']] == [[1], [3,4]]
 
+
+@pytest.mark.parametrize('first, expected_error', [
+    ('Se revisó la lista de materiales', None),
+    ('Se revisó un gasto de USD 2,000', 'Unsupported number or amount'),
+])
+@pytest.mark.parametrize('first_end', [' [E1].', '. [E1]'])
+def test_revised_paragraph_validates_citations_at_sentence_boundaries(first, expected_error, first_end):
+    from engine.minutes_narrative import narrative_sections, validate_narrative
+
+    instructions = (
+        (4, 'Materiales', 'Se revisó la lista de materiales.'),
+        (8, 'Finanzas', 'El presupuesto es de USD 2,000.'),
+    )
+    themes = [
+        {'title_es': title, 'summary_es': quote,
+         'sources':[{'source_id':row, 'timestamp':'00:01:02', 'quote':quote}]}
+        for row,title,quote in instructions
+    ]
+    section = next(narrative_sections(themes, 'es'))
+    raw = f'{first}{first_end} El presupuesto es de USD 2,000 [E2].'
+    if expected_error:
+        with pytest.raises(ValueError, match=expected_error):
+            validate_narrative(raw, section, 'es')
+        return
+    assert validate_narrative(raw, section, 'es') == [{
+        'text': 'Se revisó la lista de materiales. El presupuesto es de USD 2,000.',
+        'sources': [themes[0]['sources'][0], themes[1]['sources'][0]],
+    }]
+

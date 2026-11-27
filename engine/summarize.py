@@ -328,12 +328,18 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
               strategy=narrative_strategy,retained_themes=len(editorial))
     from .minutes_evidence import repeated_topic_coverage
     repetition=repeated_topic_coverage(blocks,items,editorial,empty)
+    source_accounting=None
+    if narrative_strategy=='localized_editorial':
+        from .minutes_source_accounting import audit_source_passages
+        source_accounting=audit_source_passages(blocks,items,editorial,editorial_gaps)
+        trace('source_accounting','accepted',{'language':language},diagnostics=source_accounting)
     report=render_minutes(presentation,mode,language,repetition['unresolved_empty_block_ids'],coverage_gaps,
                           editorial=displayed_themes,editorial_gaps=editorial_gaps,
                           narratives=narratives,narrative_fallbacks=narrative_fallbacks,
                           executive_overview=overview,show_timestamps=False,repetition_coverage=repetition,
                           localization=localization,repeated_themes=repeated_themes,
-                          respect_mode=narrative_strategy=='localized_editorial')
+                          respect_mode=narrative_strategy=='localized_editorial',
+                          uncited_passages=(source_accounting or {}).get('uncited_passages',()))
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,
@@ -341,5 +347,6 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                        'editorial_gaps':editorial_gaps,'editorial_initial_omissions':editorial_omissions,'narrative_fallbacks':narrative_fallbacks,
                        'narrative_strategy':narrative_strategy,'repetition_coverage':repetition,
                        'localization':localization,'presentation':presentation if localization else [],
-                       'repeated_theme_presentation':repeated_themes,'structured_theme_presentation':structured_theme_moves,'items':items})
+                       'repeated_theme_presentation':repeated_themes,'structured_theme_presentation':structured_theme_moves,
+                       'source_accounting':source_accounting,'items':items})
     return report

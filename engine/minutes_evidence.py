@@ -813,7 +813,7 @@ def _presentation_text(item, lang):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=(), respect_mode=False) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=(), respect_mode=False, uncited_passages=()) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -917,7 +917,7 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 lines.append('')
         incomplete_prose=any(entry['language']==lang for entry in narrative_fallbacks)
         localization_failed=sum(len(entry['rejected']) for entry in localization if entry['language']==lang)
-        if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose or localization_failed:
+        if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose or localization_failed or uncited_passages:
             lines += ['## '+loc['review'],'']
         if localization_failed:
             lines += [('No se pudo traducir fielmente toda la información. Se conservan las citas originales para revisión.'
@@ -949,6 +949,14 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         if editorial_gaps:
             lines += [('Pasajes sin síntesis' if lang=='es' else 'Passages without a synthesis'),'']
             for ref in editorial_gaps:
+                lines.append('- '+times([ref])+' "'+_markdown(ref['quote'])+'"')
+            lines.append('')
+        if uncited_passages:
+            lines += [('Pasajes sin cita en la síntesis ni en los resultados estructurados' if lang=='es' else
+                       'Passages not cited in the synthesis or structured outcomes'),'']
+            lines += [('Estas citas se conservan para revisión; no se ha determinado si son sustantivas.' if lang=='es' else
+                       'These quotations are retained for review; their substantive relevance has not been determined.'),'']
+            for ref in uncited_passages:
                 lines.append('- '+times([ref])+' "'+_markdown(ref['quote'])+'"')
             lines.append('')
         if empty_blocks:

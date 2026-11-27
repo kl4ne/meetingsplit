@@ -96,3 +96,7 @@ Run #46069647403 falló generación pese a 19 regresiones verdes; 2/8 pares vál
 ## 9. Comparación controlada de redacción prelocalizada (2026-11-27)
 
 Integración 62416ff4b300c24be0879edaf5d70b1231ef0c60 verde #46070560237 (330 motor/2 omitidas/11 navegador/auditoría). Candidato aislado 5eef2593b485e380fb556bc24434f2fd59c6dc98, run #46073480297 en cola. Usa seis fuentes existentes y traducciones archivadas en dos grupos fijos; una llamada por idioma, no retry, no nueva extracción/traducción/agrupación. Es comparación de redacción, no validación de agrupación, resumen global, pipeline completo ni hardware. Evaluar checklist independiente y coste; no certificar por gates léxicos ni acumular pruebas si no aporta calidad. Mantener requisitos de aceptación, main, versión y gate intactos.
+
+## 10. Cierre de reescritura y contabilidad estructural (2026-11-27)
+
+#46073480297 falló aceptación (10 pruebas, 3/4 párrafos filtros, 77.209 s/2 calls); revisión manual detectó nuevas afirmaciones incluso en párrafos aceptados. Cerrar experimentos de prosa adicional. Integrar contabilidad de fuente completa sin inferencia y señalar pasajes no citados para revisión. CI y comparación offline pendientes; no certifica pérdida dentro de frase citada ni calidad profesional. Mantener criterios de fase 2 y autorización de publicación, no numerar/compilar todavía.

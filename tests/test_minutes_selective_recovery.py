@@ -8,7 +8,8 @@ def make_section():
     texts=['Se habló de la preparación del equipo.',
            'Se revisó la orientación de los voluntarios.',
            'Se explicó el registro de visitantes.']
-    themes=[{'title_es':f'Tema {i}', 'summary_es':text,
+    titles=['Preparación','Orientación','Registro']
+    themes=[{'title_es':titles[i-1], 'summary_es':text,
              'sources':[{'source_id':i,'timestamp':f'00:00:0{i}','quote':text}]}
             for i,text in enumerate(texts,1)]
     return next(narrative_sections(themes,'es'))

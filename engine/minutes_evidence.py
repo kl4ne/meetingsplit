@@ -737,7 +737,7 @@ def _presentation_text(item, lang):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=()) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -752,6 +752,9 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
 
     for lang in ('es','en') if language=='both' else (language,):
         loc=_LOCALES[lang]
+        localized=any(entry['language']==lang for entry in localization)
+        if localized:
+            from .minutes_localization import local_day
         title=loc['summary'] if mode=='summary' else loc['minutes']
         field='text_'+lang
         lines=['# '+title,'','**'+loc['review_warning']+'**','']
@@ -812,7 +815,8 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 lines.append('- '+_markdown(display))
                 if category=='action':
                     lines.append('  - '+loc['owner']+': '+_markdown(item['owner'] or loc['unknown']))
-                    lines.append('  - '+loc['due']+': '+_markdown(item['due'] or loc['unknown']))
+                    due=local_day(item['due'],lang) if localized else item['due']
+                    lines.append('  - '+loc['due']+': '+_markdown(due or loc['unknown']))
                 quotations={}
                 for ref in item['sources']:
                     quotations.setdefault(ref['quote'],[]).append(ref)
@@ -822,8 +826,12 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                         lines.append('  - '+loc['evidence']+': '+times(refs)+' "'+_markdown(quote)+'"')
                 lines.append('')
         incomplete_prose=any(entry['language']==lang for entry in narrative_fallbacks)
-        if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose:
+        localization_failed=sum(len(entry['rejected']) for entry in localization if entry['language']==lang)
+        if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose or localization_failed:
             lines += ['## '+loc['review'],'']
+        if localization_failed:
+            lines += [('No se pudo traducir fielmente toda la información. Se conservan las citas originales para revisión.'
+                       if lang=='es' else 'Some information could not be faithfully translated. Original quotations remain for review.'),'']
         if incomplete_prose:
             lines += [('Parte de la revisión editorial no se completó. Se conservan los temas con sus citas.'
                        if lang=='es' else

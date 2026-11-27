@@ -252,7 +252,8 @@ def _generate_minutes(folder, base, manifest, settings, transcript, progress, ta
                                    MODEL,
                                    progress=lambda msg:progress(msg,92),endpoint=service.endpoint,
                                    cancel=task,evidence_sink=evidence.update,read_block=read_block,
-                                   write_block=lambda key,raw:_write_text(folder/f'.minutes-{key}.json',raw))
+                                   write_block=lambda key,raw:_write_text(folder/f'.minutes-{key}.json',raw),
+                                   narrative_strategy='localized_editorial')
         task.check()
         _write_json(folder/'MINUTA_EVIDENCIAS.json',evidence)
         _write_text(folder/'RESUMEN_Y_MINUTA_LOCAL.md',report)
@@ -266,6 +267,7 @@ def _generate_minutes(folder, base, manifest, settings, transcript, progress, ta
         # repetitions are accounted for, not a semantic approval.
         needs_review=bool(gaps or not items or unresolved_empty or evidence.get('editorial_gaps')
                           or evidence.get('narrative_fallbacks')
+                          or any(entry.get('rejected') for entry in evidence.get('localization',[]))
                           or any(item.get('category')=='review' for item in items))
         manifest.update(summary_status='needs_review' if needs_review else 'complete',
                         summary_review_required=True,summary_evidence='MINUTA_EVIDENCIAS.json',

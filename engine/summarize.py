@@ -68,7 +68,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                                    extraction_prompt, extraction_schema, find_coverage_gaps,
                                    explicit_source_items, reconcile_source_items, recover_evidence_items,
                                    plan_quote_retry, unresolved_retry_items)
-    if narrative_strategy not in ('reviewed','validated_editorial'):
+    if narrative_strategy not in ('reviewed','validated_editorial','localized_editorial'):
         raise ValueError('Invalid narrative strategy')
     if mode not in ('summary','minutes','both') or language not in ('es','en','both'):
         raise ValueError('Invalid report mode or language')
@@ -285,22 +285,34 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                               selection=selection)
             narratives[lang]=paragraphs
     overview=None
-    if narrative_strategy=='validated_editorial' and editorial:
+    presentation=items
+    localization=[]
+    if narrative_strategy=='localized_editorial':
+        from .minutes_localization import localize_items
+        presentation=[dict(item) for item in items]
+        for lang in (('es','en') if language=='both' else (language,)):
+            translated,diagnostic=localize_items(presentation,lang,request,cancel=cancel,progress=progress)
+            presentation=translated
+            localization.append(diagnostic)
+            trace('localization','accepted',{'language':lang},diagnostic=diagnostic)
+    if narrative_strategy in ('validated_editorial','localized_editorial') and (editorial or items):
         from .minutes_overview import build_overview
-        overview={lang:build_overview(items,editorial,lang)
+        overview={lang:build_overview(presentation,editorial,lang)
                   for lang in (('es','en') if language=='both' else (language,))}
         trace('narrative','strategy',{'language':language},
               strategy=narrative_strategy,retained_themes=len(editorial))
     from .minutes_evidence import repeated_topic_coverage
     repetition=repeated_topic_coverage(blocks,items,editorial,empty)
-    report=render_minutes(items,mode,language,repetition['unresolved_empty_block_ids'],coverage_gaps,
+    report=render_minutes(presentation,mode,language,repetition['unresolved_empty_block_ids'],coverage_gaps,
                           editorial=editorial,editorial_gaps=editorial_gaps,
                           narratives=narratives,narrative_fallbacks=narrative_fallbacks,
-                          executive_overview=overview,show_timestamps=False,repetition_coverage=repetition)
+                          executive_overview=overview,show_timestamps=False,repetition_coverage=repetition,
+                          localization=localization)
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,
                        'coverage_gaps':coverage_gaps,'editorial_themes':editorial,
                        'editorial_gaps':editorial_gaps,'narrative_fallbacks':narrative_fallbacks,
-                       'narrative_strategy':narrative_strategy,'repetition_coverage':repetition,'items':items})
+                       'narrative_strategy':narrative_strategy,'repetition_coverage':repetition,
+                       'localization':localization,'presentation':presentation if localization else [],'items':items})
     return report

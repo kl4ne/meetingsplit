@@ -8,6 +8,8 @@ CI de recuperación variada #46033392154: 316 pruebas aprobadas, 2 omitidas. Rep
 
 CI #46034100640: 324 pruebas aprobadas, 2 omitidas. Prueba puntual #46034184111 falló por omitir una fuente. Nuevo experimento de arquitectura source-first #46036960062 en curso, aislado. Consultar HANDOFF.md y último registro técnico.
 
+Source-first #46036960062: 55 unidades, 26 traducciones aceptadas; falló agrupación por siete conflictos. Reparación aislada en curso; leer HANDOFF.md y último checkpoint. Sin integración ni paquete.
+
 ---
 
 ## Continuity checkpoint — timeout recovery / main integration 2026-10-21

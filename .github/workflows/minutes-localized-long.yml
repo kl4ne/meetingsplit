@@ -48,9 +48,15 @@ jobs:
           name: consolidated-long-source-qa
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/original
-      - name: Translate only missing descriptions from saved synthetic evidence
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46001580090
+          name: localized-long-presentation
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/prior
+      - name: Reuse accepted translations and repair missing facts and exact deadline
         shell: bash
-        run: python qa/minutes_localized_long_replay.py "$RUNNER_TEMP/original" "$RUNNER_TEMP/ms-localized"
+        run: python qa/minutes_localized_long_replay.py "$RUNNER_TEMP/original" "$RUNNER_TEMP/ms-localized" "$RUNNER_TEMP/prior"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -44,3 +44,32 @@ def test_unknown_translation_id_rejected():
     original=[item('decision','The board approved the pilot.')]
     with pytest.raises(ValueError,match='IDs'):
         apply_translations('{"translations":[{"id":99,"text":"El comité aprobó el piloto."}]}',original,[0],'es')
+
+
+@pytest.mark.parametrize('wording,valid',[
+    ('Ana Ruiz enviará el borrador de acceso antes del viernes.',False),
+    ('Ana Ruiz enviará el borrador de acceso el viernes.',False),
+    ('Ana Ruiz enviará el borrador de acceso a más tardar el viernes.',True),
+])
+def test_exact_recorded_by_friday_relation(wording,valid):
+    original=[item('action','Ana Ruiz will send the access draft by Friday.','Ana Ruiz','Friday')]
+    copies,todo=prepare_presentation(original,'es')
+    good,bad=apply_translations(json.dumps({'translations':[{'id':0,'text':wording}]}),copies,todo,'es')
+    assert bool(good)==valid and bool(bad)!=valid
+
+def test_missing_amount_and_responsible_person_are_not_ignored():
+    original=[item('decision','Se aprobó un fondo de 800 pesos para el archivo norte.',
+                   text='Aprobación explícita del presupuesto para el archivo norte.'),
+              item('action','Alex Park committed to documenting the handoff by Thursday.',
+                   'Alex Park','Thursday','Documentar la entrega para el jueves')]
+    copies,todo=prepare_presentation(original,'es')
+    assert copies[0]['text_es']==original[0]['sources'][0]['quote']
+    assert todo==[1]
+    assert original[0]['text_es']!=copies[0]['text_es']
+
+def test_recorded_explicit_deadline_translation_is_preserved():
+    source='David Lin promised to circulate the vendor checklist. The deadline for this task is Tuesday.'
+    original=[item('action',source,'David Lin','Tuesday')]
+    copies,todo=prepare_presentation(original,'es')
+    translated='David Lin prometió circular la lista de verificación de proveedores. El plazo límite para esta tarea es el martes.'
+    assert apply_translations(json.dumps({'translations':[{'id':0,'text':translated}]}),copies,todo,'es')==([0],[])

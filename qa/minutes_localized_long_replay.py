@@ -12,7 +12,7 @@ from engine.minutes_localization import prepare_presentation,translation_request
 from qa.minutes_long_acceptance import fixture,score
 from qa.minutes_editorial_ab import VERSION,DIGEST
 
-def main(source,output):
+def main(source,output,prior):
     transcript,checks=fixture()
     assert (source/'transcript.txt').read_text(encoding='utf-8')==transcript
     evidence=json.loads((source/'evidence.json').read_text(encoding='utf-8'))
@@ -23,8 +23,19 @@ def main(source,output):
     translated,todo=prepare_presentation(original,'es')
     started=time.monotonic()
     accepted=[];rejected=[];traces=[]
-    for start in range(0,len(todo),5):
-        ids=todo[start:start+5]
+    # Revalidate only the three previously accepted responses against the
+    # strengthened validator. Never replay a previously rejected translation.
+    previous=json.loads((prior/'result.json').read_text(encoding='utf-8'))
+    responses=json.loads((prior/'translation-trace.json').read_text(encoding='utf-8'))
+    prior_records=[record for batch in responses for record in json.loads(batch['raw'])['translations']
+                   if record['id'] in previous['accepted'] and record['id'] in todo]
+    if prior_records:
+        good,bad=apply_translations(json.dumps({'translations':prior_records}),translated,
+                                    [r['id'] for r in prior_records],'es')
+        accepted.extend(good)
+    pending=[i for i in todo if i not in accepted]
+    for start in range(0,len(pending),5):
+        ids=pending[start:start+5]
         messages,schema=translation_request(translated,ids,'es')
         trace={'ids':ids,'messages':messages,'schema':schema}
         try:
@@ -49,11 +60,11 @@ def main(source,output):
     (output/'minutes.md').write_text(report,encoding='utf-8')
     (output/'presentation.json').write_text(json.dumps(translated,ensure_ascii=False,indent=2),encoding='utf-8')
     result={'candidate_ids':todo,'accepted':accepted,'rejected':rejected,'seconds':round(time.monotonic()-started,3),
-            'calls':len(traces),'facts_unchanged':score(transcript,checks,original)['passed'],
+            'calls':len(traces),'reused_ids':[i for i in accepted if i not in pending],'facts_unchanged':score(transcript,checks,original)['passed'],
             'quality':'requires manual semantic review; translation changes presentation only'}
     (output/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps(result,ensure_ascii=False),flush=True)
     return 0 if not rejected and len(accepted)==len(todo) else 2
 
 if __name__=='__main__':
-    raise SystemExit(main(Path(sys.argv[1]),Path(sys.argv[2])))
+    raise SystemExit(main(Path(sys.argv[1]),Path(sys.argv[2]),Path(sys.argv[3])))

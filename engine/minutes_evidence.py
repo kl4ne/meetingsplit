@@ -101,7 +101,7 @@ _PERSONAL_TENTATIVE = re.compile(
 )
 _NOTICE = re.compile(
     r'^(?:reminder\s*:|(?:we remind you|please remember) that\b|'
-    r'(?:les (?:recuerdo|recordamos|informo|informamos) que|recuerden que|se anuncia que)\b|aviso\s*:)',
+    r'(?:les (?:recuerdo|recordamos|informo|informamos) que|recuerden que|se anuncia que|se anunció que)\b|aviso\s*:)',
     re.IGNORECASE,
 )
 _RESERVED_SCHEDULE = re.compile(
@@ -284,6 +284,20 @@ def _is_descriptive_discussion(text):
         _COMMITMENT,_AMOUNT,_DISCUSSION_OPERATIONAL)))
 
 
+# Explicit metalinguistic distinction and a reviewed fictional example
+# describe teaching material; they are not a motion or a real pending item.
+_TEACHING_DISTINCTION = re.compile(
+    r'^se explicó que (?:una|la) instrucción [^.!?;:]{1,80} y (?:una|la) recomendación '
+    r'[^.!?;:]{1,80} tienen funciones distintas\.$',re.IGNORECASE)
+_FICTIONAL_REVIEW = re.compile(
+    r'^(?:the )?participants reviewed a fictional example of [^.!?;:]{1,350}\.$',re.IGNORECASE)
+
+def _is_teaching_example(text):
+    return bool((_TEACHING_DISTINCTION.fullmatch(text.strip()) or _FICTIONAL_REVIEW.fullmatch(text.strip()))
+                and not any(p.search(text) for p in (_AGREEMENT,_COMMITMENT,_NOTICE,_AMOUNT,_IMPLEMENTATION,_DISCUSSION_OPERATIONAL))
+                and not re.search(r'\b(?:agreed|proposed|assigned|decided|approved|promised|will|shall|must|should|'
+                                  r'propuso|propusieron|debe|deben|deberá|acordó|aprobó)\b',text,re.IGNORECASE))
+
 def _evidence_category(requested, evidence, by_id, owner):
     categories=set()
     owners=set()
@@ -291,6 +305,9 @@ def _evidence_category(requested, evidence, by_id, owner):
     for ref in evidence:
         quote=ref['quote']
         row=by_id[ref['source_id']]['text']
+        if not owner and quote==row and _is_teaching_example(row):
+            categories.add('topic')
+            continue
         if requested=='topic' and _is_guidance(row) and not owner:
             categories.add('topic')
             continue
@@ -395,7 +412,7 @@ def validate_items(raw: str, rows: list[dict], language: str, *, source_only_on_
         # cited row explicitly describes discussion, with no task metadata.
         # Use source wording for the recovered record, not the model's
         # unsupported proposal/confirmation interpretation.
-        if (category=='review' and item['category']=='review' and owner is None and due is None
+        if (category=='review' and item['category'] in ('review','proposal') and owner is None and due is None
                 and len(evidence)==1 and evidence[0]['quote']==by_id[evidence[0]['source_id']]['text']
                 and _is_descriptive_discussion(evidence[0]['quote'])):
             category='topic'
@@ -537,7 +554,7 @@ def explicit_source_items(rows, language):
         return hour*3600+minute*60+second
 
     for row in rows:
-        if _is_guidance(row['text']):
+        if _is_guidance(row['text']) or _is_teaching_example(row['text']):
             previous=None
             continue
         if _is_unassigned_question(row['text']):

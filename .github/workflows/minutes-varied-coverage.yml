@@ -1,0 +1,22 @@
+name: Varied source coverage regressions
+on:
+  push:
+    branches: [fix/minutes-varied-coverage-0819]
+    paths: ['.github/workflows/minutes-varied-coverage.yml']
+permissions:
+  contents: read
+jobs:
+  regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - name: Validate omission recovery, localization and classification
+        run: |
+          python -m pip install pytest
+          python -m pytest -q tests/test_minutes_varied_coverage.py tests/test_minutes_evidence.py tests/test_minutes_editorial.py tests/test_minutes_editorial_gap_retry.py tests/test_minutes_localization.py tests/test_minutes_localized_pipeline.py tests/test_minutes_consolidated_classification.py tests/test_minutes_discussion_classification.py tests/test_minutes_consolidated_strategy.py tests/test_minutes_source_coverage.py

@@ -192,9 +192,10 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     coverage_gaps=find_coverage_gaps(rows,items)
     from .control import JobCancelled
     from .minutes_brief import (editorial_input, editorial_request, validate_editorial,
-                                editorial_retry_sources, merge_editorial_retry)
+                                editorial_retry_sources, merge_editorial_retry, repair_editorial_omissions)
     editorial=[]
     editorial_gaps=[]
+    editorial_omissions=[]
     sections=editorial_input(blocks,items,explicit_items=explicit_items) if len(rows)>=4 else ()
     for section in sections:
         if cancel: cancel.check()
@@ -227,6 +228,12 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                     raise
                 except (OSError,RuntimeError,ValueError) as exc:
                     trace('editorial_retry','section_rejected',repair_scope,error_type=type(exc).__name__,reason=str(exc))
+            if narrative_strategy=='localized_editorial':
+                accepted,rejected,initial_omissions=repair_editorial_omissions(
+                    section,accepted,rejected,language,
+                    lambda messages,schema,**kw:request(with_guide(messages),schema,**kw),
+                    cancel=cancel,trace=trace)
+                editorial_omissions.extend(initial_omissions)
             editorial_gaps.extend(rejected)
             editorial.extend(accepted)
             trace('editorial','accepted',scope,themes=accepted)
@@ -330,7 +337,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,
                        'coverage_gaps':coverage_gaps,'editorial_themes':editorial,
-                       'editorial_gaps':editorial_gaps,'narrative_fallbacks':narrative_fallbacks,
+                       'editorial_gaps':editorial_gaps,'editorial_initial_omissions':editorial_omissions,'narrative_fallbacks':narrative_fallbacks,
                        'narrative_strategy':narrative_strategy,'repetition_coverage':repetition,
                        'localization':localization,'presentation':presentation if localization else [],
                        'repeated_theme_presentation':repeated_themes,'structured_theme_presentation':structured_theme_moves,'items':items})

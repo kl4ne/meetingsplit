@@ -15,6 +15,15 @@ _DAYS = dict(zip(('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday',
 def local_day(value, lang):
     if not value:
         return value
+    # Retain the entire relationship in display, rather than dropping "by".
+    if match:=_DAY_RELATION.fullmatch(value):
+        relation=next(k for k,p in _DAY_PATTERNS if re.fullmatch(p,match['relation'],re.IGNORECASE))
+        day=match['day'].casefold()
+        english=next((en for en,es in _DAYS.items() if es==day or en.casefold()==day),None)
+        if english:
+            if lang=='es':
+                return {'by':'a más tardar el','before':'antes del','after':'después del','on':'el'}[relation]+' '+_DAYS[english]
+            return relation+' '+english
     for en,es in _DAYS.items():
         if lang=='es' and value.casefold()==en.casefold():
             return es
@@ -115,8 +124,16 @@ def _validate_translation(text,item,lang):
         raise ValueError('Translation changed numbers or amounts')
     if item['owner'] and item['owner'].casefold() not in text.casefold():
         raise ValueError('Translation omitted responsible person')
-    if item['due'] and local_day(item['due'],lang).casefold() not in text.casefold():
-        raise ValueError('Translation omitted or changed date')
+    if item['due']:
+        due=item['due']
+        # For a complete weekday relation, compare meaning and day. Keep
+        # literal due metadata unchanged; the full source relation is checked below.
+        if _DAY_RELATION.fullmatch(due):
+            due_days=_relations(due)
+            if not due_days or not due_days<=_relations(text):
+                raise ValueError('Translation omitted or changed date')
+        elif local_day(due,lang).casefold() not in text.casefold():
+            raise ValueError('Translation omitted or changed date')
     if bool(affirmative_agreement_matches(text))!=bool(affirmative_agreement_matches(original)):
         raise ValueError('Translation changed affirmative approval')
     if bool(_EDITORIAL_NON_APPROVAL.search(text))!=bool(_EDITORIAL_NON_APPROVAL.search(original)):
@@ -162,7 +179,14 @@ def restore_protected_weekday(text,item,lang):
     if source is None or target is None or len(_ANY_DAY.findall(original))!=1 or len(_ANY_DAY.findall(text))!=1:
         return None
     day=local_day(source['day'],'es')
-    if target['day'].casefold()!=day.casefold() or local_day(item['due'],'es').casefold()!=day.casefold():
+    due=item['due']
+    if _DAY_RELATION.fullmatch(due):
+        if _relations(due)!=_relations(source.group().rstrip('.')):
+            return None
+        due_day=local_day(_DAY_RELATION.fullmatch(due)['day'],'es')
+    else:
+        due_day=local_day(due,'es')
+    if target['day'].casefold()!=day.casefold() or due_day.casefold()!=day.casefold():
         return None
     if not original.startswith(item['owner']+' ') or not text.startswith(item['owner']+' '):
         return None

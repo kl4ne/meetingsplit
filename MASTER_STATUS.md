@@ -6,6 +6,8 @@ Reparación variada aislada: 107 regresiones aprobadas (#46030916887). Recuperac
 
 CI de recuperación variada #46033392154: 316 pruebas aprobadas, 2 omitidas. Replay de modalidad #46033519061: 55 pruebas, exactamente dos falsos temas detectados. Guarda integrada; CI combinada pendiente. Próximo: recuperación focalizada y revisión editorial de omisiones dentro de citas.
 
+CI #46034100640: 324 pruebas aprobadas, 2 omitidas. Prueba puntual #46034184111 falló por omitir una fuente. Nuevo experimento de arquitectura source-first #46036960062 en curso, aislado. Consultar HANDOFF.md y último registro técnico.
+
 ---
 
 ## Continuity checkpoint — timeout recovery / main integration 2026-10-21

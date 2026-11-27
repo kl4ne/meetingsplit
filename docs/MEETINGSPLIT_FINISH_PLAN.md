@@ -108,3 +108,7 @@ CI #46073912935 verde (336 motor, 2 omitidas, 11 navegador y auditoría). Replay
 ## 12. Replay de código actual y siguiente defecto (2026-11-27)
 
 #46074876355 verde: 340 motor, 2 omitidas, 11 navegador, auditoría. #46075439142 diagnóstico offline verde, ZIP 15234354072 inspeccionado. Strict replay no completado por solicitudes cambiadas, revalidación por etapas varied 17/17 hechos, 37 temas, dos gaps de modalidad y dos omisiones internas demostradas. No se ha generado nueva inferencia. Nuevo arreglo de campo de plazo usando cita única con relación explícita, sin cambiar metadatos ni añadir llamadas. CI pendiente. Próxima tarea concreta: reparar pasajes 2/4/33/63 con presupuesto focalizado y comparar significado; sin reescrituras generales repetidas. Gate editorial NO-GO y requisitos posteriores intactos.
+
+## 13. Detalle de fuente focalizado (2026-11-27)
+
+CI #46075602257 verde (353 motor, 2 omitidas, 11 navegador, auditoría). Candidato aislado 16abf0da9e3d825316c7df50f0c0d2b0ae7d10cc, #46076686990 en progreso: 3 unidades literales ES, 2 traducciones de frases EN en una solicitud, para los cuatro pasajes concretos, sin reescritura ni repetir reuniones. Es un suplemento de revisión, no certificación editorial ni detección semántica automática; conservar temas y gaps anteriores. Evaluar artefacto y decidir utilidad sin ciclos repetitivos. NO-GO y demás fases intactos.

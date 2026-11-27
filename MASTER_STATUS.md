@@ -18,6 +18,8 @@ Serie de resumen ejecutivo cerrada: #46047669072 pasó formalmente pero no justi
 
 Prueba bilingüe #46049354590: timeout de primera extracción (900 s), 34 pruebas aprobadas; nueva extracción metadata-only acotada en QA #46055337219. Consultar HANDOFF.md. No integración ni paquete.
 
+Extracción bilingüe metadata-only #46055337219 completó 8/8 hechos, preservó 18 filas descriptivas en ambos idiomas; falló aceptación por traducciones. Reparación aislada focalizada #46057746118 en curso, leer HANDOFF.md. No integración ni paquete.
+
 ---
 
 ## Continuity checkpoint — timeout recovery / main integration 2026-10-21

@@ -57,3 +57,17 @@ CI 6cb0dcd36459889984213e3f518a8aa8c2945626 #46075602257 verde, 353 motor, 2 omi
 ## Actualización: recuperación focal de cuatro fuentes
 
 Run #46076686990 verde: artefacto 15234809448, SHA-256 ba8d3e74ec2577717c75ccae71275c6756dc3378e55e0b36980c5610175b1522 verificado. Revisión manual de 3 citas ES y 2 traducciones de frases EN confirma recuperación de los cuatro pasajes seleccionados; una solicitud, 19.171 s, 17 hechos archivados. Es suplemento de revisión, no detector automático ni minuta profesional regenerada. Nuevo guard genérico de citas compuestas conserva originales cuando coincidencia léxica baja o idioma distinto; pendiente de CI y evaluación exacta. No garantiza significado ni repara prosa, NO-GO se mantiene.
+
+## Decisión de cierre de la ronda actual de ingeniería
+
+**Código integrado validado:** a85cd3e502e55f48b7bf8e7815e44fe2e9733c47, #46077071845, 358 pruebas motor, 2 omitidas, 11 navegador y auditoría aprobada. **Auditoría exacta:** #46077626196, a8944138ccf1b0d549d23786fb458dcfe429240b, ZIP 15236061286 SHA-256 ecb6d531bf0c9847164093fd70c68d2f7c22035e46378baa5bd5febe96531e87, bytes y Markdown inspeccionados, cero solicitudes al modelo.
+
+| Caso | Citas compuestas en revisión | Resultado |
+|---|---:|---|
+| Corto | 0 | No crece; aún hay repetición entre resumen y minuta. |
+| Variado | 2 | Fuentes 2 y 4, +75 palabras por modo; siguen gaps 33 y 63; las citas no sustituyen prosa fiel. |
+| Denso anterior/corregido | 1 | Fuente 37 correctamente traducida; aviso conservador. Metadatos corregidos conservan dos pasajes no citados. |
+
+Se conserva el mecanismo de protección. No es verificador semántico y no se modificará el umbral para hacer pasar estos fixtures. La prueba densa usa source_first antiguo, no el motor final. EN/BOTH, carga densa real cercana a 16k palabras y calidad final siguen sin certificación. No hay un EXE 0.8.19.
+
+**Puerta de entrega actual: NO-GO.** No se justifica repetir otro experimento de prompt/regex equivalente. Se requiere decisión del propietario: mantener la calidad editorial como condición previa y aprobar una evaluación de arquitectura materialmente diferente (cualquier cambio de modelo requiere autorización), o aceptar un portable privado expresamente identificado como borrador de revisión, con estas limitaciones, para probar el motor ya mejorado en ASUS. Recomendar la segunda como hito práctico solo si acepta el alcance. No confundir un candidato privado con versión definitiva o release pública; en ambos casos release_allowed permanece false, main intacto. Sin decisión explícita, no numerar ni compilar. El usuario no ha autorizado reducir requisitos con la orden genérica de continuar.

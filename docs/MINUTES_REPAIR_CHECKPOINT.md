@@ -41,3 +41,17 @@ Actual result: 819.771 s, five requests, 2432 characters; zero editorial gaps, o
 ## Combined validation candidate
 
 Isolated quotation retry run #45959062442 passed all 89 focused regressions. Combined with the citation/presentation repair; full engine/browser/dependency CI must pass before any new real inference. No main change or version change yet.
+
+## Consolidation experiment
+
+Combined CI #45959366639 passed 237 engine tests, 2 skipped, 11 browser tests; dependency audit no known findings. Offline exact artifact replay #45959540874, artifact 15180570776, restored all six accepted themes with the new anchor guard; the prior narrative showed only four. The deterministic title-only overview prototype was insufficiently substantive. This isolated real-model candidate uses full accepted topic descriptions and recorded outcomes in a bounded overview, retains all themes and review warnings, and skips two rewrite calls via an explicit QA-only strategy. Default production strategy remains reviewed. Prior draft+review took 256.998 s of 819.771 s CPU time; actual savings and quality still unmeasured. Known residual defects: the source guidance sentence classified as a proposal, and unassigned pending question classified for review. Do not declare short acceptance solely from a green run. No new version or package.
+
+## Real consolidated short result and classification repair
+
+Run #45959825859 succeeded, artifact 15180493657 inspected. Four calls, 614.171 s vs 819.771 s before and 891.066 s original; 31% less elapsed time than original, CPU runner not ASUS. Selective retry kept ten records, retried IDs 1/2 in 44.798 s; original full retry 252.428 s. Six themes, no recorded editorial gaps. No narrative fallback because this strategy intentionally omits that stage, not proof of semantic acceptance. Defects: guidance misclassified as proposal, explicit notices rendered with source-only placeholder, unassigned question marked review, action paraphrase introduced deadline label. Narrow regression fix uses exact synthetic source patterns, keeps notices literal, and retains original commitment when deadline label unsupported. Still a candidate, not release. Validate against recorded outputs before rerunning model. Full-length QA and user acceptance remain open.
+
+Replay #45993971134 failed during import (SyntaxError line 246). The patch operation interpreted a regex dollar-sign followed by a quote as a replacement expansion, duplicating a suffix of the file. Reconstructed from the exact known-good candidate deb7106, applied literal replacements, checked unique function definitions. No validator change beyond the intended classification repair. Rerun focused tests and exact artifact replay before integration.
+
+## Integration checkpoint
+
+Run #45994422839 passed 100 focused tests and all eight exact-response replay checks; artifact 15195382415. Integrate optional consolidated strategy and source classification repairs into draft PR #7. No production default change until long acceptance. Do not infer full editorial quality from these checks. The original historical 29-block fixture is not in the repo; the reproducible 2h15 / 11-block historical fixture is a different test, and will be used for controlled long source QA. No new package.

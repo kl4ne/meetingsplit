@@ -238,6 +238,31 @@ def _is_notice(quote):
     return bool(_NOTICE.match(quote) or _RESERVED_SCHEDULE.search(quote) or _ANNOUNCED_START.search(quote))
 
 
+# Narrow patterns for the observed guidance and unassigned question.
+_GUIDANCE_CONTEXT = re.compile(
+    r'^(?:the )?(?:reference )?(?:guide|manual|handbook) (?:distinguishes|explains|describes)\b[^.!?]+\.\s+'
+    r'[^.!?]{1,160}\bshould\b[^.!?]{1,240}[.!]?$',
+    re.IGNORECASE,
+)
+_UNASSIGNED_QUESTION = re.compile(
+    r'(?:Who will [^.!?]+\?|¿Quién (?:se encargará de|va a|hará|pedirá) [^.!?]+\?)\s+'
+    r'(?:No responsible person or deadline was assigned\.?|No se asignó (?:responsable ni plazo|responsable ni fecha límite)\.?)',
+    re.IGNORECASE,
+)
+_EXPLICIT_DEADLINE = re.compile(r'\b(?:deadline|due date|fecha límite|a más tardar|plazo máximo)\b',re.IGNORECASE)
+
+
+def _is_guidance(text):
+    return bool(_GUIDANCE_CONTEXT.fullmatch(text.strip()) and
+                not affirmative_agreement_matches(text) and
+                not re.search(r'\b(?:proposal|proposed|recommendation|propuesta|propuso)\b',text,re.IGNORECASE))
+
+
+def _is_unassigned_question(text):
+    return bool(_UNASSIGNED_QUESTION.fullmatch(text.strip()) and
+                not affirmative_agreement_matches(text))
+
+
 def _evidence_category(requested, evidence, by_id, owner):
     categories=set()
     owners=set()
@@ -245,6 +270,12 @@ def _evidence_category(requested, evidence, by_id, owner):
     for ref in evidence:
         quote=ref['quote']
         row=by_id[ref['source_id']]['text']
+        if requested=='topic' and _is_guidance(row) and not owner:
+            categories.add('topic')
+            continue
+        if requested=='pending' and not owner and _is_unassigned_question(quote):
+            categories.add('pending')
+            continue
         context=[sentence for sentence in _SENTENCE_BREAK.split(row) if quote in sentence] or [row]
         if any(_UNCERTAIN.search(sentence) or _PERSONAL_TENTATIVE.search(sentence) for sentence in context):
             uncertain=True
@@ -477,6 +508,14 @@ def explicit_source_items(rows, language):
         return hour*3600+minute*60+second
 
     for row in rows:
+        if _is_guidance(row['text']):
+            previous=None
+            continue
+        if _is_unassigned_question(row['text']):
+            items.append(create('pending',[{'source_id':row['id'],'timestamp':row['timestamp'],
+                                            'quote':row['text']}]))
+            previous=None
+            continue
         for sentence in _SENTENCE_BREAK.split(row['text']):
             quote=sentence.strip()
             if not quote:
@@ -556,7 +595,15 @@ def reconcile_source_items(items, explicit):
         if item['category'] != source_item['category'] or len(source_item['sources'])>1:
             continue
         # Preserve the wording of an explicit budget instead of inferring its allocation.
-        if source_item['category'] == 'topic':
+        if source_item['category'] in ('topic','notice'):
+            continue
+        if source_item['category']=='action':
+            source_text=' '.join(ref['quote'] for ref in source_item['sources'])
+            if not _EXPLICIT_DEADLINE.search(source_text) and any(
+                    _EXPLICIT_DEADLINE.search(value) for key,value in item.items()
+                    if key.startswith('text_')):
+                continue
+        if source_item['category']=='pending' and (item['owner'] or item['due']):
             continue
         if source_item['owner'] and item['owner']!=source_item['owner']:
             continue
@@ -636,7 +683,7 @@ def _presentation_text(item, lang):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -653,15 +700,21 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         title=loc['summary'] if mode=='summary' else loc['minutes']
         field='text_'+lang
         lines=['# '+title,'','**'+loc['review_warning']+'**','']
+        brief=(executive_overview or {}).get(lang)
+        if brief:
+            lines += ['## '+loc['summary'],'']
+            for paragraph in brief:
+                lines += [_markdown(paragraph),'']
+        detail_heading=('Temas tratados' if lang=='es' else 'Topics discussed') if brief else loc['summary']
         prose=(narratives or {}).get(lang)
         if prose:
-            lines += ['## '+loc['summary'],'']
+            lines += ['## '+detail_heading,'']
             for paragraph in prose:
                 title=paragraph.get('title')
                 heading=f"**{_markdown(title)}.** " if title else ''
                 lines += [f"{heading}{_markdown(paragraph['text'])} {times(paragraph['sources'])}",'']
         elif editorial:
-            lines += ['## '+loc['summary'],'']
+            lines += ['## '+detail_heading,'']
             for theme in editorial:
                 lines += [f"**{_markdown(theme['title_'+lang])}.** {_markdown(theme['summary_'+lang])} {times(theme['sources'])}",'']
         elif not items:

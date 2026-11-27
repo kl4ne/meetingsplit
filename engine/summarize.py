@@ -57,7 +57,8 @@ def ollama_chat(messages: list[dict], model: str=MODEL, timeout: int=900, **kwar
 
 def summarize_local(transcript: str, mode: str, language: str, model: str,
                     progress=lambda msg:None, *, endpoint=DEFAULT_ENDPOINT, cancel=None,
-                    evidence_sink=None, read_block=None, write_block=None, qa_trace=None) -> str:
+                    evidence_sink=None, read_block=None, write_block=None, qa_trace=None,
+                    narrative_strategy='reviewed') -> str:
     """Extract evidence, draft and review prose, then render the minutes.
 
     qa_trace is an explicit in-memory callback for synthetic QA only. It is never
@@ -67,6 +68,8 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                                    extraction_prompt, extraction_schema, find_coverage_gaps,
                                    explicit_source_items, reconcile_source_items, recover_evidence_items,
                                    plan_quote_retry, unresolved_retry_items)
+    if narrative_strategy not in ('reviewed','validated_editorial'):
+        raise ValueError('Invalid narrative strategy')
     if mode not in ('summary','minutes','both') or language not in ('es','en','both'):
         raise ValueError('Invalid report mode or language')
     guide_path = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[1])) / 'docs' / 'Guia_Owll_y_Minutas_para_Ollama.md'
@@ -236,7 +239,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                                     review_request, validate_narrative, recover_narrative)
     narratives={}
     narrative_fallbacks=[]
-    if len(editorial)>=2:
+    if narrative_strategy=='reviewed' and len(editorial)>=2:
         for lang in ('es','en') if language=='both' else (language,):
             paragraphs=[]
             for section in narrative_sections(editorial,lang):
@@ -281,13 +284,21 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                               retained='partial_narrative' if selection['review'] or selection['draft'] else 'editorial_themes',
                               selection=selection)
             narratives[lang]=paragraphs
+    overview=None
+    if narrative_strategy=='validated_editorial' and editorial:
+        from .minutes_overview import build_overview
+        overview={lang:build_overview(items,editorial,lang)
+                  for lang in (('es','en') if language=='both' else (language,))}
+        trace('narrative','strategy',{'language':language},
+              strategy=narrative_strategy,retained_themes=len(editorial))
     report=render_minutes(items,mode,language,empty,coverage_gaps,
                           editorial=editorial,editorial_gaps=editorial_gaps,
                           narratives=narratives,narrative_fallbacks=narrative_fallbacks,
-                          show_timestamps=False)
+                          executive_overview=overview,show_timestamps=False)
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,
                        'coverage_gaps':coverage_gaps,'editorial_themes':editorial,
-                       'editorial_gaps':editorial_gaps,'narrative_fallbacks':narrative_fallbacks,'items':items})
+                       'editorial_gaps':editorial_gaps,'narrative_fallbacks':narrative_fallbacks,
+                       'narrative_strategy':narrative_strategy,'items':items})
     return report

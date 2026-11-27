@@ -1,3 +1,9 @@
+## v0.8.18 - Qwen3.5 9B local minutes
+
+- Use `qwen3.5:9b` for local minutes and update the optional setup and interface.
+- Preserve saved audio and transcription when resuming projects created with an earlier minutes model.
+- Keep the 0.8.17 notice and citation fixes in the new private Windows QA candidate.
+
 ## v0.8.17 - Source notices and sentence citations
 
 - Preserve distinct announcements and their source wording when drafting the summary.

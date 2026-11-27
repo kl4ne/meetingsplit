@@ -14,7 +14,7 @@ from urllib.request import build_opener, ProxyHandler, HTTPRedirectHandler, Requ
 from desktop.storage import validate_local_folder
 from engine.control import Cancellation, JobCancelled
 
-MODEL = 'qwen3.8:27b'
+MODEL = 'qwen3.5:9b'
 DEFAULT_ENDPOINT = 'http://127.0.0.1:11434'
 MANAGED_ENDPOINT = 'http://127.0.0.1:11435'
 
@@ -90,7 +90,7 @@ def _stream_open(endpoint, route, payload, cancel):
     try:
         connection.request('POST',route,json.dumps(payload).encode('utf-8'),{'Content-Type':'application/json'})
         connection.sock.settimeout(20)
-        # A cold 27B load and prompt evaluation may need CPU memory on Windows.
+        # Model loading and the first prompt may take longer on Windows.
         startup_limit=420 if route=='/api/chat' and payload.get('model')==MODEL else 180
         deadline=time.monotonic()+startup_limit
         while not select.select([connection.sock],[],[],.25)[0]:
@@ -121,7 +121,7 @@ def stream_json(endpoint, route, payload, cancel, progress, deadline_seconds=900
 
 
 def chat(messages, endpoint=DEFAULT_ENDPOINT, model=MODEL, cancel=None, progress=lambda _:None, timeout=900, json_output=False, *, cpu_only=False, think=None):
-    if model!=MODEL: raise ValueError('Only the local qwen3.8:27b model is supported')
+    if model!=MODEL: raise ValueError(f'Only the local {MODEL} model is supported')
     control=cancel or Cancellation()
     chunks=[]; total=0; done=False; last_update=0; thinking_chars=0
     # Structured extraction needs the completion budget for evidence, not reasoning.
@@ -216,12 +216,12 @@ class LocalService:
                 raise RuntimeError('Remote Ollama model aliases are not allowed')
             return status['model']
         if not allow_download or not self.process:
-            raise RuntimeError('qwen3.8:27b is missing. Use optional component setup to download it.')
+            raise RuntimeError(f'{MODEL} is missing. Use optional component setup to download it.')
         import shutil
         if shutil.disk_usage(self.root).free<24*1024**3: raise OSError('At least 24 GiB free is required for the model download')
         success=False
         for row in stream_json(self.endpoint,'/api/pull',{'model':MODEL,'stream':True},self.cancel,
-                               lambda r:self.progress(f"qwen3.8:27b: {r.get('status','')} {r.get('completed',0)//1048576}/{r.get('total',0)//1048576} MiB"),3600):
+                               lambda r:self.progress(f"{MODEL}: {r.get('status','')} {r.get('completed',0)//1048576}/{r.get('total',0)//1048576} MiB"),3600):
             if row.get('status')=='success': success=True
         model=existing_status(self.endpoint)['model']
         if not success or not model: raise RuntimeError('Model download was not confirmed by Ollama')

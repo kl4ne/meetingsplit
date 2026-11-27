@@ -141,6 +141,18 @@ def _resume_signature(source, x, config, task):
     return {'schema':1,'source_sha256':sha,'source_bytes':stat.st_size,'settings':settings}
 
 
+def _matches_resume_signature(previous, current):
+    if previous == current:
+        return True
+    if not isinstance(previous, dict) or not isinstance(previous.get('settings'), dict):
+        return False
+    settings = previous['settings']
+    if settings.get('ollama_model') not in ('qwen3:4b', 'qwen3.5:4b', 'qwen3.8:27b'):
+        return False
+    # Minutes are regenerated with the current model; the recording and audio settings must match.
+    return dict(previous, settings=dict(settings, ollama_model=MODEL)) == current
+
+
 def _verify_checkpoint(path, expected, task):
     if not expected or not path.is_file() or path.is_symlink() or _sha256(path,task)!=expected:
         raise ValueError('Checkpoint integrity failed; original files preserved: '+path.name)
@@ -217,6 +229,7 @@ def _minutes_pending(manifest):
 
 def _generate_minutes(folder, base, manifest, settings, transcript, progress, task):
     from .ollama import LocalService
+    settings['ollama_model'] = MODEL
     manifest['summary_status']='started'
     for key in ('summary_evidence','summary_evidence_items','summary_empty_source_blocks',
                 'summary_review_required','summary_coverage_gaps'):
@@ -324,8 +337,9 @@ def retry_minutes(folder, output, progress, cancel=None):
 def _run_locked(config,x,src,base,folder,signature,identity,resume,progress,task,on_transcription_device):
     if resume:
         manifest=_read_manifest(folder)
-        if manifest.get('resume_signature')!=signature:
+        if not _matches_resume_signature(manifest.get('resume_signature'), signature):
             raise ValueError('Resume requires the same recording and settings')
+        manifest['resume_signature'] = signature
         if _minutes_pending(manifest):
             return _retry_minutes_locked(folder,base,manifest,progress,task)
         if manifest.get('status')=='complete' and (not signature['settings']['zip_output'] or (folder/'RESULTADOS_COMPLETOS.zip').is_file()):

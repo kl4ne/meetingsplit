@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (QApplication, QDialog, QVBoxLayout, QLabel, QPush
     QCheckBox, QFileDialog, QHBoxLayout, QTextEdit, QMessageBox)
 from desktop.storage import configure_data_root, validate_local_folder
 from engine.control import Cancellation, JobCancelled
+from engine.ollama import MODEL
 
 
 class SetupWorker(QObject):
@@ -62,7 +63,9 @@ class ComponentDialog(QDialog):
         self.folder.setWordWrap(True);layout.addWidget(self.folder)
         self.choose=QPushButton(self.tr('Choose folder…','Elegir carpeta…'));self.choose.clicked.connect(self.pick);layout.addWidget(self.choose)
         self.gpu=QCheckBox(self.tr('NVIDIA CUDA 12 + cuDNN 9 (~1.1 GiB download)','NVIDIA CUDA 12 + cuDNN 9 (~1.1 GiB de descarga)'))
-        self.ollama=QCheckBox(self.tr('Ollama + qwen3.8:27b (~18 GB download if missing)','Ollama + qwen3.8:27b (~18 GB de descarga si faltan)'))
+        self.ollama=QCheckBox(self.tr(
+            f'Ollama + {MODEL} (~6.6 GB model download if missing)',
+            f'Ollama + {MODEL} (~6.6 GB de descarga si falta el modelo)'))
         layout.addWidget(self.gpu);layout.addWidget(self.ollama)
         self.repair=QCheckBox(self.tr('Repair selected MeetingSplit components (keep old copies; close other instances first)',
                                      'Reparar componentes seleccionados (conservar copias anteriores; cerrar otras instancias primero)'))

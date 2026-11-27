@@ -221,7 +221,7 @@ function beginJob(resume=false,retryMinutes=false){
   data.preserve_cpu_quality=el('preserve-cpu-quality').checked;
   data.local_summary=data.action!=='split' && el('local-summary').checked;
   data.zip_output=el('zip-output').checked;
-  data.ollama_model='qwen3.8:27b';
+  data.ollama_model='qwen3.5:9b';
   working=true;jobStarted=Date.now();
   renderLiveTranscriptionDevice('');
   showWorking();updateJobElapsed();

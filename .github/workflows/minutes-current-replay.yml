@@ -1,0 +1,46 @@
+name: Current integrated minutes offline replay
+on:
+  push:
+    branches: [qa/minutes-current-replay-0819]
+    paths: ['.github/workflows/minutes-current-replay.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46015163014
+          name: integrated-localized-short
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/short
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46025742614
+          name: varied-long-localized-qa
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/varied
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46031770427
+          name: varied-targeted-repair
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/targeted
+      - name: Revalidate archived model outputs without inference
+        run: python qa/minutes_current_replay.py "$RUNNER_TEMP/short" "$RUNNER_TEMP/varied" "$RUNNER_TEMP/targeted" "$RUNNER_TEMP/replay"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: current-minutes-replay
+          path: ${{ runner.temp }}/replay
+          if-no-files-found: warn
+          retention-days: 7

@@ -75,3 +75,7 @@ Se conserva el mecanismo de protección. No es verificador semántico y no se mo
 ## Autorización posterior del propietario — 2026-11-27
 
 El propietario autorizó expresamente preparar el portable privado 0.8.19 para pruebas, aceptando las limitaciones editoriales documentadas y sin publicación pública. Se habilita el candidato de revisión (numeración y empaquetado QA); **NO-GO editorial y NO-GO de publicación** siguen vigentes. No se ha certificado calidad profesional, generación final bilingüe/larga ni hardware. No cambiar modelo ni falsear requisitos. Fuente versionada 448a8502521192034e939145d43cc6b18b90898e; #46078498354 y #46078575131 pendientes de resultado al checkpoint. No existe aún ZIP verificado.
+
+## Candidato de revisión disponible — 2026-11-27
+
+CI #46078498354 y compilación #46078575131 aprobadas; ZIP verificado 15236425376, 696 archivos y self-check obligatorio Windows. La autorización del propietario habilitó esta entrega de QA, no la aceptación editorial ni publicación. Sigue pendiente evaluación en ASUS del ejecutable exacto, fidelidad profesional, carga larga y salida EN/BOTH. Ver docs/PORTABLE_0819_QA.md. Gate público NO-GO.

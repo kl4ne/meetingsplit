@@ -124,3 +124,7 @@ CI #46077071845 verde (358 motor, 2 omitidas, 11 navegador, auditoría). #460776
 ## 16. Autorización expresa de candidato de revisión
 
 El propietario autorizó preparar 0.8.19 para pruebas con las limitaciones documentadas, sin publicación pública. Fase 2 editorial permanece pendiente; se permite avanzar a numeración y portable QA, sin declarar calidad definitiva. Código versionado 448a8502521192034e939145d43cc6b18b90898e, CI #46078498354; rama aislada d50567c222c91fab13faacef44431eda83a526f3, #46078575131 exige CI correcto antes de empaquetar. Mantener runtime, medios LGPL, self-check, checksum e inventario exacto; no Setup, merge, tag/release ni levantar gate. Repositorio público: artefactos de Actions no garantizan almacenamiento privado. Consultar run y artefactos reales antes de entregar. Ver checkpoint y aceptación.
+
+## 17. Portable de revisión compilado y verificado
+
+Fuente 448a8502521192034e939145d43cc6b18b90898e, CI #46078498354 verde (359 motor, 2 omitidas, 11 navegador y auditoría). Run #46078575131 verde, ZIP real artefacto 15236425376 y verificación 15235574583 inspeccionados. SHA-256 del ZIP interior: d93c2334a1a2a81d26ef02a89d92952f268cb7695c3dd587fc1d80ba08ba05e5, 463728021 bytes. 696/696 archivos coinciden con inventario, self-check Windows obligatorio aprobado. CUDA no disponible en runner; ASUS, generación real y aceptación editorial pendientes. Entregar candidato para QA según autorización; no publicar, Setup, merge, tag ni levantar gate. Siguiente: pruebas del propietario según docs/PORTABLE_0819_QA.md.

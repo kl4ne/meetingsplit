@@ -636,7 +636,7 @@ def _presentation_text(item, lang):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -653,15 +653,21 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         title=loc['summary'] if mode=='summary' else loc['minutes']
         field='text_'+lang
         lines=['# '+title,'','**'+loc['review_warning']+'**','']
+        brief=(executive_overview or {}).get(lang)
+        if brief:
+            lines += ['## '+loc['summary'],'']
+            for paragraph in brief:
+                lines += [_markdown(paragraph),'']
+        detail_heading=('Temas tratados' if lang=='es' else 'Topics discussed') if brief else loc['summary']
         prose=(narratives or {}).get(lang)
         if prose:
-            lines += ['## '+loc['summary'],'']
+            lines += ['## '+detail_heading,'']
             for paragraph in prose:
                 title=paragraph.get('title')
                 heading=f"**{_markdown(title)}.** " if title else ''
                 lines += [f"{heading}{_markdown(paragraph['text'])} {times(paragraph['sources'])}",'']
         elif editorial:
-            lines += ['## '+loc['summary'],'']
+            lines += ['## '+detail_heading,'']
             for theme in editorial:
                 lines += [f"**{_markdown(theme['title_'+lang])}.** {_markdown(theme['summary_'+lang])} {times(theme['sources'])}",'']
         elif not items:

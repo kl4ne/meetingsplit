@@ -41,3 +41,7 @@ Actual result: 819.771 s, five requests, 2432 characters; zero editorial gaps, o
 ## Combined validation candidate
 
 Isolated quotation retry run #45959062442 passed all 89 focused regressions. Combined with the citation/presentation repair; full engine/browser/dependency CI must pass before any new real inference. No main change or version change yet.
+
+## Consolidation experiment
+
+Combined CI #45959366639 passed 237 engine tests, 2 skipped, 11 browser tests; dependency audit no known findings. Offline exact artifact replay #45959540874, artifact 15180570776, restored all six accepted themes with the new anchor guard; the prior narrative showed only four. The deterministic title-only overview prototype was insufficiently substantive. This isolated real-model candidate uses full accepted topic descriptions and recorded outcomes in a bounded overview, retains all themes and review warnings, and skips two rewrite calls via an explicit QA-only strategy. Default production strategy remains reviewed. Prior draft+review took 256.998 s of 819.771 s CPU time; actual savings and quality still unmeasured. Known residual defects: the source guidance sentence classified as a proposal, and unassigned pending question classified for review. Do not declare short acceptance solely from a green run. No new version or package.

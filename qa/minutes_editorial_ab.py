@@ -116,7 +116,7 @@ def run(output):
         {'role':'user','content':TRANSCRIPT},
     ]
     with patch.object(ollama,'stream_json',instrumented):
-        for arm in ('direct_api','pipeline'):
+        for arm in ('pipeline',):
             start=time.monotonic(); before=call
             try:
                 if arm=='direct_api':
@@ -125,7 +125,8 @@ def run(output):
                 else:
                     evidence={}
                     report=summarize.summarize_local(TRANSCRIPT,'both','es',ollama.MODEL,
-                              evidence_sink=evidence.update,qa_trace=lambda e:emit({'arm':arm,**e}))
+                              evidence_sink=evidence.update,qa_trace=lambda e:emit({'arm':arm,**e}),
+                              narrative_strategy='validated_editorial')
                     write_json(output/'pipeline-evidence.json',evidence)
                 (output/(arm+'.md')).write_text(report,encoding='utf-8')
                 results[arm]={'produced_document':True,'characters':len(report)}

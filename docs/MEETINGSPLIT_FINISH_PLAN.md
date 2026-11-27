@@ -100,3 +100,7 @@ Integración 62416ff4b300c24be0879edaf5d70b1231ef0c60 verde #46070560237 (330 mo
 ## 10. Cierre de reescritura y contabilidad estructural (2026-11-27)
 
 #46073480297 falló aceptación (10 pruebas, 3/4 párrafos filtros, 77.209 s/2 calls); revisión manual detectó nuevas afirmaciones incluso en párrafos aceptados. Cerrar experimentos de prosa adicional. Integrar contabilidad de fuente completa sin inferencia y señalar pasajes no citados para revisión. CI y comparación offline pendientes; no certifica pérdida dentro de frase citada ni calidad profesional. Mantener criterios de fase 2 y autorización de publicación, no numerar/compilar todavía.
+
+## 11. Auditoría de fuente y decisión de aceptación (2026-11-27)
+
+CI #46073912935 verde (336 motor, 2 omitidas, 11 navegador y auditoría). Replay offline sobre cuatro ZIPs: 13 frases sin cita inicial varied, 0 targeted, 2 dense corregido con temas antiguos. Nuevo arreglo independiente del resumen sin minuta conserva títulos adicionales de forma acotada y avisa sobre el registro de evidencias. CI pendiente. Leer docs/MINUTES_EDITORIAL_ACCEPTANCE.md: puerta editorial NO-GO por pérdida de significado incluso con citas completas y falta de aceptación integral del motor final; no volver a pruebas especulativas de redacción, no confundir seguridad estructural con calidad. Fases 3–5 no autorizadas hasta cumplir criterios o decisión explícita sobre un candidato privado con limitaciones; release pública permanece bloqueada.

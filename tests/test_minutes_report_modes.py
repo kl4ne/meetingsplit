@@ -53,3 +53,34 @@ def test_overview_includes_disagreement():
           'text_en':'The group expressed disagreement with the schedule.'}
     assert any('Desacuerdos:' in p and 'horario' in p for p in build_overview([item],[],'es'))
     assert any('Disagreements:' in p and 'schedule' in p for p in build_overview([item],[],'en'))
+
+@pytest.mark.parametrize('lang,label,legacy,reference',[
+    ('es','Otros temas identificados','Los demás temas se desarrollan a continuación.','registro de evidencias'),
+    ('en','Other identified topics','The remaining topics are detailed below.','evidence record'),
+])
+def test_summary_only_discloses_unsampled_topic_titles(lang,label,legacy,reference):
+    themes=[{'sources':[REF],'title_'+lang:f'Title {i:02d}',
+             'summary_'+lang:f'Sentence {i:02d}.'} for i in range(1,10)]
+    legacy_overview=build_overview([],themes,lang)
+    overview=build_overview([],themes,lang,detail_included=False)
+    assert legacy in legacy_overview[0] and legacy not in ' '.join(overview)
+    assert len(overview)==2 and label in overview[1] and reference in overview[1]
+    for theme in themes:
+        assert theme['summary_'+lang] in overview[0] or theme['title_'+lang] in overview[1]
+    report=render_minutes([],'summary',lang,editorial=themes,
+        executive_overview={lang:overview},respect_mode=True)
+    assert legacy not in report and label in report
+
+def test_summary_only_topic_inventory_is_bounded_and_explicit():
+    themes=[{'sources':[REF],'title_es':f'Tema adicional {i:03d} '+'x'*55,
+             'summary_es':f'Descripción única {i:03d}.'} for i in range(100)]
+    overview=build_overview([],themes,'es',detail_included=False)
+    assert len(overview)==2
+    assert 'de 94 títulos adicionales' in overview[1]
+    assert len(overview[1])<1200
+    assert 'registro de evidencias' in overview[1]
+
+def test_summary_only_no_additional_inventory_if_all_themes_sampled():
+    overview=build_overview([],THEMES,'es',detail_included=False)
+    assert overview==[THEMES[0]['summary_es']]
+

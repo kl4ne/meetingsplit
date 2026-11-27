@@ -12,16 +12,40 @@ def _sample(values, maximum):
         return values[:1]
     return [values[round(i*(len(values)-1)/(maximum-1))] for i in range(maximum)]
 
-def build_overview(items, themes, lang):
+def _other_topic_titles(themes, chosen, lang):
+    """Bound the inventory of unsampled titles; never claim it is a synthesis."""
+    titles=[];seen=set()
+    for theme in themes:
+        if theme['summary_'+lang].strip() in chosen:
+            continue
+        title=theme['title_'+lang].strip()
+        key=title.casefold()
+        if title and key not in seen:
+            seen.add(key);titles.append(title)
+    selected=_sample(titles,12)
+    while len('; '.join(selected))>900 and len(selected)>1:
+        selected=_sample(titles,len(selected)-1)
+    if selected and len('; '.join(selected))>900:
+        selected=[]
+    return selected,len(titles)
+
+
+def build_overview(items, themes, lang, *, detail_included=True):
     loc=_LOCALES[lang]
     labels={
         'es':{'more':'Los demás temas se desarrollan a continuación.',
               'detail':'Consulta el detalle en la sección correspondiente.',
+              'other':'Otros temas identificados (títulos)',
+              'other_count':'Se muestran {shown} de {total} títulos adicionales.',
+              'source_detail':'El registro de evidencias conserva las síntesis y citas; esta lista no es una síntesis completa.',
               'decision':'Acuerdos registrados','action':'Tareas registradas',
               'notice':'Avisos','pending':'Pendientes','proposal':'Propuestas','disagreement':'Desacuerdos',
               'topic':'Información financiera'},
         'en':{'more':'The remaining topics are detailed below.',
               'detail':'See the corresponding section for details.',
+              'other':'Other identified topics (titles)',
+              'other_count':'Showing {shown} of {total} additional titles.',
+              'source_detail':'The evidence record retains the summaries and quotations; this list is not a complete synthesis.',
               'decision':'Recorded decisions','action':'Recorded tasks',
               'notice':'Announcements','pending':'Pending items','proposal':'Proposals','disagreement':'Disagreements',
               'topic':'Financial information'},
@@ -33,9 +57,18 @@ def build_overview(items, themes, lang):
         chosen=_sample(values,len(chosen)-1)
     if chosen:
         lead=' '.join(v if v.endswith(('.', '!', '?')) else v+'.' for v in chosen)
-        if len(chosen)<len(values):
+        if len(chosen)<len(values) and detail_included:
             lead+=' '+labels['more']
         paragraphs.append(lead)
+        if len(chosen)<len(values) and not detail_included:
+            titles,total=_other_topic_titles(themes,chosen,lang)
+            inventory=[]
+            if titles:
+                inventory.append(labels['other']+': '+'; '.join(titles)+'.')
+            if len(titles)<total:
+                inventory.append(labels['other_count'].format(shown=len(titles),total=total))
+            inventory.append(labels['source_detail'])
+            paragraphs.append(' '.join(inventory))
     for category in ('decision','action','notice','pending','proposal','disagreement','topic'):
         records=sorted((i for i in items if i['category']==category and
                  (category!='topic' or any(_AMOUNT.search(r['quote']) for r in i['sources']))),

@@ -246,3 +246,37 @@ def test_source_first_modes_are_distinct_and_keep_structured_events_and_warnings
     assert 'Introducción breve.' in both and 'Detalle de la rampa.' in both
     assert all('Se aprobó el horario.' in d and 'revisión editorial no se completó' in d for d in (summary,minutes,both))
     assert summary.count('Resumen ejecutivo')==1 and '## Temas tratados' in minutes
+
+
+def test_dense_synthetic_capacity_preserves_all_source_sentences_without_model():
+    """Scale-only test; fake grouping does not establish semantic accuracy."""
+    from engine.minutes_source_first import compose_source_first,source_units_with_accounting
+    paragraphs=[]
+    for i in range(270):
+        # Distinct indexed rows, with repeated synthetic prose solely to
+        # exercise byte limits at the historical workload size.
+        text=('Se revisó el material de consulta de la sección '+str(i+1)+
+              ', con atención a la descripción de los documentos, la organización del contenido '
+              'y la localización de los anexos disponibles en el archivo. '
+              'Se explicó la diferencia entre el documento original y la copia de trabajo '
+              'utilizada durante la sesión de formación '+str(i+1)+'.')
+        paragraphs.append(f'[{i*30//3600:02d}:{i*30//60%60:02d}:{i*30%60:02d}] {text}')
+    transcript='\n'.join(paragraphs)
+    assert len(transcript.split())>=16000
+    blocks=list(source_blocks(transcript))
+    calls=[]
+    def request(messages,schema,**kw):
+        assert kw['stage']=='source_first_grouping'
+        ids=kw['scope']['unit_ids'];calls.append(ids)
+        assert len(ids)<=40
+        payload=json.loads(messages[1]['content'])['units']
+        assert sum(len(json.dumps(u,ensure_ascii=False).encode('utf-8')) for u in payload)<=9500
+        groups=[{'title':'Material de consulta' if j==0 else 'Documentos de trabajo',
+                 'unit_ids':ids[j:j+20],'overview_id':ids[j]} for j in range(0,len(ids),20)]
+        return json.dumps({'groups':groups})
+    out=compose_source_first(blocks,[],[],'es',request)
+    assert len(out['units'])==540
+    assert len(out['source_accounting'])==540
+    assert not out['translation_rejected'] and not out['grouping_failures']
+    assert sorted(i for window in out['windows'] for g in window['groups'] for i in g['unit_ids'])==list(range(1,541))
+    assert len(calls)>1

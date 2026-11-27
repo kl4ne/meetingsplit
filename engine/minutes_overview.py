@@ -37,8 +37,9 @@ def build_overview(items, themes, lang):
             lead+=' '+labels['more']
         paragraphs.append(lead)
     for category in ('decision','action','notice','pending','proposal','topic'):
-        records=[i for i in items if i['category']==category and
-                 (category!='topic' or any(_AMOUNT.search(r['quote']) for r in i['sources']))]
+        records=sorted((i for i in items if i['category']==category and
+                 (category!='topic' or any(_AMOUNT.search(r['quote']) for r in i['sources']))),
+                 key=lambda i:min(r['source_id'] for r in i['sources']))
         if not records:
             continue
         descriptions=[]
@@ -56,7 +57,11 @@ def build_overview(items, themes, lang):
                     value=value.rstrip('.')+' ('+'; '.join(fields)+')'
             if value not in descriptions:
                 descriptions.append(value)
-        chosen=_sample(descriptions,2)
+        # Preserve all outcomes of a short list. Bound longer lists and sample
+        # chronologically; the full detailed record is always retained.
+        chosen=_sample(descriptions,5)
+        while len(' '.join(chosen))>1100 and len(chosen)>1:
+            chosen=_sample(descriptions,len(chosen)-1)
         if chosen:
             text=labels[category]+': '+ ' '.join(v if v.endswith(('.', '!', '?')) else v+'.' for v in chosen)
             if len(chosen)<len(records):

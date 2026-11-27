@@ -783,7 +783,7 @@ def _presentation_text(item, lang):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=()) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=(), respect_mode=False) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -804,14 +804,17 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         title=loc['summary'] if mode=='summary' else loc['minutes']
         field='text_'+lang
         lines=['# '+title,'','**'+loc['review_warning']+'**','']
-        brief=(executive_overview or {}).get(lang)
+        brief=(executive_overview or {}).get(lang) if not respect_mode or mode!='minutes' else None
         if brief:
-            lines += ['## '+loc['summary'],'']
+            if not (respect_mode and mode=='summary'):
+                lines += ['## '+loc['summary'],'']
             for paragraph in brief:
                 lines += [_markdown(paragraph),'']
-        detail_heading=('Temas tratados' if lang=='es' else 'Topics discussed') if brief else loc['summary']
+        detail_heading=('Temas tratados' if lang=='es' else 'Topics discussed') if brief or respect_mode else loc['summary']
         prose=(narratives or {}).get(lang)
-        if prose:
+        if respect_mode and mode=='summary':
+            pass  # Summary keeps structured outcomes and warnings, not detailed thematic prose.
+        elif prose:
             lines += ['## '+detail_heading,'']
             for paragraph in prose:
                 title=paragraph.get('title')
@@ -844,7 +847,9 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
             selected=facts if category=='topic' else [i for i in items if i['category']==category]
             if not selected:
                 continue
-            lines+=['## '+loc[category],'']
+            heading=({'es':'Información financiera','en':'Financial information'}[lang]
+                     if respect_mode and category=='topic' else loc[category])
+            lines+=['## '+heading,'']
             grouped=[]
             repeated={}
             for item in selected:

@@ -203,7 +203,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         # Optional comparison strategy, not selected by the desktop.
         from .minutes_source_first import compose_source_first
         from .minutes_localization import localize_items
-        from .minutes_overview import build_overview
+        from .minutes_overview import build_source_first_overview
         from .minutes_evidence import repeated_topic_coverage
         langs=('es','en') if language=='both' else (language,)
         presentation=[dict(i) for i in items]
@@ -220,8 +220,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             themes.extend(local_themes)
             narratives[lang]=[{'title':t['title_'+lang],'text':t['summary_'+lang],'sources':t['sources']}
                               for t in local_themes]
-            representative_themes=[{'summary_'+lang:r} for r in composed['representatives']]
-            overview[lang]=build_overview(presentation,representative_themes,lang)
+            overview[lang]=build_source_first_overview(presentation,composed,lang,mode)
             if composed['grouping_failures'] or composed['translation_rejected'] or source_first_extraction_failures:
                 fallbacks.append({'language':lang,'theme_ids':[],
                     'reason':'source_first incomplete validation'})
@@ -231,7 +230,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         repetition=repeated_topic_coverage(blocks,items,themes,[])
         report=render_minutes(presentation,mode,language,repetition['unresolved_empty_block_ids'],coverage_gaps,
             editorial_gaps=[],narratives=narratives,narrative_fallbacks=fallbacks,
-            executive_overview=overview,show_timestamps=False,repetition_coverage=repetition,localization=localization)
+            executive_overview=overview,show_timestamps=False,repetition_coverage=repetition,localization=localization,respect_mode=True)
         if evidence_sink is not None:
             evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                 'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,

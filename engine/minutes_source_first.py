@@ -14,34 +14,53 @@ from .minutes_evidence import (_SENTENCE_BREAK,_NUMBER,_AMOUNT,_AGREEMENT,_PROPO
     editorial_decision_error)
 from .minutes_localization import _language,translation_request,apply_translations
 
-def source_units(blocks,items,presentation,lang,localization=(),*,explicit_items=None):
-    """Derive input from production evidence; never from an expected-answer list."""
-    by_key={}
-    # Complete structured events are displayed in their own section even
-    # when translation fails: the renderer retains the original quotation
-    # and warning. Never split a proposal's negation into a separate topic.
+def source_units_with_accounting(blocks,items,presentation,lang,localization=(),*,explicit_items=None):
+    """Partition every source sentence into detail, a structured citation or a safe exact repeat.
+
+    Do not use a model-generated description to decide whether a source is
+    covered. Do not discard personal asides, partial quotes or near-duplicates.
+    A complete operational event remains in its structured section even if
+    localization fails, with the original citation and its existing warning.
+    """
+    from .minutes_evidence import (_UNCERTAIN,_DISAGREEMENT,_RESERVED_SCHEDULE,
+        _ANNOUNCED_START,_DEADLINE_QUALIFIERS,_PERSONAL_TENTATIVE)
+    by_row={}
     for i,item in enumerate(items):
-        if item['category'] not in ('proposal','pending'):
+        if item['category'] not in ('decision','action','notice','proposal','disagreement','pending','review') and not (
+                item['category']=='topic' and any(_AMOUNT.search(r['quote']) for r in item['sources'])):
             continue
-        refs=item['sources']
-        if len({r['source_id'] for r in refs})==1:
-            by_key[(refs[0]['source_id'],' '.join(r['quote'] for r in refs))]=i
-    units=[]
-    # Reconstruct the same explicit source items used by the real pipeline.
-    from .minutes_evidence import explicit_source_items
-    explicit=explicit_source_items([r for b in blocks for r in b],lang) if explicit_items is None else explicit_items
-    for section in editorial_input(blocks,items,explicit_items=explicit):
-        for ref in section:
-            if (ref['source_id'],ref['quote']) in by_key:
-                continue
-            # Split on actual sentence boundary, not semicolons or abbreviations
-            # guessed from model output. A compound sentence stays intact.
-            for sentence in _SENTENCE_BREAK.split(ref['quote']):
+        for ref in item['sources']:
+            by_row.setdefault(ref['source_id'],[]).append((i,ref['quote']))
+    guards=(_AMOUNT,_AGREEMENT,_UNCERTAIN,_PROPOSAL,_NOTICE,_PENDING,_IMPLEMENTATION,
+            _COMMITMENT,_DISAGREEMENT,_RESERVED_SCHEDULE,_ANNOUNCED_START,
+            _PERSONAL_TENTATIVE,*_DEADLINE_QUALIFIERS)
+    units=[];accounting=[];prior={}
+    for block in blocks:
+        for row in block:
+            for sentence in _SENTENCE_BREAK.split(row['text']):
                 quote=sentence.strip()
-                if quote:
-                    units.append({'id':len(units)+1,'source':dict(ref,quote=quote),'text':quote,
-                                  'status':'literal' if _language(quote,lang) else 'needs_translation'})
-    return units
+                if not quote:
+                    continue
+                ref={'source_id':row['id'],'timestamp':row['timestamp'],'quote':quote}
+                matches=[i for i,q in by_row.get(row['id'],[]) if quote in q]
+                if matches:
+                    accounting.append({'source':ref,'status':'structured','item_indices':sorted(set(matches))})
+                    continue
+                safe=not any(p.search(quote) for p in guards)
+                if safe and quote in prior:
+                    accounting.append({'source':ref,'status':'exact_repeat','unit_id':prior[quote]})
+                    continue
+                uid=len(units)+1
+                units.append({'id':uid,'source':ref,'text':quote,
+                    'status':'literal' if _language(quote,lang) else 'needs_translation'})
+                accounting.append({'source':ref,'status':'detail','unit_id':uid})
+                if safe:
+                    prior[quote]=uid
+    return units,accounting
+
+def source_units(blocks,items,presentation,lang,localization=(),*,explicit_items=None):
+    return source_units_with_accounting(blocks,items,presentation,lang,localization,
+                                        explicit_items=explicit_items)[0]
 
 def _batches(values,size_of,maximum_count,maximum_bytes):
     batch=[];size=0
@@ -249,7 +268,7 @@ def compose_source_first(blocks,items,presentation,lang,request,*,explicit_items
     unlimited request. No claim that the resulting headings are globally optimal.
     """
     from .control import JobCancelled
-    units=source_units(blocks,items,presentation,lang,localization,explicit_items=explicit_items)
+    units,accounting=source_units_with_accounting(blocks,items,presentation,lang,localization,explicit_items=explicit_items)
     translated,bad,_=translate_units(units,lang,request,cancel=cancel)
     themes=[];representatives=[];windows=[];failures=[]
     for number,window in enumerate(_batches(translated,lambda u:len(
@@ -284,7 +303,7 @@ def compose_source_first(blocks,items,presentation,lang,request,*,explicit_items
     if cancel:cancel.check()
     assert sorted(i for w in windows for g in w['groups'] for i in g['unit_ids'])==[u['id'] for u in translated]
     return {'language':lang,'units':translated,'themes':themes,'representatives':representatives,
-            'windows':windows,'translation_rejected':bad,'grouping_failures':failures}
+            'windows':windows,'source_accounting':accounting,'translation_rejected':bad,'grouping_failures':failures}
 
 
 def source_first_extraction_request(rows):

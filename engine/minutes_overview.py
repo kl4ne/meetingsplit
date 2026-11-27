@@ -72,3 +72,33 @@ def build_overview(items, themes, lang):
             text=labels[category]+': '+labels['detail']
         paragraphs.append(text)
     return paragraphs
+
+
+def build_source_first_overview(items,composed,lang,mode):
+    """Bounded, extractive and explicit: no further model rewrite.
+
+    Mention each group heading when space permits; include representative
+    source statements and verified outcomes. In summary mode the renderer
+    retains the full structured sections, so do not repeat their text here.
+    """
+    titles=list(dict.fromkeys(t['title_'+lang].strip() for t in composed['themes']))
+    representatives=list(dict.fromkeys(x.strip() for x in composed['representatives']))
+    paragraphs=[]
+    chosen=[]
+    for title in titles:
+        if len('; '.join(chosen+[title]))>850:
+            break
+        chosen.append(title)
+    if chosen:
+        intro=('Temas principales: ' if lang=='es' else 'Main subjects: ')+'; '.join(chosen)+'.'
+        if len(chosen)<len(titles):
+            intro+=(' Otros temas constan en las evidencias.' if lang=='es' else ' Further topics are recorded in the evidence.')
+        paragraphs.append(intro)
+    selected=_sample(representatives,4)
+    while len(' '.join(selected))>1000 and len(selected)>1:
+        selected=_sample(selected,len(selected)-1)
+    if selected:
+        paragraphs.append(' '.join(v if v.endswith(('.', '!', '?')) else v+'.' for v in selected))
+    if mode=='both':
+        paragraphs.extend(build_overview(items,[],lang))
+    return paragraphs

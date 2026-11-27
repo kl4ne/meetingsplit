@@ -209,3 +209,40 @@ def test_narrow_passive_approval_translation(text,valid):
           'sources':[{'source_id':1,'quote':'Se aprobó mantener el formato actual del formulario de visitantes.'}]}
     good,bad=apply_translations(json.dumps({'translations':[{'id':0,'text':text}]}),[item],[0],'en')
     assert bool(good)==valid and bool(bad)!=valid
+
+
+def test_every_source_sentence_accounted_without_normalized_dedup_or_personal_aside_loss():
+    from engine.minutes_source_first import source_units_with_accounting
+    text='\n'.join([
+        '[00:00:01] Se explicó la rampa. Se explicó el registro.',
+        '[00:00:02] Se explicó la rampa.',
+        '[00:00:03] Se explicó LA rampa.',
+        '[00:00:04] Yo podría revisar el plano.',
+        '[00:00:05] Se aprobó conservar el horario. La puerta tiene una rampa.',
+    ])
+    blocks=list(source_blocks(text))
+    item={'category':'decision','owner':None,'due':None,'text_es':'Se aprobó conservar el horario.',
+          'sources':[{'source_id':5,'timestamp':'00:00:05','quote':'Se aprobó conservar el horario.'}]}
+    units,account=source_units_with_accounting(blocks,[item],[item],'es')
+    assert len(account)==7 and len(units)==5
+    assert [a['status'] for a in account]==['detail','detail','exact_repeat','detail','detail','structured','detail']
+    assert any(u['text']=='Yo podría revisar el plano.' for u in units)
+    assert any('LA rampa' in u['text'] for u in units)
+    assert any('puerta tiene una rampa' in u['text'] for u in units)
+
+def test_source_first_modes_are_distinct_and_keep_structured_events_and_warnings():
+    from engine.minutes_evidence import render_minutes
+    item={'category':'decision','owner':None,'due':None,'text_es':'Se aprobó el horario.',
+          'sources':[{'source_id':1,'timestamp':'00:00:01','quote':'Se aprobó el horario.'}]}
+    kwargs={'narratives':{'es':[{'title':'Orientación','text':'Detalle de la rampa.','sources':[]}]},
+            'executive_overview':{'es':['Introducción breve.']},
+            'respect_mode':True,'show_timestamps':False,
+            'narrative_fallbacks':[{'language':'es','theme_ids':[]}]}
+    summary=render_minutes([item],'summary','es',**kwargs)
+    minutes=render_minutes([item],'minutes','es',**kwargs)
+    both=render_minutes([item],'both','es',**kwargs)
+    assert 'Introducción breve.' in summary and 'Detalle de la rampa.' not in summary
+    assert 'Introducción breve.' not in minutes and 'Detalle de la rampa.' in minutes
+    assert 'Introducción breve.' in both and 'Detalle de la rampa.' in both
+    assert all('Se aprobó el horario.' in d and 'revisión editorial no se completó' in d for d in (summary,minutes,both))
+    assert summary.count('Resumen ejecutivo')==1 and '## Temas tratados' in minutes

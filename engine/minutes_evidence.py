@@ -637,6 +637,60 @@ def find_coverage_gaps(rows, items):
     return gaps
 
 
+def repeated_topic_coverage(blocks, items, editorial, empty_blocks):
+    """Account for exact earlier descriptive repetitions, never decisions.
+
+    Retain raw extraction diagnostics. This lexical accounting neither
+    establishes semantic correctness nor clears new text, uncertain speech,
+    partial citations, or operational statements.
+    """
+    rows={row['id']:row for block in blocks for row in block}
+    safe={}
+    guards=(_AMOUNT,_AGREEMENT,_UNCERTAIN,_PROPOSAL,_NOTICE,_RESERVED_SCHEDULE,
+            _ANNOUNCED_START,_PENDING,_DISAGREEMENT,_IMPLEMENTATION,_COMMITMENT,
+            *_DEADLINE_QUALIFIERS)
+    def eligible(text):
+        return bool(text.strip() and not any(p.search(text) for p in guards))
+    references=[ref for theme in editorial for ref in theme['sources']]
+    references.extend(ref for item in items if item['category']=='topic'
+                      and not item.get('owner') and not item.get('due') for ref in item['sources'])
+    for ref in references:
+        row=rows.get(ref['source_id'])
+        if row and ref['quote']==row['text'] and eligible(row['text']):
+            safe[row['text']]=min(row['id'],safe.get(row['text'],row['id']))
+    def prior(row):
+        first=safe.get(row['text'])
+        return first if first is not None and first<row['id'] else None
+    covered_blocks=[];unresolved_blocks=[]
+    for number in empty_blocks:
+        block=blocks[number-1]
+        matches=[prior(row) for row in block]
+        if block and all(match is not None for match in matches):
+            covered_blocks.append({'block':number,'matches':[
+                {'source_id':row['id'],'earlier_source_id':match} for row,match in zip(block,matches)]})
+        else:
+            unresolved_blocks.append(number)
+    repeated_reviews=[];unresolved_reviews=[]
+    for index,item in enumerate(items):
+        if item['category']!='review':
+            continue
+        matches=[]
+        if not item.get('owner') and not item.get('due'):
+            for ref in item['sources']:
+                row=rows.get(ref['source_id'])
+                first=prior(row) if row and row['text']==ref['quote'] else None
+                if first is None:
+                    matches=[]
+                    break
+                matches.append({'source_id':row['id'],'earlier_source_id':first})
+        if matches:
+            repeated_reviews.append({'item_index':index,'matches':matches})
+        else:
+            unresolved_reviews.append(index)
+    return {'covered_empty_blocks':covered_blocks,'unresolved_empty_block_ids':unresolved_blocks,
+            'repeated_review_items':repeated_reviews,'unresolved_review_indices':unresolved_reviews}
+
+
 def _markdown(value):
     # Render model/transcript text as text, not links, HTML or headings.
     value=' '.join(value.split())
@@ -683,12 +737,13 @@ def _presentation_text(item, lang):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
     facts=[item for item in topics if any(_AMOUNT.search(ref['quote']) for ref in item['sources'])]
-    review_count=sum(item['category']=='review' for item in items)
+    covered_review_indices={entry['item_index'] for entry in (repetition_coverage or {}).get('repeated_review_items',[])}
+    review_count=sum(item['category']=='review' and i not in covered_review_indices for i,item in enumerate(items))
 
     def times(sources):
         if not show_timestamps:
@@ -780,13 +835,16 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 note=('Un elemento quedó marcado' if review_count==1 else f'{review_count} elementos quedaron marcados')+' para revisión en el JSON de evidencias.'
             lines += [note,'']
             reviewed_quotes={}
-            for item in items:
-                if item['category']=='review':
+            for index,item in enumerate(items):
+                if item['category']=='review' and index not in covered_review_indices:
                     for ref in item['sources']:
                         reviewed_quotes.setdefault(ref['quote'],[]).append(ref)
             for quote,refs in reviewed_quotes.items():
                 lines.append('- '+times(refs)+' "'+_markdown(quote)+'"')
             lines.append('')
+        if repetition_coverage and (repetition_coverage['covered_empty_blocks'] or covered_review_indices):
+            lines += [('Se conservaron en el JSON las advertencias de extracción sobre pasajes repetidos literalmente y ya citados. La equivalencia semántica no está certificada.'
+                       if lang=='es' else 'Extraction warnings for exact previously cited repetitions remain in the evidence JSON. Semantic equivalence is not certified.'),'']
         if editorial_gaps:
             lines += [('Pasajes sin síntesis' if lang=='es' else 'Passages without a synthesis'),'']
             for ref in editorial_gaps:

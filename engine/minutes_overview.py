@@ -46,6 +46,14 @@ def build_overview(items, themes, lang):
             value=_presentation_text(item,lang).strip()
             if value==loc['source_only'] or 'consulta la cita original' in value or 'see the source quotation' in value:
                 continue
+            if category=='action':
+                fields=[]
+                if item.get('owner') and item['owner'].casefold() not in value.casefold():
+                    fields.append(loc['owner']+': '+item['owner'])
+                if item.get('due') and item['due'].casefold() not in value.casefold():
+                    fields.append(loc['due']+': '+item['due'])
+                if fields:
+                    value=value.rstrip('.')+' ('+'; '.join(fields)+')'
             if value not in descriptions:
                 descriptions.append(value)
         chosen=_sample(descriptions,2)

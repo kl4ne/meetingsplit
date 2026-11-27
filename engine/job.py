@@ -259,7 +259,13 @@ def _generate_minutes(folder, base, manifest, settings, transcript, progress, ta
         diagnostic.unlink(missing_ok=True)
         gaps=len(evidence.get('coverage_gaps',[]))
         items=evidence.get('items',[])
-        needs_review=bool(gaps or not items or evidence.get('editorial_gaps') or evidence.get('narrative_fallbacks')
+        repetition=evidence.get('repetition_coverage')
+        unresolved_empty=(repetition['unresolved_empty_block_ids'] if repetition is not None
+                          else evidence.get('empty_block_ids',[]))
+        # Preserve review classification until editorial acceptance. Exact
+        # repetitions are accounted for, not a semantic approval.
+        needs_review=bool(gaps or not items or unresolved_empty or evidence.get('editorial_gaps')
+                          or evidence.get('narrative_fallbacks')
                           or any(item.get('category')=='review' for item in items))
         manifest.update(summary_status='needs_review' if needs_review else 'complete',
                         summary_review_required=True,summary_evidence='MINUTA_EVIDENCIAS.json',

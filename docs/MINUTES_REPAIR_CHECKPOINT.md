@@ -63,3 +63,7 @@ Run #45994579450, artifact 15196553252: 276 rows, 11 blocks, 36,178 characters, 
 ## Long presentation localization checkpoint
 
 Run #46001580090 passed 19 preflight tests; 3/4 translations accepted, one rejected for changing by Friday to before Friday (artifact 15198461769). Actual translation time 30.54 s, one call. Do not weaken deadline checks. Normalize explicit bilingual weekday relations, distinguish by/before/on/after, and preserve named deadline statements. Reuse three accepted responses only after strengthened validation; retry rejected Ana Ruiz translation and missing Alex Park commitment. Same-language 800 pesos approval restored verbatim; original items immutable. No general semantic certification or production integration yet. Generic/redundant editorial themes still need attention.
+
+## Protected weekday replay
+
+Exact artifact 15201659731: Alex Park response used "antes del jueves" rather than inclusive by Thursday; Ana Ruiz response used "más tardar el viernes" (missing a). 24 tests passed, 3/5 accepted. Restore only a single terminal weekday relation of a single affirmative action using exact source day and relation; require unchanged named actor, same day, one sentence, no detected conditions or negation, preserve commitment verb, run existing translation validator. No changes to original evidence, log before/after. No general semantic guarantee. Offline replay uses both recorded outputs and adds nine regression cases. No new inference or production integration yet.

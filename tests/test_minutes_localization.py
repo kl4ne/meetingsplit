@@ -73,3 +73,39 @@ def test_recorded_explicit_deadline_translation_is_preserved():
     copies,todo=prepare_presentation(original,'es')
     translated='David Lin prometió circular la lista de verificación de proveedores. El plazo límite para esta tarea es el martes.'
     assert apply_translations(json.dumps({'translations':[{'id':0,'text':translated}]}),copies,todo,'es')==([0],[])
+
+
+from engine.minutes_localization import restore_protected_weekday
+
+@pytest.mark.parametrize('source,owner,day,response,expected',[
+    ('Alex Park committed to documenting the handoff by Thursday.','Alex Park','Thursday',
+     'Alex Park se comprometió a documentar la transferencia antes del jueves.',
+     'Alex Park se comprometió a documentar la transferencia a más tardar el jueves.'),
+    ('Ana Ruiz will send the access draft by Friday.','Ana Ruiz','Friday',
+     'Ana Ruiz enviará el borrador de acceso más tardar el viernes.',
+     'Ana Ruiz enviará el borrador de acceso a más tardar el viernes.'),
+    ('Ana Ruiz will send the access draft before Friday.','Ana Ruiz','Friday',
+     'Ana Ruiz enviará el borrador de acceso el viernes.',
+     'Ana Ruiz enviará el borrador de acceso antes del viernes.'),
+])
+def test_restore_protected_weekday_from_exact_source(source,owner,day,response,expected):
+    original=item('action',source,owner,day)
+    assert restore_protected_weekday(response,original,'es')==expected
+    assert original['text_es']==_LOCALES['es']['source_only']
+
+@pytest.mark.parametrize('source,response',[
+    ('Alex Park committed to documenting the handoff by Thursday.',
+     'Alex Park se comprometió a documentar la transferencia antes del viernes.'),
+    ('Alex Park committed to documenting the handoff by Thursday.',
+     'Alex Park documentará la transferencia antes del jueves.'),
+    ('Alex Park committed to documenting the handoff by Thursday.',
+     'Alex Park se comprometió a documentar la transferencia no antes del jueves.'),
+    ('Alex Park committed to documenting the handoff by Thursday.',
+     'Alex Park se comprometió a documentar la transferencia el martes antes del jueves.'),
+    ('Alex Park committed to documenting the handoff by Thursday.',
+     'Alex Park se comprometió a documentar la transferencia. Antes del jueves.'),
+    ('Alex Park committed to documenting the handoff only by Thursday.',
+     'Alex Park se comprometió a documentar la transferencia antes del jueves.'),
+])
+def test_protected_weekday_refuses_ambiguous_or_changed_content(source,response):
+    assert restore_protected_weekday(response,item('action',source,'Alex Park','Thursday'),'es') is None

@@ -1,0 +1,50 @@
+name: Offline protected weekday replay
+on:
+  push:
+    branches: [qa/minutes-localized-long-replay]
+    paths: ['.github/workflows/minutes-protected-weekday-replay.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - name: Test protected weekday restoration
+        run: |
+          python -m pip install pytest
+          python -m pytest -q tests/test_minutes_localization.py tests/test_minutes_repeated_topic_coverage.py tests/test_minutes_consolidated_strategy.py
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 45994579450
+          name: consolidated-long-source-qa
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/original
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46001580090
+          name: localized-long-presentation
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/prior
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46008752302
+          name: localized-long-presentation
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/retry
+      - name: Replay exact responses without inference
+        run: python qa/minutes_protected_weekday_replay.py "$RUNNER_TEMP/original" "$RUNNER_TEMP/prior" "$RUNNER_TEMP/retry" "$RUNNER_TEMP/replayed"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: protected-weekday-replay
+          path: ${{ runner.temp }}/replayed
+          if-no-files-found: warn
+          retention-days: 7

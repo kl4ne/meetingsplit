@@ -128,6 +128,55 @@ def _validate_translation(text,item,lang):
         raise ValueError('Translation changed operational meaning')
     return text
 
+# For a single affirmative action with a single terminal weekday relation,
+# the date phrase is a protected field, not a model-generated fact. A retry
+# can repair ONLY that suffix, using the literal source relation and day.
+# Other text, unknown dates, negation, multiple sentences or changed days
+# require ordinary rejection and review.
+_PROTECTED_SOURCE_END=re.compile(
+    r'\b(?P<relation>by|before|after|on)\s+(?P<day>Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\.$',
+    re.IGNORECASE)
+_PROTECTED_TARGET_END=re.compile(
+    r'\b(?P<relation>a más tardar el|más tardar el|como máximo el|para el|antes del|antes de|después del|después de|el)\s+'
+    r'(?P<day>lunes|martes|miércoles|jueves|viernes|sábado|domingo)\.$',re.IGNORECASE)
+_PROTECTED_EXCLUSIONS=re.compile(r'\b(?:not|never|unless|if|only|no|nunca|salvo|si|solo|sólo|excepto|sin|but|pero|or|o)\b|[?¿!¡;:\n\r]',re.IGNORECASE)
+_ANY_DAY=re.compile(r'\b(?:'+'|'.join([*map(str.lower,_DAYS),*_DAYS.values()])+r')\b',re.IGNORECASE)
+
+
+def restore_protected_weekday(text,item,lang):
+    """Return a narrowly corrected presentation or None; never edit evidence."""
+    if lang!='es' or item['category']!='action' or not item.get('owner') or not item.get('due'):
+        return None
+    if not isinstance(text,str) or len(item['sources'])!=1:
+        return None
+    original=source_text(item)
+    # Protect only a single unambiguous sentence, not recurring or qualified dates.
+    if original.count('.')!=1 or text.count('.')!=1 or _PROTECTED_EXCLUSIONS.search(original) or _PROTECTED_EXCLUSIONS.search(text):
+        return None
+    source=_PROTECTED_SOURCE_END.search(original)
+    target=_PROTECTED_TARGET_END.search(text)
+    if source is None or target is None or len(_ANY_DAY.findall(original))!=1 or len(_ANY_DAY.findall(text))!=1:
+        return None
+    day=local_day(source['day'],'es')
+    if target['day'].casefold()!=day.casefold() or local_day(item['due'],'es').casefold()!=day.casefold():
+        return None
+    if not original.startswith(item['owner']+' ') or not text.startswith(item['owner']+' '):
+        return None
+    stem=text[:target.start()].rstrip()
+    if not stem or re.search(r'\b(?:antes|después|tardar|máximo|before|after|by|on)\b',stem,re.IGNORECASE):
+        return None
+    # Do not silently turn a commitment into an unassigned task.
+    if re.search(r'\b(?:committed|promised|agreed) to\b',original,re.IGNORECASE) and not re.search(
+            r'\b(?:se comprometió a|prometió|acordó)\b',stem,re.IGNORECASE):
+        return None
+    prefix={'by':'a más tardar el','before':'antes del','after':'después del','on':'el'}[source['relation'].casefold()]
+    repaired=stem+' '+prefix+' '+day+'.'
+    try:
+        return _validate_translation(repaired,item,lang)
+    except ValueError:
+        return None
+
+
 def apply_translations(raw,items,indices,lang):
     document=json.loads(raw,object_pairs_hook=_unique_keys)
     if not isinstance(document,dict) or set(document)!={'translations'} or not isinstance(document['translations'],list):

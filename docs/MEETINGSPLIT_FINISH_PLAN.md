@@ -92,3 +92,7 @@ Candidato aislado b817e5b69054705b45042b0c12c1d91a424f5118, run #46069647403 en 
 ## 8. Resultado focal y decisión vigente (2026-11-27)
 
 Run #46069647403 falló generación pese a 19 regresiones verdes; 2/8 pares válidos, 234.705 s/2 requests, artefacto 15233205100 revisado. Cerrar experimento de respuesta multilingüe combinada; conservar diagnósticos, no repetir el prompt. Corrección independiente integrada para diferenciar summary/minutes/both en localized_editorial y mostrar desacuerdos en overview; verificar CI. Siguiente alternativa debe simplificar por idioma y aprovechar traducciones ya validadas; medir coste, no lanzar prueba larga ni cambiar versión o gate hasta calidad profesional. Todos los criterios previos se mantienen.
+
+## 9. Comparación controlada de redacción prelocalizada (2026-11-27)
+
+Integración 62416ff4b300c24be0879edaf5d70b1231ef0c60 verde #46070560237 (330 motor/2 omitidas/11 navegador/auditoría). Candidato aislado 5eef2593b485e380fb556bc24434f2fd59c6dc98, run #46073480297 en cola. Usa seis fuentes existentes y traducciones archivadas en dos grupos fijos; una llamada por idioma, no retry, no nueva extracción/traducción/agrupación. Es comparación de redacción, no validación de agrupación, resumen global, pipeline completo ni hardware. Evaluar checklist independiente y coste; no certificar por gates léxicos ni acumular pruebas si no aporta calidad. Mantener requisitos de aceptación, main, versión y gate intactos.

@@ -77,6 +77,38 @@ def editorial_request(sources, language):
     return messages, schema
 
 
+# An affirmative assertion that somebody proposed an action is stronger
+# than describing a discussion. Distinguish it from merely mentioning
+# proposals as a topic, or teaching what a recommendation means.
+_PROPOSAL_ASSERTION=re.compile(
+    r'\b(?:se\s+(?:propuso|propusieron|recomendó|recomendaron|sugirió|sugirieron)|'
+    r'(?:propuso|propusieron|recomendó|recomendaron|sugirió|sugirieron)\s+(?:que\b|[^\W\d_]+(?:ar|er|ir)\b)|'
+    r'(?:proposed|recommended|suggested)\s+(?:that\b|to\b|[^\W\d_]+ing\b)|'
+    r'(?:was|were)\s+(?:proposed|recommended|suggested))\b',re.IGNORECASE)
+_EXPLICIT_PROPOSAL_SOURCE=re.compile(
+    r'\b(?:propus[oa]|propusieron|propongo|proponemos|proponen|propuesta\s*:|'
+    r'sugiri[oó]|sugirieron|sugiero|sugerimos|recomend[oó]|recomendaron|recomiendo|recomendamos|'
+    r'propos(?:e|es|ed|al\s*:|al\s+only)|suggest(?:s|ed)?|recommend(?:s|ed)?)\b',
+    re.IGNORECASE)
+_DISCUSSION_OPENING=re.compile(
+    r'^(?:(?:al final|al inicio|durante la reunión|durante la sesión)\s*,?\s+)?'
+    r'(?:se habló de|se discutió|se conversó sobre)\b|'
+    r'^(?:the (?:group|team|participants)|participants)\s+(?:discussed|talked about)\b',
+    re.IGNORECASE)
+
+def editorial_modality_error(value,refs):
+    """Narrow guard, not semantic entailment; reject rather than rewrite."""
+    if not _PROPOSAL_ASSERTION.search(value):
+        return None
+    # Deliberately limited to a single explicit discussion statement.
+    # Mixed sources need a separate semantic review and are not certified.
+    if len(refs)==1:
+        quote=refs[0]['quote']
+        if _DISCUSSION_OPENING.search(quote) and not _EXPLICIT_PROPOSAL_SOURCE.search(quote):
+            return 'Editorial theme turned discussion into an unsupported proposal'
+    return None
+
+
 def validate_editorial(raw, sources, language, *, rejected=None, on_rejection=None):
     document = json.loads(raw, object_pairs_hook=_unique_keys)
     if not isinstance(document,dict) or set(document)!={'themes'}:
@@ -103,6 +135,8 @@ def validate_editorial(raw, sources, language, *, rejected=None, on_rejection=No
                 raise ValueError('Editorial theme is in the wrong language')
             for value in texts.values():
                 if reason := editorial_decision_error(value,quotes):
+                    raise ValueError(reason)
+                if reason := editorial_modality_error(value,refs):
                     raise ValueError(reason)
                 if changes_operational_meaning(value,quotes):
                     raise ValueError('Editorial theme changed a deadline or implementation claim')

@@ -1,6 +1,6 @@
 ## Estado vigente — 2026-11-27 — reparación 0.8.19 en PR #7
 
-**Leer [HANDOFF.md](HANDOFF.md) primero.** Es el punto de continuidad canónico para el próximo chat, junto con el [plan de terminación](docs/MEETINGSPLIT_FINISH_PLAN.md) y [registro de evidencias](docs/MINUTES_QA_LEDGER.md). Último código validado: `6b92c8f25ee9314065e3085cc6341d6005bfc30f`; 291 pruebas motor +11 interfaz, 2 omitidas, replay completo 9/9. Prueba temática variada #46025742614 en curso en el momento de este checkpoint. Main sigue en 0.8.18; objetivo 0.8.19 no numerado ni empaquetado. Release gate cerrado. Los checkpoints históricos siguientes no representan el estado vigente de esta rama.
+**Leer [HANDOFF.md](HANDOFF.md) primero.** Es el punto de continuidad canónico para el próximo chat, junto con el [plan de terminación](docs/MEETINGSPLIT_FINISH_PLAN.md) y [registro de evidencias](docs/MINUTES_QA_LEDGER.md). Último código validado: `6b92c8f25ee9314065e3085cc6341d6005bfc30f`; 291 pruebas motor +11 interfaz, 2 omitidas, replay completo 9/9. Prueba temática variada #46025742614 finalizada: fallo de aceptación (16/17 hechos, 8/9 temas, dos traducciones rechazadas); artefacto 15214500646 inspeccionado. Ver último checkpoint. Main sigue en 0.8.18; objetivo 0.8.19 no numerado ni empaquetado. Release gate cerrado. Los checkpoints históricos siguientes no representan el estado vigente de esta rama.
 
 ---
 

@@ -65,7 +65,8 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     """
     from .minutes_evidence import (source_blocks, validate_items, render_minutes,
                                    extraction_prompt, extraction_schema, find_coverage_gaps,
-                                   explicit_source_items, reconcile_source_items, recover_evidence_items)
+                                   explicit_source_items, reconcile_source_items, recover_evidence_items,
+                                   plan_quote_retry, unresolved_retry_items)
     if mode not in ('summary','minutes','both') or language not in ('es','en','both'):
         raise ValueError('Invalid report mode or language')
     guide_path = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[1])) / 'docs' / 'Guia_Owll_y_Minutas_para_Ollama.md'
@@ -137,6 +138,17 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                 extracted=validate_items(raw,rows,language,source_only_on_mismatch=bool(attempt))
             except ValueError as exc:
                 trace('extraction','validation_error',{'block':number,'source_ids':[row['id'] for row in rows],'attempt':attempt+1,'language':language},reason=str(exc))
+                if not attempt:
+                    plan=plan_quote_retry(raw,rows,language)
+                    if plan is not None:
+                        kept,subset=plan
+                        trace('extraction','selective_retry',{'block':number,'language':language,
+                              'source_ids':[row['id'] for row in subset]},retained_records=len(kept))
+                        if cancel: cancel.check()
+                        progress('Reintentando solo citas afectadas / Retrying affected quotations')
+                        retried=extract(subset,number)
+                        combined=kept+retried+unresolved_retry_items(subset,retried,language)
+                        return sorted(combined,key=lambda item:item['sources'][0]['source_id'])
                 if attempt:
                     recovered=recover_evidence_items(raw,rows,language)
                     if recovered is not None:

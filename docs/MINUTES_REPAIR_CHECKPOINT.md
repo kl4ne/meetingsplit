@@ -29,3 +29,7 @@ CI #45954418778: 219 passed, 1 failed, 2 skipped. Integration fixture supplied n
 ## Isolated follow-up: bounded editorial gap repair
 
 Prepared on a separate branch pending CI acceptance of selective narrative recovery. One narrowly scoped retry (up to five unique rejected source IDs per section), only for theme-level validation rejects. Existing valid themes are retained. Clear only gaps for exact source passages cited by a newly accepted nonduplicate repair, with no repeated rejection of that passage. Whole-section failures and failed retries retain their warnings; no recursive retry. This is not semantic coverage proof and does not address silently omitted themes. Five deterministic cases added, pending validation. No real inference or package.
+
+## Isolated optimization candidate — exact quotation retry
+
+Original A/B trace: 273.226 s extraction and 252.428 s retry; first record inserted "los" into "atención a visitantes" while citing rows 1 and 2. Preserve independently validated disjoint records and retry only affected, uncited and linked rows. Maximum five rows and half the input; unknown IDs, other validation errors, or larger scope use the existing retry. Missing targeted rows remain explicit review entries. No approximate matching. Recursive retry strictly shrinks input. Seven deterministic synthetic tests; performance improvement not yet measured. Planned version 0.8.19 only after quality validation if still available.

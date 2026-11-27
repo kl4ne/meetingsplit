@@ -379,6 +379,59 @@ def recover_evidence_items(raw, rows, language):
     return verified
 
 
+def plan_quote_retry(raw, rows, language):
+    """Keep disjoint validated records and retry only damaged/uncited/linked rows."""
+    try:
+        document=json.loads(raw,object_pairs_hook=_unique_keys)
+    except (TypeError,ValueError):
+        return None
+    if (not isinstance(document,dict) or set(document)!={'items'}
+            or not isinstance(document['items'],list) or len(document['items'])>100):
+        return None
+    known={row['id'] for row in rows}
+    validated=[]
+    affected=set()
+    for item in document['items']:
+        try:
+            validated.extend(validate_items(json.dumps({'items':[item]}),rows,language))
+        except ValueError as exc:
+            if str(exc)!='Quotation is not verbatim from the specified source':
+                return None
+            refs=item.get('sources') if isinstance(item,dict) else None
+            if not isinstance(refs,list) or not refs or any(
+                    not isinstance(ref,dict) or type(ref.get('id')) is not int
+                    or ref['id'] not in known for ref in refs):
+                return None
+            affected.update(ref['id'] for ref in refs)
+    if not affected or not validated:
+        return None
+    def ids(item):
+        return {ref['source_id'] for ref in item['sources']}
+    represented=set().union(*(ids(item) for item in validated))
+    affected.update(known-represented)
+    while True:
+        expanded=affected.union(*(ids(item) for item in validated if ids(item)&affected))
+        if expanded==affected:
+            break
+        affected=expanded
+    if len(affected)>5 or len(affected)*2>len(rows):
+        return None
+    kept=[item for item in validated if not ids(item)&affected]
+    if not kept:
+        return None
+    return kept,[row for row in rows if row['id'] in affected]
+
+
+def unresolved_retry_items(rows, items, language):
+    """Never silently erase a source row absent from a targeted retry."""
+    represented={ref['source_id'] for item in items for ref in item['sources']}
+    languages=('es','en') if language=='both' else (language,)
+    return [{'category':'review','owner':None,'due':None,
+             'sources':[{'source_id':row['id'],'timestamp':row['timestamp'],'quote':row['text']}],
+             **{'text_'+lang:_LOCALES[lang]['source_only'] for lang in languages}}
+            for row in rows if row['id'] not in represented]
+
+
 # Recognize only direct statements. Indirect speech and ambiguous references still
 # need model extraction and review; a proposal is never itself proof of approval.
 _DIRECT_DECISION = re.compile(

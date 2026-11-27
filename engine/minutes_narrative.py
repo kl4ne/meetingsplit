@@ -71,6 +71,30 @@ def review_request(messages, draft):
              'and return only the complete revised prose, without explaining your edits.'}]
 
 
+# A citation ID alone does not establish coverage of the referenced theme.
+# This conservative lexical check catches obvious reference swaps. It is not
+# a semantic entailment test and can reject a valid paraphrase.
+_ANCHOR_STOP = {
+    'about','during','discussed','meeting','reviewed','explained','topic','session',
+    'participants','group','team','could','would','should','according','regarding',
+    'durante','reunión','sesión','equipo','grupo','revisó','habló','explicó','trató',
+    'abordó','discutió','presentó','tema','temas','también','sobre','mediante',
+    'participantes','indicó','mencionó','propuso','respecto','parte','forma',
+}
+
+
+def _anchor_words(text):
+    return {word for word in re.findall(r'\b[^\W\d_]+\b', text.casefold())
+            if len(word)>=5 and word not in _ANCHOR_STOP}
+
+
+def _distinctive_anchors(section):
+    words={key:_anchor_words(record['title']+' '+record['summary'])
+           for key,(_,record) in section.items()}
+    return {key:own-set().union(*(other for k,other in words.items() if k!=key))
+            for key,own in words.items()}
+
+
 def _validate_narrative(raw, section, language, *, require_complete=True):
     if not raw.strip() or len(raw.encode('utf-8')) > _DRAFT_BYTES:
         raise ValueError('Invalid revised narrative length')
@@ -78,6 +102,7 @@ def _validate_narrative(raw, section, language, *, require_complete=True):
     paragraph_ids = []
     covered = set()
     seen = set()
+    anchors = _distinctive_anchors(section) if len(section)>1 else {}
     for paragraph in re.split(r'\r?\n[ \t]*\r?\n', raw.strip()):
         passages = []
         refs = {}
@@ -104,6 +129,13 @@ def _validate_narrative(raw, section, language, *, require_complete=True):
                 raise ValueError('Narrative changed a deadline or implementation claim')
             if set(_NUMBER.findall(body))-set(_NUMBER.findall(quotes)) or _amount_keys(body)-_amount_keys(quotes):
                 raise ValueError('Unsupported number or amount in narrative')
+            # A multi-theme citation must have at least some distinctive
+            # lexical support for each cited theme, when such anchors exist.
+            # Otherwise preserve the validated theme instead of claiming it
+            # was covered by an unrelated paragraph.
+            body_words=_anchor_words(body)
+            if any(anchors.get(key) and not anchors[key]&body_words for key in keys):
+                raise ValueError('Narrative citation lacks a distinctive theme anchor')
             normalized = body.casefold().rstrip('.!?,;')
             if normalized in seen:
                 raise ValueError('Repeated narrative paragraph')

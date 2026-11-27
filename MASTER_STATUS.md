@@ -16,6 +16,8 @@ Resumen ejecutivo libre #46046370941 falló por omitir grupo; nueva comparación
 
 Serie de resumen ejecutivo cerrada: #46047669072 pasó formalmente pero no justifica costo/redacción. Opción source_first acotada en rama QA, prueba bilingüe fresca #46049354590 en cola. Leer HANDOFF.md. Desktop y main intactos.
 
+Prueba bilingüe #46049354590: timeout de primera extracción (900 s), 34 pruebas aprobadas; nueva extracción metadata-only acotada en QA #46055337219. Consultar HANDOFF.md. No integración ni paquete.
+
 ---
 
 ## Continuity checkpoint — timeout recovery / main integration 2026-10-21

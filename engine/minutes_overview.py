@@ -84,8 +84,8 @@ def build_overview(items, themes, lang, *, detail_included=True):
                 fields=[]
                 if item.get('owner') and item['owner'].casefold() not in value.casefold():
                     fields.append(loc['owner']+': '+item['owner'])
-                from .minutes_localization import local_day
-                due=local_day(item.get('due'),lang)
+                from .minutes_localization import presentation_due
+                due=presentation_due(item,lang)
                 if due and due.casefold() not in value.casefold():
                     fields.append(loc['due']+': '+due)
                 if fields:

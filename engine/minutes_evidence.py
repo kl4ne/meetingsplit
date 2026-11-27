@@ -830,7 +830,7 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         loc=_LOCALES[lang]
         localized=any(entry['language']==lang for entry in localization)
         if localized:
-            from .minutes_localization import local_day
+            from .minutes_localization import presentation_due
         title=loc['summary'] if mode=='summary' else loc['minutes']
         field='text_'+lang
         lines=['# '+title,'','**'+loc['review_warning']+'**','']
@@ -905,7 +905,7 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 lines.append('- '+_markdown(display))
                 if category=='action':
                     lines.append('  - '+loc['owner']+': '+_markdown(item['owner'] or loc['unknown']))
-                    due=local_day(item['due'],lang) if localized else item['due']
+                    due=presentation_due(item,lang) if localized else item['due']
                     lines.append('  - '+loc['due']+': '+_markdown(due or loc['unknown']))
                 quotations={}
                 for ref in item['sources']:

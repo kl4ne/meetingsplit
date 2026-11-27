@@ -30,7 +30,7 @@ def test_localized_pipeline_keeps_evidence_and_corrects_only_protected_day(monke
     assert evidence['items'][0]['text_es']==_LOCALES['es']['source_only']
     assert bool(evidence['localization'][0]['accepted'])==accepted
     assert bool(evidence['localization'][0]['rejected'])!=accepted
-    assert SOURCE in report and 'Fecha o plazo mencionado: viernes' in report
+    assert SOURCE in report and 'Fecha o plazo mencionado: a más tardar el viernes' in report
     if accepted:
         assert 'a más tardar el viernes' in report and 'antes del viernes' not in report
         assert evidence['localization'][0]['protected_weekdays']==[0]
@@ -55,3 +55,43 @@ def test_localization_cancellation_is_not_swallowed():
         raise JobCancelled()
     with pytest.raises(JobCancelled):
         localize_items([item],'es',fail)
+
+@pytest.mark.parametrize('quote,due,es,en',[
+    ('Alex Park committed to documenting the handoff by Thursday.','Thursday','a más tardar el jueves','by Thursday'),
+    ('David Lin promised to circulate the vendor checklist by Tuesday.','Tuesday','a más tardar el martes','by Tuesday'),
+    ('Ana Ruiz will send the guide on Friday.','Friday','el viernes','on Friday'),
+    ('Ana Ruiz will send the guide before Friday.','Friday','antes del viernes','before Friday'),
+    ('Ana Ruiz se comprometió a enviar la guía el viernes.','viernes','el viernes','on Friday'),
+    ('Ana Ruiz se comprometió a enviar la guía a más tardar el viernes.','viernes','a más tardar el viernes','by Friday'),
+])
+def test_presentation_due_preserves_original_explicit_relation(quote,due,es,en):
+    from engine.minutes_localization import presentation_due
+    import copy
+    item={'category':'action','owner':' '.join(quote.split()[:2]),'due':due,
+          'sources':[{'source_id':1,'timestamp':'00:00:00','quote':quote}]}
+    original=copy.deepcopy(item)
+    assert presentation_due(item,'es')==es
+    assert presentation_due(item,'en')==en
+    assert item==original
+
+@pytest.mark.parametrize('quote,due,expected',[
+    ('Ana Ruiz will send the guide by Friday if approved.','Friday','viernes'),
+    ('Ana Ruiz will send the guide on Monday or by Friday.','Friday','viernes'),
+    ('Ana Ruiz will send the guide by Friday.','Monday','lunes'),
+    ('Ana Ruiz will send the guide by Friday.',None,None),
+    ('Ana Ruiz will send the guide by Friday.','by Friday','a más tardar el viernes'),
+    ('The guide is available by Friday.','Friday','viernes'),
+])
+def test_presentation_due_does_not_infer_missing_or_ambiguous_relation(quote,due,expected):
+    from engine.minutes_localization import presentation_due
+    item={'category':'action','owner':'Ana Ruiz','due':due,
+          'sources':[{'source_id':1,'timestamp':'00:00:00','quote':quote}]}
+    assert presentation_due(item,'es')==expected
+
+def test_presentation_due_does_not_expand_multi_source_action():
+    from engine.minutes_localization import presentation_due
+    item={'category':'action','owner':'Ana Ruiz','due':'Friday',
+          'sources':[{'source_id':1,'timestamp':'00:00:00','quote':SOURCE},
+                     {'source_id':2,'timestamp':'00:00:02','quote':'Ana Ruiz discussed the guide.'}]}
+    assert presentation_due(item,'es')=='viernes'
+

@@ -178,6 +178,34 @@ _PROTECTED_EXCLUSIONS=re.compile(r'\b(?:not|never|unless|if|only|no|nunca|salvo|
 _ANY_DAY=re.compile(r'\b(?:'+'|'.join([*map(str.lower,_DAYS),*_DAYS.values()])+r')\b',re.IGNORECASE)
 
 
+def presentation_due(item,lang):
+    """Display an explicit weekday relation lost in a day-only metadata field.
+
+    This does not change the extracted owner/due or infer a missing date.
+    Only use a single unambiguous terminal relation in the original action
+    quotation. Multiple days, conditional/negated language, or nonterminal
+    relations leave the existing literal metadata unchanged.
+    """
+    due=item.get('due')
+    plain=local_day(due,lang)
+    if (item.get('category')!='action' or not item.get('owner') or not due
+            or len(item['sources'])!=1 or not _ANY_DAY.fullmatch(due)):
+        return plain
+    quote=item['sources'][0]['quote']
+    if (quote.count('.')!=1 or not quote.endswith('.') or
+            _PROTECTED_EXCLUSIONS.search(quote) or
+            not quote.startswith(item['owner']+' ') or
+            len(_ANY_DAY.findall(quote))!=1):
+        return plain
+    matches=list(_DAY_RELATION.finditer(quote))
+    if len(matches)!=1:
+        return plain
+    match=matches[0]
+    if match.end()!=len(quote)-1 or match['day'].casefold()!=due.casefold():
+        return plain
+    return local_day(match.group(),lang)
+
+
 def restore_protected_weekday(text,item,lang):
     """Return a narrowly corrected presentation or None; never edit evidence."""
     if lang!='es' or item['category']!='action' or not item.get('owner') or not item.get('due'):

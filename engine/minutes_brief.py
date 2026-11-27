@@ -162,3 +162,60 @@ def merge_editorial_retry(accepted, rejected, repaired, retry_rejected, language
         if ref_key not in covered or ref_key in unresolved:
             remaining.setdefault(ref_key,ref)
     return sorted(result,key=lambda theme:theme['sources'][0]['source_id']),list(remaining.values())
+
+
+def omitted_editorial_sources(sources, accepted, rejected=()):
+    """Literal omission accounting, NOT a semantic coverage certificate.
+
+    Only examine the excerpts actually supplied to editorial_request (already
+    filtered for separate events and duplicate text). Do not mark known
+    rejections as a second independent omission.
+    """
+    def key(ref):
+        return ref['source_id'],ref['quote']
+    known={key(ref) for theme in accepted for ref in theme['sources']}
+    known.update(key(ref) for ref in rejected)
+    return [ref for ref in sources if key(ref) not in known]
+
+
+def repair_editorial_omissions(sources,accepted,rejected,language,request,*,cancel=None,trace=None):
+    """At most two extra calls of five excerpts per original section.
+
+    Permit the model to return no themes when excerpts are not substantive.
+    Neither an empty reply nor a transport failure clears a literal omission.
+    Every unprocessed/uncited excerpt remains visible for review.
+    """
+    from .control import JobCancelled
+    omitted=omitted_editorial_sources(sources,accepted,rejected)
+    if not omitted:
+        return accepted,rejected,[]
+    original=list(omitted)
+    for start in range(0,min(len(original),10),5):
+        if cancel:
+            cancel.check()
+        subset=original[start:start+5]
+        messages,schema=editorial_request(subset,language)
+        schema['properties']['themes']['minItems']=0
+        messages[0]['content']+=(
+            ' These excerpts were not cited in the prior synthesis. Recover distinct substantive topics, '
+            'including material near the end. Do not invent a proposal or agreement from an explanation or example. '
+            'If no excerpt contains a substantive topic, return an empty themes array. '
+            'Use only the supplied excerpts, do not repeat prior topics from memory.')
+        scope={'source_ids':[r['source_id'] for r in subset],'language':language}
+        try:
+            raw=request(messages,schema,stage='editorial_omission_retry',scope=scope)
+            # Empty means no synthesis, not evidence that the omission is safe.
+            if json.loads(raw,object_pairs_hook=_unique_keys)=={'themes':[]}:
+                repaired=[];retry_rejected=[]
+            else:
+                retry_rejected=[]
+                repaired=validate_editorial(raw,subset,language,rejected=retry_rejected)
+            accepted,omitted=merge_editorial_retry(accepted,omitted,repaired,retry_rejected,language)
+            if trace:
+                trace('editorial_omission_retry','accepted',scope,themes=repaired,remaining_gaps=omitted)
+        except JobCancelled:
+            raise
+        except (OSError,RuntimeError,ValueError) as exc:
+            if trace:
+                trace('editorial_omission_retry','section_rejected',scope,error_type=type(exc).__name__,reason=str(exc))
+    return accepted,rejected+omitted,original

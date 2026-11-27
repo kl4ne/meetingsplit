@@ -15,6 +15,15 @@ _DAYS = dict(zip(('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday',
 def local_day(value, lang):
     if not value:
         return value
+    # Retain the entire relationship in display, rather than dropping "by".
+    if match:=_DAY_RELATION.fullmatch(value):
+        relation=next(k for k,p in _DAY_PATTERNS if re.fullmatch(p,match['relation'],re.IGNORECASE))
+        day=match['day'].casefold()
+        english=next((en for en,es in _DAYS.items() if es==day or en.casefold()==day),None)
+        if english:
+            if lang=='es':
+                return {'by':'a más tardar el','before':'antes del','after':'después del','on':'el'}[relation]+' '+_DAYS[english]
+            return relation+' '+english
     for en,es in _DAYS.items():
         if lang=='es' and value.casefold()==en.casefold():
             return es
@@ -44,6 +53,19 @@ _DAY_RELATION=re.compile(
     re.IGNORECASE)
 
 def _normalize_weekday_relations(text):
+    # Schedule expansion and a deadline are not interchangeable. In a phrase
+    # explicitly about extending opening/support hours to a weekday, retain
+    # inclusion of that day. "Hasta el domingo" is NOT a safe equivalent.
+    weekdays='|'.join(map(str.lower,_DAYS))
+    dias='|'.join(_DAYS.values())
+    def include(match):
+        day=match['day'].casefold()
+        day=next((en.casefold() for en,es in _DAYS.items() if es==day),day)
+        return match['lead']+' RELATION_include_'+day+' '
+    text=re.sub(r'\b(?P<lead>extend(?:ing)?\s+[^.!?;]{0,100}?\bhours)\s+to\s+(?P<day>'+weekdays+r')\b',
+                include,text,flags=re.IGNORECASE)
+    text=re.sub(r'\b(?P<lead>ampliar\s+[^.!?;]{0,100}?\bhorarios?[^.!?;]{0,60}?)\s+(?:para\s+)?incluir\s+el\s+(?P<day>'+dias+r')\b',
+                include,text,flags=re.IGNORECASE)
     text=re.sub(r'\b(?:the )?deadline (?:for [^.!?]{1,80} )?is\s+(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b',r'deadline by \1',text,flags=re.IGNORECASE)
     text=re.sub(r'\b(?:el )?(?:plazo(?: límite)?|fecha límite) (?:para [^.!?]{1,80} )?es el\s+(lunes|martes|miércoles|jueves|viernes|sábado|domingo)\b',r'plazo a más tardar el \1',text,flags=re.IGNORECASE)
     def replace(match):
@@ -100,6 +122,7 @@ def translation_request(items,indices,lang):
         'Preserve approval, non-approval, proposals and uncertainty. Do not turn on a day into before or by that day. '
         'For by Friday use a más tardar el viernes, for before Friday use antes del viernes, for on Friday use el viernes; '
         'in English preserve the distinction by/before/on. Preserve the named actor and commitment verb. '
+        'When a proposal extends opening or reception hours to include a weekday, express inclusion of that day, not an end date or deadline (Spanish: ampliar el horario para incluir el domingo, not hasta el domingo). '
         'Translate day names, retain the original relative-date meaning. Return a complete sentence or sentences for each ID. '
         'Do not invent who, what, when or why. Use plain text, no headings, timecodes or Markdown. Return only the schema.'},
         {'role':'user','content':json.dumps({'records':records},ensure_ascii=False)}]
@@ -115,8 +138,16 @@ def _validate_translation(text,item,lang):
         raise ValueError('Translation changed numbers or amounts')
     if item['owner'] and item['owner'].casefold() not in text.casefold():
         raise ValueError('Translation omitted responsible person')
-    if item['due'] and local_day(item['due'],lang).casefold() not in text.casefold():
-        raise ValueError('Translation omitted or changed date')
+    if item['due']:
+        due=item['due']
+        # For a complete weekday relation, compare meaning and day. Keep
+        # literal due metadata unchanged; the full source relation is checked below.
+        if _DAY_RELATION.fullmatch(due):
+            due_days=_relations(due)
+            if not due_days or not due_days<=_relations(text):
+                raise ValueError('Translation omitted or changed date')
+        elif local_day(due,lang).casefold() not in text.casefold():
+            raise ValueError('Translation omitted or changed date')
     if bool(affirmative_agreement_matches(text))!=bool(affirmative_agreement_matches(original)):
         raise ValueError('Translation changed affirmative approval')
     if bool(_EDITORIAL_NON_APPROVAL.search(text))!=bool(_EDITORIAL_NON_APPROVAL.search(original)):
@@ -162,7 +193,14 @@ def restore_protected_weekday(text,item,lang):
     if source is None or target is None or len(_ANY_DAY.findall(original))!=1 or len(_ANY_DAY.findall(text))!=1:
         return None
     day=local_day(source['day'],'es')
-    if target['day'].casefold()!=day.casefold() or local_day(item['due'],'es').casefold()!=day.casefold():
+    due=item['due']
+    if _DAY_RELATION.fullmatch(due):
+        if _relations(due)!=_relations(source.group().rstrip('.')):
+            return None
+        due_day=local_day(_DAY_RELATION.fullmatch(due)['day'],'es')
+    else:
+        due_day=local_day(due,'es')
+    if target['day'].casefold()!=day.casefold() or due_day.casefold()!=day.casefold():
         return None
     if not original.startswith(item['owner']+' ') or not text.startswith(item['owner']+' '):
         return None

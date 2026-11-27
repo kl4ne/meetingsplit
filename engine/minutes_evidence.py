@@ -458,6 +458,9 @@ def reconcile_source_items(items, explicit):
         source_item=explicit[index]
         if item['category'] != source_item['category'] or len(source_item['sources'])>1:
             continue
+        # Preserve the wording of an explicit budget instead of inferring its allocation.
+        if source_item['category'] == 'topic':
+            continue
         if source_item['owner'] and item['owner']!=source_item['owner']:
             continue
         if source_item['due'] and (not item['due'] or source_item['due'].casefold() not in item['due'].casefold()):
@@ -568,8 +571,8 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 quotations={}
                 for ref in item['sources']:
                     quotations.setdefault(ref['quote'],[]).append(ref)
-                # A verbatim notice is already readable evidence in the local report.
-                if show_timestamps or category != 'notice' or item[field] != ' '.join(quotations):
+                # An explicit budget or notice is already readable as a verbatim statement.
+                if show_timestamps or category not in ('notice', 'topic') or item[field] != ' '.join(quotations):
                     for quote,refs in quotations.items():
                         lines.append('  - '+loc['evidence']+': '+times(refs)+' "'+_markdown(quote)+'"')
                 lines.append('')

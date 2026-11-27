@@ -11,9 +11,9 @@ from .minutes_evidence import _AGREEMENT, _NUMBER, _amount_keys, changes_operati
 _INPUT_BYTES = 5500
 _DRAFT_BYTES = 4000
 _REFERENCE = re.compile(r'\[E([1-9][0-9]*)\]')
-_REFERENCES_AT_END = re.compile(r'(?P<refs>(?:\s*\[E[1-9][0-9]*\])+)(?P<punct>[.!?])?$')
+_REFERENCES_AT_END = re.compile(r'(?P<refs>(?:\s*\[E[1-9][0-9]*\])+)(?P<punct>[.!?,;])?$')
 _CITED_SENTENCE_BREAK = re.compile(
-    r'(?P<end>[.!?](?:[ \t]*\[E[1-9][0-9]*\])+|\[E[1-9][0-9]*\][.!?])'
+    r'(?P<end>[.!?,;](?:[ \t]*\[E[1-9][0-9]*\])+|\[E[1-9][0-9]*\][.!?,;])'
     r'[ \t]+(?=(?!\[E[1-9][0-9]*\])\S)'
 )
 _NON_PROSE = re.compile(r'^\s*(?:[#>|*~_-]|[0-9]+[.)]\s)|[|`<>]|[\[\]]', re.MULTILINE)
@@ -80,7 +80,7 @@ def validate_narrative(raw, section, language):
     for paragraph in re.split(r'\r?\n[ \t]*\r?\n', raw.strip()):
         passages = []
         refs = {}
-        # A paragraph may cite consecutive sentences individually.
+        # A paragraph may cite consecutive sentences or clauses individually.
         cited = _CITED_SENTENCE_BREAK.sub(r'\g<end>\n\n', paragraph.strip())
         for passage in cited.split('\n\n'):
             ending = _REFERENCES_AT_END.search(passage)
@@ -91,7 +91,7 @@ def validate_narrative(raw, section, language):
             if not keys <= section.keys() or not body or _NON_PROSE.search(body):
                 raise ValueError('Invalid narrative format or evidence IDs')
             body = ' '.join(body.split())
-            if ending['punct'] and not body.endswith(('.', '!', '?')):
+            if ending['punct'] and not body.endswith(('.', '!', '?', ',', ';')):
                 body += ending['punct']
             if not _language_matches(body, language):
                 raise ValueError('Narrative is in the wrong language')
@@ -102,7 +102,7 @@ def validate_narrative(raw, section, language):
                 raise ValueError('Narrative changed a deadline or implementation claim')
             if set(_NUMBER.findall(body))-set(_NUMBER.findall(quotes)) or _amount_keys(body)-_amount_keys(quotes):
                 raise ValueError('Unsupported number or amount in narrative')
-            normalized = body.casefold().rstrip('.')
+            normalized = body.casefold().rstrip('.!?,;')
             if normalized in seen:
                 raise ValueError('Repeated narrative paragraph')
             seen.add(normalized)

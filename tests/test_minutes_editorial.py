@@ -237,8 +237,10 @@ def test_local_minutes_keep_calendar_notices_out_of_prose_rewriting(
     ('Se revisó la lista de materiales', None),
     ('Se revisó un gasto de USD 2,000', 'Unsupported number or amount'),
 ])
-@pytest.mark.parametrize('first_end', [' [E1].', '. [E1]'])
-def test_revised_paragraph_validates_citations_at_sentence_boundaries(first, expected_error, first_end):
+@pytest.mark.parametrize('first_end, punctuation', [
+    (' [E1].', '.'), ('. [E1]', '.'), (' [E1],', ','), (' [E1];', ';'),
+])
+def test_revised_paragraph_validates_citations_at_sentence_boundaries(first, expected_error, first_end, punctuation):
     from engine.minutes_narrative import narrative_sections, validate_narrative
 
     instructions = (
@@ -257,7 +259,31 @@ def test_revised_paragraph_validates_citations_at_sentence_boundaries(first, exp
             validate_narrative(raw, section, 'es')
         return
     assert validate_narrative(raw, section, 'es') == [{
-        'text': 'Se revisó la lista de materiales. El presupuesto es de USD 2,000.',
+        'text': f'Se revisó la lista de materiales{punctuation} El presupuesto es de USD 2,000.',
         'sources': [themes[0]['sources'][0], themes[1]['sources'][0]],
     }]
+
+
+@pytest.mark.parametrize('language, budget, discussion, amount, implied_use', [
+    ('es', 'El presupuesto es de USD 2,400.', 'Se habló de la distribución de libros.',
+     'USD 2,400', 'Se asignó el monto a los libros'),
+    ('en', 'The budget is USD 2,400.', 'The team discussed distributing books.',
+     'USD 2,400', 'The amount was earmarked for books'),
+])
+def test_standalone_budget_stays_verbatim_and_does_not_enter_the_editorial_input(
+    language, budget, discussion, amount, implied_use
+):
+    from engine.minutes_evidence import explicit_source_items, reconcile_source_items, source_blocks
+
+    blocks = list(source_blocks(f'[00:01:02] {budget} {discussion}'))
+    explicit = explicit_source_items(blocks[0], language)
+    assert len(explicit) == 1 and explicit[0]['category'] == 'topic'
+    model_budget = {**explicit[0], f'text_{language}':implied_use}
+    items = reconcile_source_items([model_budget], explicit)
+    assert items == explicit
+    excerpts = list(editorial_input(blocks, items, explicit_items=explicit))
+    assert excerpts[0][0]['quote'] == discussion
+    report = render_minutes(items, 'minutes', language, show_timestamps=False)
+    assert report.count(amount) == 1 and budget in report
+    assert implied_use not in report
 

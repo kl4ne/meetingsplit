@@ -12,6 +12,8 @@ Source-first #46036960062: 55 unidades, 26 traducciones aceptadas; falló agrupa
 
 Agrupación source-first #46038580739 aprobada: 55 unidades, nueve grupos, 26 traducciones reutilizadas. Calidad de prosa/resumen aún no aprobada. Nuevo experimento ejecutivo aislado; leer HANDOFF.md.
 
+Resumen ejecutivo libre #46046370941 falló por omitir grupo; nueva comparación de frases por grupo #46047669072 en QA. No integrado; leer HANDOFF.md.
+
 ---
 
 ## Continuity checkpoint — timeout recovery / main integration 2026-10-21

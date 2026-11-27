@@ -92,7 +92,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
 
     def request(messages, schema=False, *, stage, scope):
         nonlocal cpu_only
-        options={} if schema else {'think':False}
+        options={'think':False} if not schema or stage.startswith('source_first_') else {}
         def invoke():
             start=time.monotonic()
             trace(stage,'request',scope,messages=messages,schema=schema,cpu_only=cpu_only)

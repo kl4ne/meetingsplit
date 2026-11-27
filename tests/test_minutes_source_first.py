@@ -93,7 +93,7 @@ def test_long_grouping_windows_bounded_and_complete():
 
 def test_optional_real_engine_path_preserves_bilingual_units_and_fallbacks(monkeypatch):
     from engine import summarize
-    transcript='[00:00:01] Se explicó el uso de materiales de consulta.\n[00:00:02] The guide describes accessible routes.'
+    transcript='[00:00:01] Se explicó el uso de materiales de consulta.\n[00:00:02] The guide describes the accessible routes in the building.'
     calls=[];evidence={}
     def fake(messages,*args,json_output,**kwargs):
         p=json.loads(messages[1]['content']);calls.append(p)

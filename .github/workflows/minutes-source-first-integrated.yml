@@ -1,0 +1,62 @@
+name: Fresh bilingual source-first integrated comparison
+on:
+  push:
+    branches: [qa/minutes-source-first-integrated-0819]
+    paths: ['.github/workflows/minutes-source-first-integrated.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      OLLAMA_HOST: 127.0.0.1:11434
+      OLLAMA_NO_CLOUD: '1'
+      OLLAMA_NUM_PARALLEL: '1'
+      OLLAMA_MAX_LOADED_MODELS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - name: Preflight consolidation and minutes regressions
+        run: |
+          python -m pip install pytest
+          python -m pytest -q tests/test_minutes_source_first.py tests/test_minutes_varied_coverage.py tests/test_minutes_localized_pipeline.py tests/test_minutes_consolidated_strategy.py
+      - name: Validate independent fixture before model setup
+        run: python -c "from qa.minutes_source_first_integrated import fixture; t,c,s=fixture(); print(len(t.splitlines()),len(c),len(s))"
+      - name: Prepare isolated pinned Ollama (synthetic QA only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OLLAMA_MODELS="$RUNNER_TEMP/ms-models"
+          echo "OLLAMA_MODELS=$OLLAMA_MODELS" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/ms-ollama" "$OLLAMA_MODELS"
+          curl --fail --location --retry 2 --max-time 360 -o "$RUNNER_TEMP/ollama.tar.zst" https://github.com/ollama/ollama/releases/download/v0.40.18/ollama-linux-amd64.tar.zst
+          echo "b82649006cb5b54ed1237fa2d1a26a7f939a4fd03150033759acbff7ff315adf  $RUNNER_TEMP/ollama.tar.zst" | sha256sum --check
+          tar --zstd -xf "$RUNNER_TEMP/ollama.tar.zst" -C "$RUNNER_TEMP/ms-ollama"
+          exe="$RUNNER_TEMP/ms-ollama/bin/ollama"
+          "$exe" serve > "$RUNNER_TEMP/ollama-server.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/ollama.pid"
+          for i in {1..60}; do curl -fsS http://127.0.0.1:11434/api/version && break; sleep 1; done
+          timeout 600 "$exe" pull qwen3.5:9b
+          "$exe" list
+      - name: Run fresh optional engine strategy in both languages
+        shell: bash
+        run: python qa/minutes_source_first_integrated.py "$RUNNER_TEMP/integrated"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-first-integrated-qa
+          path: |
+            ${{ runner.temp }}/integrated/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Stop isolated service
+        if: always()
+        shell: bash
+        run: |
+          if test -f "$RUNNER_TEMP/ollama.pid"; then kill "$(cat "$RUNNER_TEMP/ollama.pid")" || true; fi

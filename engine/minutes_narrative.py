@@ -5,7 +5,7 @@ import json
 import re
 
 from .minutes_brief import _language_matches
-from .minutes_evidence import _AGREEMENT, _NUMBER, _amount_keys, changes_operational_meaning
+from .minutes_evidence import _NUMBER, _amount_keys, changes_operational_meaning, editorial_decision_error
 
 
 _INPUT_BYTES = 5500
@@ -95,9 +95,9 @@ def validate_narrative(raw, section, language):
                 body += ending['punct']
             if not _language_matches(body, language):
                 raise ValueError('Narrative is in the wrong language')
-            if _AGREEMENT.search(body):
-                raise ValueError('Formal decisions belong in the separate evidence section')
             quotes = ' '.join(quote for key in keys for quote in section[key][1]['quotes'])
+            if reason := editorial_decision_error(body,quotes):
+                raise ValueError(reason)
             if changes_operational_meaning(body,quotes):
                 raise ValueError('Narrative changed a deadline or implementation claim')
             if set(_NUMBER.findall(body))-set(_NUMBER.findall(quotes)) or _amount_keys(body)-_amount_keys(quotes):

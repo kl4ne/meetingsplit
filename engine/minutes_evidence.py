@@ -20,6 +20,43 @@ _NEGATED_AGREEMENT = re.compile(
     r'(?:agreed|approved|acordó|aprob(?:ó|ad[oa]s?))\b',
     re.IGNORECASE,
 )
+# Narrow explicit negations, not a general semantic classifier. Do not mask
+# a positive approval later in the same sentence or a 'not only' construction.
+_EDITORIAL_NON_APPROVAL = re.compile(
+    r'\b(?:no se convirtió en (?:una )?decisión oficial(?: o (?:un )?acuerdo aprobado)?|'
+    r'no (?:se |fue |ha sido )?aprob(?:ó|ad[oa]s?)|'
+    r'sin aprobación|not (?:yet )?approved|not agreed)\b', re.IGNORECASE,
+)
+_EDITORIAL_REJECTION = re.compile(
+    r'\b(?:rechaz(?:ó|aron|ad[oa]s?)|rejected)\b', re.IGNORECASE,
+)
+_STANDALONE_NON_APPROVAL = re.compile(
+    r'(?:not approved|no (?:se |fue )?aprob(?:ó|ad[oa]))[.!]?', re.IGNORECASE,
+)
+
+
+def affirmative_agreement_matches(text):
+    """Yield positive lexical agreement candidates outside explicit negation spans."""
+    negated=[m.span() for m in _EDITORIAL_NON_APPROVAL.finditer(text)]
+    return [m for m in _AGREEMENT.finditer(text)
+            if not any(start<=m.start() and m.end()<=end for start,end in negated)]
+
+
+def editorial_decision_error(value, quotes):
+    """Keep decisions out of prose; do not conflate non-approval with rejection.
+
+    These checks target observed lexical errors. They do not prove meaning,
+    attachment of a claim to the correct subject, or all possible negations.
+    """
+    if affirmative_agreement_matches(value):
+        return 'Formal decisions belong in the separate evidence section'
+    if _EDITORIAL_NON_APPROVAL.search(value) and not _EDITORIAL_NON_APPROVAL.search(quotes):
+        return 'Non-approval is not supported by cited evidence'
+    if _EDITORIAL_REJECTION.search(value) and not _EDITORIAL_REJECTION.search(quotes):
+        return 'Rejection is not supported by cited evidence'
+    return None
+
+
 _CONFIRMED_HEADING = re.compile(r'^(?:confirmed agreement|acuerdo confirmado)\s*:', re.IGNORECASE)
 _DEADLINE_QUALIFIERS = (
     re.compile(r'\b(?:antes de(?:l)?|before)\b', re.IGNORECASE),
@@ -245,7 +282,7 @@ def changes_operational_meaning(value, quotes):
     if any(pattern.search(value) and not pattern.search(quotes) for pattern in _DEADLINE_QUALIFIERS):
         return True
     return bool(_IMPLEMENTATION.search(value) and not (
-        _IMPLEMENTATION.search(quotes) or _AGREEMENT.search(quotes)))
+        _IMPLEMENTATION.search(quotes) or affirmative_agreement_matches(quotes)))
 
 
 def validate_items(raw: str, rows: list[dict], language: str, *, source_only_on_mismatch=False) -> list[dict]:
@@ -395,6 +432,13 @@ def explicit_source_items(rows, language):
             close=previous and 0<=seconds(source['timestamp'])-seconds(previous['sources'][-1]['timestamp'])<=45
             prior=previous if close else None
             previous=None
+            # A standalone non-approval immediately following a proposal in the
+            # same source row belongs to that proposal, never to an agreement.
+            if (prior and prior['category']=='proposal'
+                    and prior['sources'][-1]['source_id']==row['id']
+                    and _STANDALONE_NON_APPROVAL.fullmatch(quote)):
+                items[-1]=create('proposal',[*prior['sources'],source])
+                continue
             # Quoted or hypothetical speech cannot create confirmed evidence.
             if _UNCERTAIN.search(quote) or _UNSAFE_STATEMENT.search(quote) or _PERSONAL_TENTATIVE.search(quote):
                 continue
@@ -486,7 +530,7 @@ def find_coverage_gaps(rows, items):
         for amount in dict.fromkeys(match.group() for match in _AMOUNT.finditer(row['text'])):
             if not any(amount in (match.group() for match in _AMOUNT.finditer(quote)) for _,quote in cited):
                 gaps.append({**source,'kind':'amount','text':amount})
-        for phrase in dict.fromkeys(match.group() for match in _AGREEMENT.finditer(row['text'])):
+        for phrase in dict.fromkeys(match.group() for match in affirmative_agreement_matches(row['text'])):
             if not any(category in ('decision','action','proposal','disagreement','pending','review')
                        and phrase in quote for category,quote in cited):
                 gaps.append({**source,'kind':'agreement','text':phrase})

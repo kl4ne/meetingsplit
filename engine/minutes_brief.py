@@ -2,7 +2,7 @@
 import json
 import re
 
-from .minutes_evidence import _NUMBER, _PERSONAL_TENTATIVE, _SENTENCE_BREAK, _amount_keys, _field, _unique_keys, changes_operational_meaning
+from .minutes_evidence import _NUMBER, _PERSONAL_TENTATIVE, _SENTENCE_BREAK, _amount_keys, _field, _unique_keys, changes_operational_meaning, editorial_decision_error
 
 
 _COMMON_WORDS = {
@@ -102,6 +102,8 @@ def validate_editorial(raw, sources, language, *, rejected=None, on_rejection=No
             if any(not _language_matches(texts[f'summary_{lang}'],lang) for lang in languages):
                 raise ValueError('Editorial theme is in the wrong language')
             for value in texts.values():
+                if reason := editorial_decision_error(value,quotes):
+                    raise ValueError(reason)
                 if changes_operational_meaning(value,quotes):
                     raise ValueError('Editorial theme changed a deadline or implementation claim')
                 if set(_NUMBER.findall(value))-set(_NUMBER.findall(quotes)) or _amount_keys(value)-_amount_keys(quotes):

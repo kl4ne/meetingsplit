@@ -332,7 +332,8 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                           editorial=displayed_themes,editorial_gaps=editorial_gaps,
                           narratives=narratives,narrative_fallbacks=narrative_fallbacks,
                           executive_overview=overview,show_timestamps=False,repetition_coverage=repetition,
-                          localization=localization,repeated_themes=repeated_themes)
+                          localization=localization,repeated_themes=repeated_themes,
+                          respect_mode=narrative_strategy=='localized_editorial')
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,

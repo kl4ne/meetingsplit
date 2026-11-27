@@ -18,12 +18,12 @@ def build_overview(items, themes, lang):
         'es':{'more':'Los demás temas se desarrollan a continuación.',
               'detail':'Consulta el detalle en la sección correspondiente.',
               'decision':'Acuerdos registrados','action':'Tareas registradas',
-              'notice':'Avisos','pending':'Pendientes','proposal':'Propuestas',
+              'notice':'Avisos','pending':'Pendientes','proposal':'Propuestas','disagreement':'Desacuerdos',
               'topic':'Información financiera'},
         'en':{'more':'The remaining topics are detailed below.',
               'detail':'See the corresponding section for details.',
               'decision':'Recorded decisions','action':'Recorded tasks',
-              'notice':'Announcements','pending':'Pending items','proposal':'Proposals',
+              'notice':'Announcements','pending':'Pending items','proposal':'Proposals','disagreement':'Disagreements',
               'topic':'Financial information'},
     }[lang]
     paragraphs=[]
@@ -36,7 +36,7 @@ def build_overview(items, themes, lang):
         if len(chosen)<len(values):
             lead+=' '+labels['more']
         paragraphs.append(lead)
-    for category in ('decision','action','notice','pending','proposal','topic'):
+    for category in ('decision','action','notice','pending','proposal','disagreement','topic'):
         records=sorted((i for i in items if i['category']==category and
                  (category!='topic' or any(_AMOUNT.search(r['quote']) for r in i['sources']))),
                  key=lambda i:min(r['source_id'] for r in i['sources']))

@@ -1,0 +1,55 @@
+"""Production localized-editorial presentation modes; no model inference."""
+import pytest
+from engine.minutes_evidence import render_minutes
+from engine.minutes_overview import build_overview
+
+REF={'source_id':1,'timestamp':'00:00:01','quote':'Se examinó la orientación.'}
+GAP={'source_id':3,'timestamp':'00:00:03','quote':'Un pasaje sin síntesis.'}
+ACTION={'category':'action','owner':'Ana Ruiz','due':'Friday',
+        'sources':[{'source_id':2,'timestamp':'00:00:02','quote':'Ana Ruiz will send the guide by Friday.'}],
+        'text_es':'Ana Ruiz enviará la guía a más tardar el viernes.',
+        'text_en':'Ana Ruiz will send the guide by Friday.'}
+THEMES=[{'sources':[REF],'title_es':'Orientación detallada','summary_es':'Detalle temático de orientación.',
+         'title_en':'Detailed orientation','summary_en':'Detailed thematic orientation.'}]
+OVERVIEW={'es':['Síntesis ejecutiva breve.'],'en':['Concise executive overview.']}
+
+@pytest.mark.parametrize('lang,headline,summary,detail,title',[
+    ('es','Resumen ejecutivo','Síntesis ejecutiva breve.','Temas tratados','Orientación detallada'),
+    ('en','Executive summary','Concise executive overview.','Topics discussed','Detailed orientation'),
+])
+@pytest.mark.parametrize('mode',['summary','minutes','both'])
+def test_distinct_modes_keep_outcomes_and_review(lang,headline,summary,detail,title,mode):
+    report=render_minutes([ACTION],mode,lang,editorial=THEMES,executive_overview=OVERVIEW,
+        editorial_gaps=[GAP],show_timestamps=False,respect_mode=True)
+    assert (summary in report)==(mode!='minutes')
+    assert (title in report)==(mode!='summary')
+    assert ('## '+detail in report)==(mode!='summary')
+    assert report.startswith('# '+headline) if mode=='summary' else not report.startswith('# '+headline)
+    assert report.count('## '+headline)==(1 if mode=='both' else 0)
+    assert 'Ana Ruiz' in report and 'Friday' in report and GAP['quote'] in report
+    assert '[00:00:' not in report
+
+def test_bilingual_summary_has_separate_documents_and_no_detailed_themes():
+    report=render_minutes([ACTION],'summary','both',editorial=THEMES,executive_overview=OVERVIEW,
+        editorial_gaps=[GAP],show_timestamps=False,respect_mode=True)
+    es,en=report.split('\n\n---\n\n')
+    assert es.startswith('# Resumen ejecutivo') and en.startswith('# Executive summary')
+    assert OVERVIEW['es'][0] in es and OVERVIEW['en'][0] not in es
+    assert OVERVIEW['en'][0] in en and OVERVIEW['es'][0] not in en
+    assert GAP['quote'] in es and GAP['quote'] in en
+
+def test_no_overview_does_not_drop_descriptive_content():
+    report=render_minutes([],'summary','es',editorial=THEMES,respect_mode=True)
+    assert THEMES[0]['summary_es'] in report
+
+def test_legacy_mode_unchanged_by_default():
+    report=render_minutes([ACTION],'summary','es',editorial=THEMES,executive_overview=OVERVIEW)
+    assert THEMES[0]['title_es'] in report and OVERVIEW['es'][0] in report
+
+def test_overview_includes_disagreement():
+    item={'category':'disagreement','owner':None,'due':None,
+          'sources':[{'source_id':1,'timestamp':'00:00:01','quote':'El grupo expresó desacuerdo con el horario.'}],
+          'text_es':'El grupo expresó desacuerdo con el horario.',
+          'text_en':'The group expressed disagreement with the schedule.'}
+    assert any('Desacuerdos:' in p and 'horario' in p for p in build_overview([item],[],'es'))
+    assert any('Disagreements:' in p and 'schedule' in p for p in build_overview([item],[],'en'))

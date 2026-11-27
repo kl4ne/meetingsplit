@@ -813,7 +813,7 @@ def _presentation_text(item, lang):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=()) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=(), respect_mode=False) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -835,13 +835,27 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         field='text_'+lang
         lines=['# '+title,'','**'+loc['review_warning']+'**','']
         brief=(executive_overview or {}).get(lang)
+        if respect_mode and mode=='minutes':
+            brief=None
+        show_detail=not respect_mode or mode!='summary'
         if brief:
-            lines += ['## '+loc['summary'],'']
+            if not respect_mode or mode!='summary':
+                lines += ['## '+loc['summary'],'']
             for paragraph in brief:
                 lines += [_markdown(paragraph),'']
-        detail_heading=('Temas tratados' if lang=='es' else 'Topics discussed') if brief else loc['summary']
+        detail_heading=('Temas tratados' if lang=='es' else 'Topics discussed') if (brief or respect_mode) else loc['summary']
         prose=(narratives or {}).get(lang)
-        if prose:
+        if not show_detail and brief:
+            # The overview already describes the themes. Do not repeat the
+            # complete thematic minute in summary mode. Structured outcomes
+            # and all review material below remain available.
+            pass
+        elif not show_detail and editorial:
+            # Defensive path if an overview is unavailable. Preserve content
+            # rather than silently dropping the themes.
+            for theme in editorial:
+                lines += [_markdown(theme['summary_'+lang]),'']
+        elif prose:
             lines += ['## '+detail_heading,'']
             for paragraph in prose:
                 title=paragraph.get('title')

@@ -88,3 +88,7 @@ Integración 0a1d22868cc5fea7d28609ffa2029cf05070d31c verde #46068901708. Protot
 ## 7. Ventana bilingüe focalizada (2026-11-27)
 
 Candidato aislado b817e5b69054705b45042b0c12c1d91a424f5118, run #46069647403 en progreso. Contabilidad por idioma/ID con traducción puente y síntesis en una respuesta, máximo dos requests por ventana de 12 unidades/4500 bytes. Reintento selectivo, citas originales y revisión explícita; QA renderer separado por idioma y modo. Preflight aún no certificado. Próximo: inspeccionar salida real de cuatro fragmentos sintéticos en ambos idiomas y checklist fijado, medir coste y calidad, sin inferencia de reunión completa. Las traducciones son candidatas, no certificación semántica. Mantener todas las puertas de aceptación previas; no numerar, empaquetar ni modificar main/gate.
+
+## 8. Resultado focal y decisión vigente (2026-11-27)
+
+Run #46069647403 falló generación pese a 19 regresiones verdes; 2/8 pares válidos, 234.705 s/2 requests, artefacto 15233205100 revisado. Cerrar experimento de respuesta multilingüe combinada; conservar diagnósticos, no repetir el prompt. Corrección independiente integrada para diferenciar summary/minutes/both en localized_editorial y mostrar desacuerdos en overview; verificar CI. Siguiente alternativa debe simplificar por idioma y aprovechar traducciones ya validadas; medir coste, no lanzar prueba larga ni cambiar versión o gate hasta calidad profesional. Todos los criterios previos se mantienen.

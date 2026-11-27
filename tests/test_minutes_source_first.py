@@ -36,3 +36,33 @@ def test_translation_failure_preserves_original_unit():
     copies,bad,calls=translate_units(u,'es',fail)
     assert calls==1 and bad and copies[0]['status']=='source_only' and copies[0]['text']==u[0]['text']
     assert u[0]['status']=='needs_translation'
+
+
+from qa.minutes_source_first import plan_grouping_repair,grouping_repair_request,apply_grouping_repair
+
+def test_bounded_repair_preserves_fixed_partition():
+    units=[{'id':i,'text':f'Texto {i}.'} for i in range(1,9)]
+    raw=json.dumps({'groups':[{'title':'Archivo','unit_ids':[1,2,3,4],'overview_id':3},
+                              {'title':'Recepción','unit_ids':[3,5,6,7],'overview_id':5}]})
+    plan=plan_grouping_repair(raw,units,'es')
+    assert plan['disputed']==[3,8] and plan['duplicates']==[3] and plan['missing']==[8]
+    assert plan['fixed'][0]['overview_id']==1
+    messages,schema=grouping_repair_request(plan,units,'es')
+    assert [u['id'] for u in json.loads(messages[1]['content'])['disputed_units']]==[3,8]
+    groups=apply_grouping_repair(json.dumps({'assignments':[{'unit_id':3,'group_id':2},{'unit_id':8,'group_id':1}]}),plan,units,'es')
+    assert groups[0]['unit_ids']==[1,2,4,8] and groups[1]['unit_ids']==[3,5,6,7]
+    assert plan['fixed'][0]['unit_ids']==[1,2,4]
+    for bad in ([{'unit_id':3,'group_id':1},{'unit_id':3,'group_id':2}],
+                [{'unit_id':1,'group_id':1},{'unit_id':8,'group_id':2}],
+                [{'unit_id':3,'group_id':99},{'unit_id':8,'group_id':1}]):
+        with pytest.raises(ValueError):
+            apply_grouping_repair(json.dumps({'assignments':bad}),plan,units,'es')
+
+def test_unbounded_or_unanchored_group_repair_rejected():
+    units=[{'id':i} for i in range(1,9)]
+    for groups in ([{'title':'Archivo','unit_ids':[1,2],'overview_id':1}],
+                   [{'title':'Archivo','unit_ids':[1,2,3,4,5,6,7],'overview_id':1},
+                    {'title':'Recepción','unit_ids':[1],'overview_id':1}],
+                   [{'title':'Se aprobó','unit_ids':[1,2,3,4,5,6,7],'overview_id':1}]):
+        with pytest.raises(ValueError):
+            plan_grouping_repair(json.dumps({'groups':groups}),units,'es')

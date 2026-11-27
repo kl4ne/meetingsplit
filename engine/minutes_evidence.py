@@ -531,8 +531,8 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         elif not items:
             lines += [loc['empty'],'']
         else:
-            # Use dated facts when no validated editorial overview is available.
-            highlights=substantive or topics
+            # Monetary facts already have an evidence section below.
+            highlights=substantive or [item for item in topics if item not in facts]
             highlights=sorted(highlights,key=lambda item:item['sources'][0]['source_id'])
             distinct={}
             for item in highlights:

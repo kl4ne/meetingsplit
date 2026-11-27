@@ -72,7 +72,7 @@ RUBRIC=[
 def write_json(path,value):
     path.write_text(json.dumps(value,ensure_ascii=False,indent=2),encoding='utf-8')
 
-def run(output):
+def run(output, arms=('direct_api','pipeline')):
     output=Path(output)
     parent=validate_local_folder(output.parent)
     output=parent/output.name
@@ -116,7 +116,7 @@ def run(output):
         {'role':'user','content':TRANSCRIPT},
     ]
     with patch.object(ollama,'stream_json',instrumented):
-        for arm in ('direct_api','pipeline'):
+        for arm in arms:
             start=time.monotonic(); before=call
             try:
                 if arm=='direct_api':
@@ -146,14 +146,14 @@ def replay(output):
     results=[]
     for e in events:
         stage=e.get('stage');event=e.get('event');scope=e.get('scope')
-        if stage not in ('editorial','draft','review') or scope is None:continue
+        if stage not in ('editorial','editorial_retry','draft','review') or scope is None:continue
         key=(stage,json.dumps(scope,sort_keys=True))
         if event=='request':requests[key]=e
         if event!='response':continue
         result={'stage':stage,'scope':scope}
         try:
             req=requests[key]
-            if stage=='editorial':
+            if stage in ('editorial','editorial_retry'):
                 sources=[{'source_id':r['id'],'timestamp':rows[r['id']]['timestamp'],'quote':r['quote']}
                          for r in json.loads(req['messages'][1]['content'])['sources']]
                 rejected=[]; reasons=[]
@@ -176,9 +176,11 @@ def replay(output):
 
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument('command',choices=('run','replay'))
+    parser.add_argument('command',choices=('run','pipeline','replay'))
     parser.add_argument('output',type=Path)
     args=parser.parse_args()
+    if args.command=='pipeline':
+        return run(args.output,('pipeline',))
     return (run if args.command=='run' else replay)(args.output)
 
 if __name__=='__main__':

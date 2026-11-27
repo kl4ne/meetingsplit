@@ -22,6 +22,8 @@ Extracción bilingüe metadata-only #46055337219 completó 8/8 hechos, preservó
 
 Replay bilingüe #46057746118 aprobado: 7/7 traducciones, 8/8 hechos; continúa evaluación de calidad. Nuevo caso de capacidad y densidad #46059887920, fuente acotada y modos distintos, aislado. Leer HANDOFF.md. No integración ni paquete.
 
+Caso denso #46059887920: 50 preflight, 111 frases contabilizadas, diez hechos presentes, dos falsas propuestas y un review. Corrección por frase aislada y replay sin inferencia. Advertencia de escalabilidad: 24 llamadas/1899 palabras. Leer HANDOFF.md; no integración ni paquete.
+
 ---
 
 ## Continuity checkpoint — timeout recovery / main integration 2026-10-21

@@ -284,6 +284,11 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                               retained='partial_narrative' if selection['review'] or selection['draft'] else 'editorial_themes',
                               selection=selection)
             narratives[lang]=paragraphs
+    displayed_themes=editorial
+    repeated_themes=[]
+    if narrative_strategy=='localized_editorial':
+        from .minutes_theme_presentation import compact_repeated_theme_sources
+        displayed_themes,repeated_themes=compact_repeated_theme_sources(blocks,editorial)
     overview=None
     presentation=items
     localization=[]
@@ -297,22 +302,23 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             trace('localization','accepted',{'language':lang},diagnostic=diagnostic)
     if narrative_strategy in ('validated_editorial','localized_editorial') and (editorial or items):
         from .minutes_overview import build_overview
-        overview={lang:build_overview(presentation,editorial,lang)
+        overview={lang:build_overview(presentation,displayed_themes,lang)
                   for lang in (('es','en') if language=='both' else (language,))}
         trace('narrative','strategy',{'language':language},
               strategy=narrative_strategy,retained_themes=len(editorial))
     from .minutes_evidence import repeated_topic_coverage
     repetition=repeated_topic_coverage(blocks,items,editorial,empty)
     report=render_minutes(presentation,mode,language,repetition['unresolved_empty_block_ids'],coverage_gaps,
-                          editorial=editorial,editorial_gaps=editorial_gaps,
+                          editorial=displayed_themes,editorial_gaps=editorial_gaps,
                           narratives=narratives,narrative_fallbacks=narrative_fallbacks,
                           executive_overview=overview,show_timestamps=False,repetition_coverage=repetition,
-                          localization=localization)
+                          localization=localization,repeated_themes=repeated_themes)
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,
                        'coverage_gaps':coverage_gaps,'editorial_themes':editorial,
                        'editorial_gaps':editorial_gaps,'narrative_fallbacks':narrative_fallbacks,
                        'narrative_strategy':narrative_strategy,'repetition_coverage':repetition,
-                       'localization':localization,'presentation':presentation if localization else [],'items':items})
+                       'localization':localization,'presentation':presentation if localization else [],
+                       'repeated_theme_presentation':repeated_themes,'items':items})
     return report

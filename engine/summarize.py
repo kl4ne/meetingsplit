@@ -300,6 +300,19 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             presentation=translated
             localization.append(diagnostic)
             trace('localization','accepted',{'language':lang},diagnostic=diagnostic)
+    structured_theme_moves=[]
+    if narrative_strategy=='localized_editorial':
+        from .minutes_theme_presentation import separate_structured_themes
+        languages=('es','en') if language=='both' else (language,)
+        prior_themes=displayed_themes
+        displayed_themes,structured_theme_moves=separate_structured_themes(
+            blocks,prior_themes,presentation,languages,localization)
+        # Store original editorial indices, even if the repetition pass
+        # already removed earlier entries.
+        removed={entry['theme_index'] for entry in repeated_themes}
+        original_indices=[i for i in range(len(editorial)) if i not in removed]
+        for entry in structured_theme_moves:
+            entry['theme_index']=original_indices[entry['theme_index']]
     if narrative_strategy in ('validated_editorial','localized_editorial') and (editorial or items):
         from .minutes_overview import build_overview
         overview={lang:build_overview(presentation,displayed_themes,lang)
@@ -320,5 +333,5 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                        'editorial_gaps':editorial_gaps,'narrative_fallbacks':narrative_fallbacks,
                        'narrative_strategy':narrative_strategy,'repetition_coverage':repetition,
                        'localization':localization,'presentation':presentation if localization else [],
-                       'repeated_theme_presentation':repeated_themes,'items':items})
+                       'repeated_theme_presentation':repeated_themes,'structured_theme_presentation':structured_theme_moves,'items':items})
     return report

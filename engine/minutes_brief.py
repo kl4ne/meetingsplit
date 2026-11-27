@@ -123,3 +123,42 @@ def validate_editorial(raw, sources, language, *, rejected=None, on_rejection=No
             rejected.extend(refs or sources)
     return sorted(result,key=lambda theme:theme['sources'][0]['source_id'])
 
+
+def editorial_retry_sources(rejected, *, maximum=5):
+    """One bounded repair: preserve original order and unique source passages."""
+    unique={}
+    for ref in rejected:
+        unique.setdefault((ref['source_id'],ref['quote']),ref)
+    # Do not retry two different excerpts sharing an ID in one request.
+    chosen={}
+    for ref in unique.values():
+        chosen.setdefault(ref['source_id'],ref)
+        if len(chosen)>=maximum:
+            break
+    return list(chosen.values())
+
+
+def merge_editorial_retry(accepted, rejected, repaired, retry_rejected, language):
+    """Retain accepted themes; clear only explicitly recovered source passages.
+
+    A cited ID is not semantic proof of complete topic coverage. Never clear
+    a gap merely because another theme in the first response cited that ID.
+    """
+    languages=('es','en') if language=='both' else (language,)
+    key=lambda theme:tuple(theme[f'title_{lang}'].casefold() for lang in languages)
+    seen={key(theme) for theme in accepted}
+    result=list(accepted)
+    unresolved={(ref['source_id'],ref['quote']) for ref in retry_rejected}
+    covered=set()
+    for theme in repaired:
+        if key(theme) in seen:
+            continue
+        seen.add(key(theme))
+        result.append(theme)
+        covered.update((ref['source_id'],ref['quote']) for ref in theme['sources'])
+    remaining={}
+    for ref in rejected:
+        ref_key=(ref['source_id'],ref['quote'])
+        if ref_key not in covered or ref_key in unresolved:
+            remaining.setdefault(ref_key,ref)
+    return sorted(result,key=lambda theme:theme['sources'][0]['source_id']),list(remaining.values())

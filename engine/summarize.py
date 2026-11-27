@@ -176,7 +176,8 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     items=reconcile_source_items(items,explicit_items)
     coverage_gaps=find_coverage_gaps(rows,items)
     from .control import JobCancelled
-    from .minutes_brief import editorial_input, editorial_request, validate_editorial
+    from .minutes_brief import (editorial_input, editorial_request, validate_editorial,
+                                editorial_retry_sources, merge_editorial_retry)
     editorial=[]
     editorial_gaps=[]
     sections=editorial_input(blocks,items,explicit_items=explicit_items) if len(rows)>=4 else ()
@@ -187,8 +188,31 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         scope={'source_ids':[row['source_id'] for row in section],'language':language}
         try:
             raw=request(with_guide(messages),schema,stage='editorial',scope=scope)
-            accepted=validate_editorial(raw,section,language,rejected=editorial_gaps,
+            rejected=[]
+            accepted=validate_editorial(raw,section,language,rejected=rejected,
                         on_rejection=lambda theme,exc:trace('editorial','theme_rejected',scope,theme=theme,reason=str(exc)))
+            if rejected:
+                # One repair request only for individually rejected themes.
+                # Transport failure and whole-document invalidity do not start
+                # a recursive retry chain; their original warning is preserved.
+                subset=editorial_retry_sources(rejected)
+                repair_scope={'source_ids':[row['source_id'] for row in subset],'language':language}
+                if cancel: cancel.check()
+                retry_messages,retry_schema=editorial_request(subset,language)
+                retry_messages[0]['content'] += (' Repair only these previously rejected excerpts. '
+                    'Describe what was discussed; never assert a decision, invent a number, or change a deadline.')
+                try:
+                    retry_raw=request(with_guide(retry_messages),retry_schema,stage='editorial_retry',scope=repair_scope)
+                    retry_rejected=[]
+                    repaired=validate_editorial(retry_raw,subset,language,rejected=retry_rejected,
+                        on_rejection=lambda theme,exc:trace('editorial_retry','theme_rejected',repair_scope,theme=theme,reason=str(exc)))
+                    accepted,rejected=merge_editorial_retry(accepted,rejected,repaired,retry_rejected,language)
+                    trace('editorial_retry','accepted',repair_scope,themes=repaired,remaining_gaps=rejected)
+                except JobCancelled:
+                    raise
+                except (OSError,RuntimeError,ValueError) as exc:
+                    trace('editorial_retry','section_rejected',repair_scope,error_type=type(exc).__name__,reason=str(exc))
+            editorial_gaps.extend(rejected)
             editorial.extend(accepted)
             trace('editorial','accepted',scope,themes=accepted)
         except JobCancelled:

@@ -118,7 +118,8 @@ def test_minutes_retries_only_failed_block_using_verified_transcript(tmp_path, m
                 'clips': [{'number': 1}],
                 'checkpoints': {'1': job._sha256(checkpoint, Cancellation())},
                 'resume_signature': {'settings': {'action': 'both', 'language': 'both',
-                    'report': 'both', 'local_summary': True, 'zip_output': True}}}
+                    'report': 'both', 'local_summary': True, 'zip_output': True,
+                    'ollama_model': 'qwen3.8:27b'}}}
     job._write_json(folder / 'manifest.json', manifest)
     monkeypatch.setattr(engine.ollama, 'LocalService', Service)
     calls = []
@@ -149,6 +150,7 @@ def test_minutes_retries_only_failed_block_using_verified_transcript(tmp_path, m
     job.retry_minutes(folder, tmp_path, lambda *_: None)
     assert calls == [[3]]
     assert read_manifest(folder)['summary_status'] == 'complete'
+    assert read_manifest(folder)['resume_signature']['settings']['ollama_model'] == job.MODEL
     assert not (folder / 'MINUTA_NO_GENERADA.txt').exists()
     report = (folder / 'RESUMEN_Y_MINUTA_LOCAL.md').read_text(encoding='utf-8')
     assert '# Minuta de reunión' in report and '# Meeting minutes' in report
@@ -175,3 +177,15 @@ def test_whisper_cpu_keeps_word_timestamps_and_discards_out_of_bounds_padding(tm
     rows = transcribe_clip(model, Clip(2, 10, 13, 8, 14), tmp_path / 'speech.wav')
     assert observed['vad_filter'] and observed['word_timestamps'] and observed['beam_size'] == 2
     assert rows == [{'start': 10.2, 'end': 11, 'text': 'speech', 'part': 2}]
+
+
+def test_resume_accepts_old_minutes_model_but_preserves_source_and_audio_settings():
+    previous = {'schema': 1, 'source_sha256': 'same-source', 'source_bytes': 123,
+                'settings': {'format': 'mp3', 'ollama_model': 'qwen3.8:27b'}}
+    new = dict(previous, settings=dict(previous['settings'], ollama_model=job.MODEL))
+    assert job._matches_resume_signature(previous, new)
+    assert not job._matches_resume_signature(previous, dict(new, source_sha256='different-source'))
+    changed_output = dict(new, settings=dict(new['settings'], format='wav'))
+    assert not job._matches_resume_signature(previous, changed_output)
+    assert previous['settings']['ollama_model'] == 'qwen3.8:27b'
+

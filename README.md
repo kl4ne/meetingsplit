@@ -15,7 +15,7 @@
 </div>
 
 > [!IMPORTANT]
-> **Windows development candidate · v0.8.16.** The public release and installer remain gated. See [current status](MASTER_STATUS.md).
+> **Windows development candidate · v0.8.18.** The public release and installer remain gated. See [current status](MASTER_STATUS.md).
 
 ---
 
@@ -25,7 +25,7 @@ The app accepts folders on **verified internal C: or D:** drives, and deliberate
 
 NVIDIA GPU transcription requires **CUDA 12 cuBLAS and cuDNN 9**, beyond the driver. Optional setup downloads pinned official NVIDIA archives into a validated internal folder, registers them only for this process, and tests lazy inference in an isolated child. CPU fallback remains available. No driver, System32 or global PATH changes occur. The base installer does not contain these archives.
 
-**Optional local minutes.** Meeting Split uses `qwen3.8:27b` through the local Ollama service. The readable minutes omit timecodes and tables. Source timecodes remain in the transcript and evidence JSON. The meeting export opens with one `RESULTADOS_COMPLETOS` folder containing categorized files.
+**Optional local minutes.** Meeting Split uses `qwen3.5:9b` through the local Ollama service. The readable minutes omit timecodes and tables. Source timecodes remain in the transcript and evidence JSON. The meeting export opens with one `RESULTADOS_COMPLETOS` folder containing categorized files.
 
 **Verified baseline:** the user confirmed internal D: and six CPU transcripts in about 11 minutes. Current read-only ASUS checks accept internal C:/D: and reject USB J:. Without working CUDA, CPU uses `small` when Medium or Large was selected; accuracy may be lower. Enlarged typography, five EN/ES pages and elapsed-time feedback remain in place.
 
@@ -123,6 +123,8 @@ Building a Windows executable: read [`COMPILACION_WINDOWS.md`](COMPILACION_WINDO
 
 The project includes [a manually triggered Windows build workflow](.github/workflows/windows-build.yml) (`workflow_dispatch`). The workflow is a **build/test aid, not evidence that the installer works on the target PC**. Release packaging, third-party license notices, executable verification, privacy review, and hardware QA remain gates before distribution.
 
+The extracted portable supports `MeetingSplit.exe --minutes-qa <synthetic QA folder>` for local recovery QA. Supply only `synthetic-transcript.json` (a `segments` array with `start`, `end` and `text`) and `synthetic-part.mp3` in that folder. The command uses an existing verified local Ollama model and writes the report and ZIP in a new test project. It exercises recovery and export. Review the generated minutes separately for factual coverage.
+
 ## Development
 
 ```text
@@ -189,13 +191,13 @@ MeetingSplit es una aplicación de escritorio para **Windows 11** que divide gra
 
 ### ¿Ya puedo instalarlo?
 
-**La versión de desarrollo en Windows es 0.8.16.** La minuta local usa `qwen3.8:27b` y se presenta sin tablas ni marcas de tiempo. La transcripción y el JSON conservan las referencias. El ZIP de la reunión agrupa los resultados en una sola carpeta `RESULTADOS_COMPLETOS`.
+**La versión de desarrollo en Windows es 0.8.18.** La minuta local usa `qwen3.5:9b` y se presenta sin tablas ni marcas de tiempo. La transcripción y el JSON conservan las referencias. El ZIP de la reunión agrupa los resultados en una sola carpeta `RESULTADOS_COMPLETOS`.
 
 ### Compilación y estado de la minuta
 
 El flujo [Windows build](https://github.com/kl4ne/meetingsplit/actions/workflows/windows-build.yml) ejecuta pruebas automatizadas. La opción manual de portable para QA compila el ZIP completo, verifica el ejecutable extraído y publica el artefacto con su SHA-256.
 
-En la prueba con el 27B, la sección de avisos conservó dos anuncios distintos. El resumen ejecutivo volvió a agruparlos y resultó demasiado extenso. La calidad de la minuta completa sigue pendiente de validación para una nueva entrega portátil.
+La 0.8.18 usa Qwen3.5 9B para las minutas locales. La prueba larga con 27B se detuvo al cambiar de modelo. La duración y la calidad de la 0.8.18 se verifican con las mismas regresiones de avisos, acuerdos y recuperación antes de entregar el portátil.
 
 ### Privacidad
 
@@ -217,7 +219,7 @@ This project depends on software with **separate licenses** (including Qt/PySide
 
 **Designed & Developed by Roberto S. Macfie**
 
-<sub>MeetingSplit · Independent Windows desktop software · Private Windows portable v0.8.16</sub>
+<sub>MeetingSplit · Independent Windows desktop software · Private Windows portable v0.8.18</sub>
 
 </div>
 

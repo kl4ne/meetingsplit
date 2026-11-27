@@ -458,6 +458,9 @@ def reconcile_source_items(items, explicit):
         source_item=explicit[index]
         if item['category'] != source_item['category'] or len(source_item['sources'])>1:
             continue
+        # Preserve the wording of an explicit budget instead of inferring its allocation.
+        if source_item['category'] == 'topic':
+            continue
         if source_item['owner'] and item['owner']!=source_item['owner']:
             continue
         if source_item['due'] and (not item['due'] or source_item['due'].casefold() not in item['due'].casefold()):
@@ -528,8 +531,8 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         elif not items:
             lines += [loc['empty'],'']
         else:
-            # Use dated facts when no validated editorial overview is available.
-            highlights=substantive or topics
+            # Monetary facts already have an evidence section below.
+            highlights=substantive or [item for item in topics if item not in facts]
             highlights=sorted(highlights,key=lambda item:item['sources'][0]['source_id'])
             distinct={}
             for item in highlights:
@@ -568,8 +571,10 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 quotations={}
                 for ref in item['sources']:
                     quotations.setdefault(ref['quote'],[]).append(ref)
-                for quote,refs in quotations.items():
-                    lines.append('  - '+loc['evidence']+': '+times(refs)+' "'+_markdown(quote)+'"')
+                # An explicit budget or notice is already readable as a verbatim statement.
+                if show_timestamps or category not in ('notice', 'topic') or item[field] != ' '.join(quotations):
+                    for quote,refs in quotations.items():
+                        lines.append('  - '+loc['evidence']+': '+times(refs)+' "'+_markdown(quote)+'"')
                 lines.append('')
         incomplete_prose=any(entry['language']==lang for entry in narrative_fallbacks)
         if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose:

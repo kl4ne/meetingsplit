@@ -52,7 +52,7 @@ def test_invalid_record_preserves_minutes_and_places_original_passage_under_revi
     invalid=record(owner=None,due='Wednesday',sources=[{'id':3,'quote':tentative}])
     monkeypatch.setattr(summarize,'ollama_chat',lambda *a,**k:payload(invalid,valid))
     sidecar={}
-    report=summarize.summarize_local(SOURCE+'\n[00:00:09] '+tentative,'minutes','both','qwen3.8:27b',
+    report=summarize.summarize_local(SOURCE+'\n[00:00:09] '+tentative,'minutes','both','qwen3.5:9b',
                                      evidence_sink=sidecar.update)
     assert 'Wednesday' not in report
     assert 'Luis' in report and 'Monday' in report
@@ -65,7 +65,7 @@ def test_malformed_evidence_twice_still_does_not_emit_report(monkeypatch):
     monkeypatch.setattr(summarize,'ollama_chat',lambda *a,**k:'not JSON')
     sidecar={}
     with pytest.raises(RuntimeError,match='Invalid source evidence'):
-        summarize.summarize_local(SOURCE,'minutes','both','qwen3.8:27b',evidence_sink=sidecar.update)
+        summarize.summarize_local(SOURCE,'minutes','both','qwen3.5:9b',evidence_sink=sidecar.update)
     assert sidecar=={}
 
 
@@ -111,3 +111,18 @@ def test_empty_blocks_reported_in_sidecar_and_markdown(monkeypatch):
     report=summarize.summarize_local(SOURCE,'minutes','en','qwen3:4b',evidence_sink=sidecar.update)
     assert sidecar['empty_block_ids']==[1]
     assert 'Sections with no extracted items' in report
+
+
+def test_ollama_chat_selects_local_qwen35_9b(monkeypatch):
+    from engine import ollama
+
+    def stream(endpoint, route, payload, *_):
+        assert endpoint == 'http://127.0.0.1:11434'
+        assert route == '/api/chat'
+        assert payload['model'] == 'qwen3.5:9b'
+        assert payload['options']['num_ctx'] == 16384
+        yield {'message': {'content': '{"items":[]}'}, 'done': True, 'done_reason': 'stop'}
+
+    monkeypatch.setattr(ollama, 'stream_json', stream)
+    assert ollama.chat([{'role': 'user', 'content': 'Synthetic fixture'}], json_output=True) == '{"items":[]}'
+

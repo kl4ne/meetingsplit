@@ -151,13 +151,14 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                 seen.add(key);items.append(item)
     if cancel: cancel.check()
     rows=[row for block in blocks for row in block]
-    items=reconcile_source_items(items,explicit_source_items(rows,language))
+    explicit_items=explicit_source_items(rows,language)
+    items=reconcile_source_items(items,explicit_items)
     coverage_gaps=find_coverage_gaps(rows,items)
     from .control import JobCancelled
     from .minutes_brief import editorial_input, editorial_request, validate_editorial
     editorial=[]
     editorial_gaps=[]
-    sections=editorial_input(blocks,items) if len(rows)>=4 else ()
+    sections=editorial_input(blocks,items,explicit_items=explicit_items) if len(rows)>=4 else ()
     for section in sections:
         if cancel: cancel.check()
         progress('Preparando la síntesis temática / Preparing the thematic overview')

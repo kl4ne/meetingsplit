@@ -11,7 +11,11 @@ from .minutes_evidence import _AGREEMENT, _NUMBER, _amount_keys, changes_operati
 _INPUT_BYTES = 5500
 _DRAFT_BYTES = 4000
 _REFERENCE = re.compile(r'\[E([1-9][0-9]*)\]')
-_REFERENCES_AT_END = re.compile(r'(?P<refs>(?:\s*\[E[1-9][0-9]*\])+)(?P<punct>[.!?])?$')
+_REFERENCES_AT_END = re.compile(r'(?P<refs>(?:\s*\[E[1-9][0-9]*\])+)(?P<punct>[.!?,;])?$')
+_CITED_SENTENCE_BREAK = re.compile(
+    r'(?P<end>[.!?,;](?:[ \t]*\[E[1-9][0-9]*\])+|\[E[1-9][0-9]*\][.!?,;])'
+    r'[ \t]+(?=(?!\[E[1-9][0-9]*\])\S)'
+)
 _NON_PROSE = re.compile(r'^\s*(?:[#>|*~_-]|[0-9]+[.)]\s)|[|`<>]|[\[\]]', re.MULTILINE)
 
 
@@ -74,33 +78,38 @@ def validate_narrative(raw, section, language):
     covered = set()
     seen = set()
     for paragraph in re.split(r'\r?\n[ \t]*\r?\n', raw.strip()):
-        paragraph = paragraph.strip()
-        ending = _REFERENCES_AT_END.search(paragraph)
-        if ending is None:
-            raise ValueError('Narrative paragraph needs evidence IDs')
-        body = paragraph[:ending.start()].strip()
-        keys = {int(key) for key in _REFERENCE.findall(ending['refs'])}
-        if not keys <= section.keys() or not body or _NON_PROSE.search(body):
-            raise ValueError('Invalid narrative format or evidence IDs')
-        body = ' '.join(body.split())
-        if ending['punct'] and not body.endswith(('.', '!', '?')):
-            body += ending['punct']
-        if not _language_matches(body, language):
-            raise ValueError('Narrative is in the wrong language')
-        if _AGREEMENT.search(body):
-            raise ValueError('Formal decisions belong in the separate evidence section')
-        quotes = ' '.join(quote for key in keys for quote in section[key][1]['quotes'])
-        if changes_operational_meaning(body,quotes):
-            raise ValueError('Narrative changed a deadline or implementation claim')
-        if set(_NUMBER.findall(body))-set(_NUMBER.findall(quotes)) or _amount_keys(body)-_amount_keys(quotes):
-            raise ValueError('Unsupported number or amount in narrative')
-        normalized = body.casefold().rstrip('.')
-        if normalized in seen:
-            raise ValueError('Repeated narrative paragraph')
-        seen.add(normalized)
-        covered.update(keys)
-        refs = {ref['source_id']:ref for key in sorted(keys) for ref in section[key][0]['sources']}
-        paragraphs.append({'text':body, 'sources':[refs[key] for key in sorted(refs)]})
+        passages = []
+        refs = {}
+        # A paragraph may cite consecutive sentences or clauses individually.
+        cited = _CITED_SENTENCE_BREAK.sub(r'\g<end>\n\n', paragraph.strip())
+        for passage in cited.split('\n\n'):
+            ending = _REFERENCES_AT_END.search(passage)
+            if ending is None:
+                raise ValueError('Narrative paragraph needs evidence IDs')
+            body = passage[:ending.start()].strip()
+            keys = {int(key) for key in _REFERENCE.findall(ending['refs'])}
+            if not keys <= section.keys() or not body or _NON_PROSE.search(body):
+                raise ValueError('Invalid narrative format or evidence IDs')
+            body = ' '.join(body.split())
+            if ending['punct'] and not body.endswith(('.', '!', '?', ',', ';')):
+                body += ending['punct']
+            if not _language_matches(body, language):
+                raise ValueError('Narrative is in the wrong language')
+            if _AGREEMENT.search(body):
+                raise ValueError('Formal decisions belong in the separate evidence section')
+            quotes = ' '.join(quote for key in keys for quote in section[key][1]['quotes'])
+            if changes_operational_meaning(body,quotes):
+                raise ValueError('Narrative changed a deadline or implementation claim')
+            if set(_NUMBER.findall(body))-set(_NUMBER.findall(quotes)) or _amount_keys(body)-_amount_keys(quotes):
+                raise ValueError('Unsupported number or amount in narrative')
+            normalized = body.casefold().rstrip('.!?,;')
+            if normalized in seen:
+                raise ValueError('Repeated narrative paragraph')
+            seen.add(normalized)
+            covered.update(keys)
+            refs.update((ref['source_id'],ref) for key in sorted(keys) for ref in section[key][0]['sources'])
+            passages.append(body)
+        paragraphs.append({'text':' '.join(passages), 'sources':[refs[key] for key in sorted(refs)]})
     if covered != section.keys():
         raise ValueError('The revised narrative omitted evidence IDs')
     return paragraphs

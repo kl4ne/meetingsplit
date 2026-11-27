@@ -18,10 +18,16 @@ def _language_matches(value, language):
     return other < 3 or own >= other
 
 
-def editorial_input(blocks, items=()):
+def editorial_input(blocks, items=(), *, explicit_items=()):
+    """Leave explicit notices and budget statements in their own report sections."""
     separate = {(ref['source_id'], ref['quote'].strip())
                 for item in items if item['category'] in ('action','decision')
                 for ref in item['sources']}
+    separate_quotes = {}
+    for item in explicit_items:
+        if item['category'] in ('notice', 'topic'):
+            for ref in item['sources']:
+                separate_quotes.setdefault(ref['source_id'], set()).add(ref['quote'])
     seen = set()
     for block in blocks:
         sources = []
@@ -29,12 +35,15 @@ def editorial_input(blocks, items=()):
             text = row['text'].strip()
             if (row['id'],text) in separate:
                 continue
-            if _PERSONAL_TENTATIVE.search(text) and len(_SENTENCE_BREAK.split(text))==1:
+            if excluded := separate_quotes.get(row['id']):
+                sentences = (sentence.strip() for sentence in _SENTENCE_BREAK.split(text))
+                text = '\n'.join(sentence for sentence in sentences if sentence and sentence not in excluded)
+            if not text or (_PERSONAL_TENTATIVE.search(text) and len(_SENTENCE_BREAK.split(text))==1):
                 continue
-            key = ' '.join(row['text'].casefold().split())
+            key = ' '.join(text.casefold().split())
             if key not in seen:
                 seen.add(key)
-                sources.append({'source_id':row['id'], 'timestamp':row['timestamp'], 'quote':row['text']})
+                sources.append({'source_id':row['id'], 'timestamp':row['timestamp'], 'quote':text})
         if sources:
             yield sources
 

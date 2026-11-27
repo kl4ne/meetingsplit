@@ -95,3 +95,7 @@ Read exact artifact 15205494850 trace: extraction requested review for full row 
 ## Final classification integration checkpoint
 
 CI #46024213286 succeeded: 283 engine tests, 2 skipped, 11 browser tests, dependency audit no known findings. Exact replay #46024353373 passed 32 focused tests; only row 12 reclassified from review to descriptive topic; every other evidence record and source unchanged. Artifact 15211181219. Integrate the narrow correction in draft PR #7. Full validation on the combined revision is still required; no claim of semantic certification or a completed frozen Windows/GPU workload. No public release.
+
+## Continuidad documentada — 2026-11-27
+
+CI #46024899679 passed 291 engine tests plus 11 browser tests, 2 skipped; dependency audit no known findings. Full exact recorded pipeline replay #46025010689 passed 9/9, artifact 15210253968. Independent varied source QA #46025742614 / job 140596549351 running on SHA 67bda32ab4b73642caf04b13f26d9a658ef3f611 at this snapshot. Read root HANDOFF.md first, then docs/MEETINGSPLIT_FINISH_PLAN.md and docs/MINUTES_QA_LEDGER.md. The next action is to inspect the actual varied result, not rerun previous tests. This documentation-only checkpoint preserves source SHA 6b92c8f, main and release gate; no new version or executable. Quality and long dense validation remain open.

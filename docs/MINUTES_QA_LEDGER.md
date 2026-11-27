@@ -1,0 +1,90 @@
+# Evidencias de reparación de minutas — registro verificable
+
+Actualizado el 2026-11-27. Repositorio: `kl4ne/meetingsplit`. Los IDs de runs/artefactos corresponden a GitHub Actions. Enlaces de ejecución: `https://github.com/kl4ne/meetingsplit/actions/runs/<ID>`. Los artefactos pueden caducar; no asumir que siguen descargables. No contienen grabaciones personales por diseño. Leer los resultados completos, no solamente la conclusión del workflow.
+
+## Línea base y ramas
+
+| Referencia | SHA / función |
+|---|---|
+| main al iniciar reparación | de0f22a43a5a1f857ec5d47ded802037b2f34984, 0.8.18, Codex PR #6 ya fusionado |
+| PR #7, fix/minutes-editorial-diagnostics | 6b92c8f25ee9314065e3085cc6341d6005bfc30f, último código validado antes de este traspaso documental |
+| PR #8 | prueba aislada de extracción selectiva, rama fix/minutes-selective-quote-retry, 95746f9; su cambio ya está en #7, no fusionar de nuevo |
+| qa/minutes-varied-long-0819 | 67bda32ab4b73642caf04b13f26d9a658ef3f611, prueba variada activa |
+| qa/minutes-final-replay-0819 | 6061b68884406bc3ce2f30b0e9d13f727ed93cdc, replay completo corto |
+
+## Cambios integrados (16 commits de código/pruebas/documentación técnica antes de este handoff)
+
+| Commit (prefijo) | Cambio |
+|---|---|
+| 2d79cb6 | Trazas QA explícitas y conservar borrador válido si falla revisión. |
+| e91e2f9 | A/B sintético corto con referencia y replay. |
+| 576b988 | Polaridad de acuerdos, no aprobación distinta de rechazo. |
+| e0884ad | Recuperación de párrafos completos verificados. |
+| 794acbe, d585f38 | Expectativa de recuperación parcial y títulos de prueba sin números inventados. |
+| 7fb2290 | Un reintento acotado de temas rechazados, conserva los aceptados. |
+| 95746f9 | Reintento de citas selectivo, IDs afectados y vinculados; no aproximar citas. |
+| 4450b91 | Integración de anclas de tema y presentación literal de idioma. |
+| f791131 | Estrategia consolidada y clasificación de guía, pendiente y avisos. |
+| 37f3879 | Contabilidad de repeticiones descriptivas, advertencias originales, campos de tarea. |
+| dccb71d | Integración desktop de localized_editorial, validación y protección de traducciones. |
+| 8b78942 | Redundancia de líneas largas y prueba de recuperación adaptada. |
+| bf05a2a | Corrección del mock de idioma y diagnóstico explícito de recuperación. |
+| 48a3d64 | Propuestas y pendientes en sus secciones, conserva temas originales. |
+| 6b92c8f | Discusión explícita se clasifica como tema, no pendiente inventado. |
+
+## Ejecuciones y artefactos principales
+
+| Run | Artefacto ID (si consta) | Resultado observado |
+|---|---|---|
+| 45950804921 | — | 206 motor, 11 interfaz, 2 omitidas; auditoría limpia. |
+| 45951175096 | 15177746760 | A/B real: directo 193.829 s/1 llamada, pipeline 891.066 s/5; ambos con errores semánticos. |
+| 45954020095 | — | 215 motor +11 interfaz, 2 omitidas. |
+| 45954418778 | — | Fallo de fixture por número en título; corregido sin relajar guarda numérica. |
+| 45954649481 | — | 220 motor +11 interfaz, 2 omitidas. |
+| 45955097281 | 15178636016 | CI correcta con recuperación acotada de temas. |
+| 45955174164 | 15179585459 | Pipeline real reparado: 819.771 s/5 llamadas, 6 temas, cero lagunas editoriales detectadas, un fallback; narrativa omitió dos temas a pesar de IDs. |
+| 45959062442 | — | 89 pruebas de extracción selectiva. |
+| 45959366639 | 15180376379 (auditoría) | 237 motor +11 interfaz, 2 omitidas, auditoría limpia. |
+| 45959540874 | 15180570776 | Replay recuperó 6/6 temas; sin inferencia. |
+| 45959825859 | 15180493657 | Consolidado real: 614.171 s/4 llamadas, reintento selectivo 44.798 s vs 252.428 s histórico. |
+| 45993971134 | — | Fallo SyntaxError por expansión JS de sustitución de cadena; archivo restaurado desde versión sana y patch literal. |
+| 45994422839 | 15195382415 | 100 pruebas, 8/8 checks replay de clasificación. |
+| 45994530781 | 15194219125 (auditoría) | 243 motor +11 interfaz, 2 omitidas. |
+| 45994579450 | 15196553252 | Largo repetitivo real: 276 filas/11 bloques/36,178 chars, 1735.341 s/16 llamadas; 11/11 hechos correctos, pero 4 bloques vacíos y 15 registros review. Falló aceptación estricta. |
+| 46000635732 | 15198380886 (auditoría) | 253 motor +11 interfaz, 2 omitidas. |
+| 46000677544 | 15198485540 | 39 pruebas y 5/5 replay repeticiones; 112 filas de 4 bloques y 15 reviews contabilizados, sin borrar diagnóstico. |
+| 46001580090 | 15198461769 | 19 pruebas, traducción 3/4, 30.54 s/1 llamada; plazo excluía viernes. |
+| 46008752302 | 15201659731 | 24 pruebas, 3/5 traducciones, 27.243 s/1 llamada; 2 plazos rechazados. |
+| 46009865198 | 15202657089 | 33 pruebas, 5/5 traducciones en replay offline, restauración acotada de día, hechos y registros originales intactos. |
+| 46010385069 | 15203317506 (auditoría) | 276 pruebas, 1 fallo mock de recuperación sin soporte de traducción; 2 omitidas. |
+| 46010555628 | 15203432244 | 41 pruebas y replay 7→5 temas, conserva fragmento único y 11 hechos. |
+| 46015055749 | 15205557241 (auditoría) | 280 pruebas, 1 fallo recuperación needs_review por frases del mock rechazadas; 2 omitidas. |
+| 46015163014 | 15205494850 | Motor integrado real: 41 preflight, 14/14 checks, 875.204 s/4 llamadas, 4557 chars. Un review de discusión; sin fallos de traducción; duplicación. |
+| 46023661916 | 15211695482 (auditoría) | 281 motor +11 interfaz, 2 omitidas; recuperación pasa. |
+| 46023822998 | 15212165509 | 30 pruebas, replay 6→4 temas mostrados, propuesta/pendiente pasan a sección propia; 4557→3912 chars. |
+| 46024213286 | 15212011213 (auditoría) | 283 motor +11 interfaz, 2 omitidas. |
+| 46024353373 | 15211181219 | 32 pruebas, exactamente un review de fila 12 recuperado como tema; demás registros iguales. |
+| 46024899679 | 15211811984 (auditoría) | Última CI integral: 291 motor +11 interfaz = 302 aprobadas, 2 omitidas; auditoría sin vulnerabilidades conocidas. |
+| 46025010689 | 15210253968 | Replay completo con los 4 requests exactos, 9/9 checks, ningún review sin resolver en ese fixture; mantiene revisión obligatoria. |
+| 46025742614 | Pendiente | Último estado comprobado: job 140596549351 en inferencia real, prueba temática variada, artifact esperado varied-long-localized-qa. Consultar estado nuevo. |
+
+## Interpretación de rendimiento
+
+- El caso corto directo de 193.829 s no es equivalente a la aplicación: no garantiza fuente, inventó destino de presupuesto, mezcló fechas y trató no aprobación como rechazo.
+- Pipeline inicial 891.066 s. Primera reparación 819.771 s. Consolidación 614.171 s (aprox. 31% de ahorro observado en esa prueba). Motor localizado integrado 875.204 s (aprox. 1.8% menos que el inicial). No se garantiza 31%; variación de runner y respuestas. Comparaciones son CPU Linux sobre fixture sintético, no ASUS.
+- El reintento selectivo redujo una llamada observada de ~252 s a ~45 s, conservó 10 registros y reintentó 2 IDs. No extrapolar a todas las reuniones.
+- El largo histórico de 11 bloques no es el largo original de 29 bloques del ASUS; el caso variado de 71 filas tiene 2h15 de cronología, no de habla continua. La validación larga densa y variada sigue pendiente. Un replay es una reconstrucción de respuestas existentes, no una nueva ejecución del modelo.
+
+## Defectos originales y protecciones relevantes
+
+La extracción original falló porque una cita agregó “los” a “atención a visitantes”. No tolerar aproximaciones. El modelo atribuyó “se acordó preparar ejemplos” a una conversación, y “fue rechazada” a un texto “Not approved.”. La revisión narrativa asignó IDs de confidencialidad y ejemplos al inventario; referencias correctas formalmente no bastaron. Instrucciones del manual con “should” se volvieron propuesta; una pregunta explícitamente sin responsable/plazo se clasificó review. Se corrigieron avisos separados, presupuesto literal, plazos y presentación bilingüe. Traducciones de by Friday/Thursday cambiaban a antes de; se restaura relación exacta solo cuando un caso estrecho permite hacerlo y pasa validación. No tratar todas las paráfrasis como seguras. Las tareas repetidas no se deduplican como simple texto de fondo. Mantener advertencias originales.
+
+## Evidencias históricas que faltan
+
+El handoff técnico original de 0.8.18 indicó 16,037 palabras, 270 filas, 29 bloques, 2h15, 1529.34 s en ASUS RTX 4070, 4 acuerdos/2 tareas/presupuesto correctos, 198 temas aceptados, ocho lagunas y 15 fallbacks en 38 requests, estado needs_review. Los archivos exactos `synthetic-transcript.json` / `expected.json` y salida de QA estaban en la estación Windows del propietario, no en el repo; no se dispone de las respuestas brutas de ese caso. Estos números son contexto reportado, no una verificación independiente. Si se recuperan, fijar hash y origen y volver a evaluar con el motor nuevo. No usar el digest antiguo Qwen3:4B del harness histórico.
+
+Ante un artefacto caducado, este registro y `MINUTES_REPAIR_CHECKPOINT.md` preservan los hechos conocidos, pero no reemplazan las bytes originales. Copiar los resultados sintéticos esenciales y referencias a commits cuando sea posible; nunca guardar secretos o transcripciones reales en repo público.
+
+## Estado de cierre
+
+Código de minutas probado en PR #7; falta resultado del caso variado, validación de volumen denso/semántica, numeración, portable y aceptación ASUS. Release gate permanece cerrado. Ningún paquete nuevo de 0.8.19 se ha creado. No confundir la anterior prueba de paquete 0.8.18 de Codex (#45944749555, artifact 15173838121) con una compilación de estos cambios.

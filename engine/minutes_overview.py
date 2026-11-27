@@ -51,8 +51,10 @@ def build_overview(items, themes, lang):
                 fields=[]
                 if item.get('owner') and item['owner'].casefold() not in value.casefold():
                     fields.append(loc['owner']+': '+item['owner'])
-                if item.get('due') and item['due'].casefold() not in value.casefold():
-                    fields.append(loc['due']+': '+item['due'])
+                from .minutes_localization import local_day
+                due=local_day(item.get('due'),lang)
+                if due and due.casefold() not in value.casefold():
+                    fields.append(loc['due']+': '+due)
                 if fields:
                     value=value.rstrip('.')+' ('+'; '.join(fields)+')'
             if value not in descriptions:

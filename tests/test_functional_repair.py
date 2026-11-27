@@ -126,8 +126,29 @@ def test_minutes_retries_only_failed_block_using_verified_transcript(tmp_path, m
     fail = True
     cancel = Cancellation()
 
+    localization_calls = []
+
     def fake_chat(messages, *_args, **_kwargs):
-        source = json.loads(messages[1]['content'])['source_rows']
+        payload = json.loads(messages[1]['content'])
+        if 'records' in payload:
+            # The recovery test exercises the real localization validator,
+            # without asking Ollama to translate the synthetic padding.
+            spanish = 'into Spanish.' in messages[0]['content']
+            localized = []
+            for record in payload['records']:
+                original = record['source']
+                if 'US$200' in original:
+                    text = 'Se acordó gastar US$200.' if spanish else 'It was agreed to spend US$200.'
+                elif '300 pesos' in original:
+                    text = 'Se acordó invertir 300 pesos.' if spanish else 'It was agreed to invest 300 pesos.'
+                elif '$100' in original:
+                    text = 'Se aprobó $100.' if spanish else 'The amount of $100 was approved.'
+                else:
+                    pytest.fail('Unexpected localization source')
+                localized.append({'id':record['id'],'text':text})
+            localization_calls.append([record['id'] for record in payload['records']])
+            return json.dumps({'translations':localized})
+        source = payload['source_rows']
         calls.append([row['id'] for row in source])
         if fail and any(row['id'] == 3 for row in source):
             return 'invalid'
@@ -149,13 +170,16 @@ def test_minutes_retries_only_failed_block_using_verified_transcript(tmp_path, m
     calls.clear()
     job.retry_minutes(folder, tmp_path, lambda *_: None)
     assert calls == [[3]]
-    assert read_manifest(folder)['summary_status'] == 'complete'
+    assert localization_calls
+    assert read_manifest(folder)['summary_status'] == 'complete', (folder / 'MINUTA_NO_GENERADA.txt').read_text(encoding='utf-8') if (folder / 'MINUTA_NO_GENERADA.txt').exists() else read_manifest(folder)
     assert read_manifest(folder)['resume_signature']['settings']['ollama_model'] == job.MODEL
     assert not (folder / 'MINUTA_NO_GENERADA.txt').exists()
     report = (folder / 'RESUMEN_Y_MINUTA_LOCAL.md').read_text(encoding='utf-8')
     assert '# Minuta de reunión' in report and '# Meeting minutes' in report
     evidence = json.loads((folder / 'MINUTA_EVIDENCIAS.json').read_text(encoding='utf-8'))
     assert {item['sources'][0]['quote'] for item in evidence['items']} == {row['text'] for row in rows}
+    assert evidence['narrative_strategy'] == 'localized_editorial'
+    assert all(not entry['rejected'] for entry in evidence['localization'])
     with ZipFile(folder / 'RESULTADOS_COMPLETOS.zip') as archive:
         assert 'RESULTADOS_COMPLETOS/Minutas/RESUMEN_Y_MINUTA_LOCAL.md' in archive.namelist()
         assert not any('/.minutes-' in name for name in archive.namelist())

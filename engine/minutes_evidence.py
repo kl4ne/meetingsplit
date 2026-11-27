@@ -737,7 +737,7 @@ def _presentation_text(item, lang):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=()) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=()) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -853,6 +853,9 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         if repetition_coverage and (repetition_coverage['covered_empty_blocks'] or covered_review_indices):
             lines += [('Se conservaron en el JSON las advertencias de extracción sobre pasajes repetidos literalmente y ya citados. La equivalencia semántica no está certificada.'
                        if lang=='es' else 'Extraction warnings for exact previously cited repetitions remain in the evidence JSON. Semantic equivalence is not certified.'),'']
+        if repeated_themes:
+            lines += [('Los temas de líneas repetidas literalmente se presentan una sola vez; las síntesis y referencias originales se conservan en el JSON.'
+                       if lang=='es' else 'Topics from literally repeated lines are presented once; original summaries and references remain in the evidence JSON.'),'']
         if editorial_gaps:
             lines += [('Pasajes sin síntesis' if lang=='es' else 'Passages without a synthesis'),'']
             for ref in editorial_gaps:

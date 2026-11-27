@@ -68,7 +68,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                                    extraction_prompt, extraction_schema, find_coverage_gaps,
                                    explicit_source_items, reconcile_source_items, recover_evidence_items,
                                    plan_quote_retry, unresolved_retry_items)
-    if narrative_strategy not in ('reviewed','validated_editorial','localized_editorial'):
+    if narrative_strategy not in ('reviewed','validated_editorial','localized_editorial','source_first'):
         raise ValueError('Invalid narrative strategy')
     if mode not in ('summary','minutes','both') or language not in ('es','en','both'):
         raise ValueError('Invalid report mode or language')
@@ -190,6 +190,45 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     explicit_items=explicit_source_items(rows,language)
     items=reconcile_source_items(items,explicit_items)
     coverage_gaps=find_coverage_gaps(rows,items)
+    if narrative_strategy=='source_first':
+        # Optional comparison strategy, not selected by the desktop.
+        from .minutes_source_first import compose_source_first
+        from .minutes_localization import localize_items
+        from .minutes_overview import build_overview
+        from .minutes_evidence import repeated_topic_coverage
+        langs=('es','en') if language=='both' else (language,)
+        presentation=[dict(i) for i in items]
+        localization=[]
+        for lang in langs:
+            presentation,diag=localize_items(presentation,lang,request,cancel=cancel,progress=progress)
+            localization.append(diag)
+        diagnostics=[];narratives={};overview={};fallbacks=[];themes=[]
+        for lang in langs:
+            composed=compose_source_first(blocks,items,presentation,lang,request,
+                explicit_items=explicit_items,localization=localization,cancel=cancel,progress=progress)
+            diagnostics.append(composed)
+            local_themes=composed['themes']
+            themes.extend(local_themes)
+            narratives[lang]=[{'title':t['title_'+lang],'text':t['summary_'+lang],'sources':t['sources']}
+                              for t in local_themes]
+            representative_themes=[{'summary_'+lang:r} for r in composed['representatives']]
+            overview[lang]=build_overview(presentation,representative_themes,lang)
+            if composed['grouping_failures'] or composed['translation_rejected']:
+                fallbacks.append({'language':lang,'theme_ids':[],
+                    'reason':'source_first incomplete validation'})
+            trace('source_first','accepted',{'language':lang},diagnostics=composed)
+        repetition=repeated_topic_coverage(blocks,items,themes,empty)
+        report=render_minutes(presentation,mode,language,repetition['unresolved_empty_block_ids'],coverage_gaps,
+            editorial_gaps=[],narratives=narratives,narrative_fallbacks=fallbacks,
+            executive_overview=overview,show_timestamps=False,repetition_coverage=repetition,localization=localization)
+        if evidence_sink is not None:
+            evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
+                'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,
+                'coverage_gaps':coverage_gaps,'editorial_themes':themes,'editorial_gaps':[],
+                'editorial_initial_omissions':[],'narrative_fallbacks':fallbacks,'narrative_strategy':narrative_strategy,
+                'repetition_coverage':repetition,'localization':localization,'presentation':presentation,
+                'source_first':diagnostics,'items':items})
+        return report
     from .control import JobCancelled
     from .minutes_brief import (editorial_input, editorial_request, validate_editorial,
                                 editorial_retry_sources, merge_editorial_retry, repair_editorial_omissions)

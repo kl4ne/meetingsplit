@@ -259,7 +259,8 @@ def test_dense_synthetic_capacity_preserves_all_source_sentences_without_model()
               ', con atención a la descripción de los documentos, la organización del contenido '
               'y la localización de los anexos disponibles en el archivo. '
               'Se explicó la diferencia entre el documento original y la copia de trabajo '
-              'utilizada durante la sesión de formación '+str(i+1)+'.')
+              'utilizada durante la sesión de formación '+str(i+1)+
+              ', junto con las notas y los materiales de referencia correspondientes.')
         paragraphs.append(f'[{i*30//3600:02d}:{i*30//60%60:02d}:{i*30%60:02d}] {text}')
     transcript='\n'.join(paragraphs)
     assert len(transcript.split())>=16000

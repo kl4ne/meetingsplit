@@ -203,7 +203,7 @@ EVENTS=[
     None
   ],
   [
-    1320,
+    1325,
     "Who will order replacement signs? No responsible person or deadline was assigned.",
     "pending",
     None,

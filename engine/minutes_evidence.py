@@ -288,15 +288,38 @@ def _is_descriptive_discussion(text):
 # describe teaching material; they are not a motion or a real pending item.
 _TEACHING_DISTINCTION = re.compile(
     r'^se explicó que (?:una|la) instrucción [^.!?;:]{1,80} y (?:una|la) recomendación '
-    r'[^.!?;:]{1,80} tienen funciones distintas\.$',re.IGNORECASE)
+    r'[^.!?;:]{1,80} tienen funciones (?:distintas|diferentes)\.$',re.IGNORECASE)
 _FICTIONAL_REVIEW = re.compile(
     r'^(?:the )?participants reviewed a fictional example of [^.!?;:]{1,350}\.$',re.IGNORECASE)
 
+# Mentioning a proposal as a type of communication is not making one.
+# Keep the scope to explicit comparisons and disallow operational verbs.
+_METALINGUISTIC_COMPARISON = re.compile(
+    r'^(?:the (?:discussion|group|team)|participants) distinguished [^.!?;:]{1,180}'
+    r'\bfrom a proposal to [^.!?;:]{1,200}\.$',re.IGNORECASE)
+
 def _is_teaching_example(text):
-    return bool((_TEACHING_DISTINCTION.fullmatch(text.strip()) or _FICTIONAL_REVIEW.fullmatch(text.strip()))
+    return bool((_TEACHING_DISTINCTION.fullmatch(text.strip()) or _FICTIONAL_REVIEW.fullmatch(text.strip()) or
+                 _METALINGUISTIC_COMPARISON.fullmatch(text.strip()))
                 and not any(p.search(text) for p in (_AGREEMENT,_COMMITMENT,_NOTICE,_AMOUNT,_IMPLEMENTATION,_DISCUSSION_OPERATIONAL))
                 and not re.search(r'\b(?:agreed|proposed|assigned|decided|approved|promised|will|shall|must|should|'
                                   r'propuso|propusieron|debe|deben|deberá|acordó|aprobó)\b',text,re.IGNORECASE))
+
+def _descriptive_sentence_for_quote(quote,row):
+    """Resolve a verbatim quote to its unique complete descriptive sentence.
+
+    Only a complete sentence, or that sentence without its final period,
+    can qualify. Do not reinterpret a truncated clause, a cross-sentence
+    quotation, a repeated ambiguous match, or an operational statement.
+    """
+    matches=[part.strip() for part in _SENTENCE_BREAK.split(row) if quote in part]
+    if len(matches)!=1:
+        return False
+    sentence=matches[0]
+    if quote not in (sentence,sentence.removesuffix('.')):
+        return False
+    return _is_teaching_example(sentence) or _is_descriptive_discussion(sentence)
+
 
 def _evidence_category(requested, evidence, by_id, owner):
     categories=set()
@@ -305,7 +328,7 @@ def _evidence_category(requested, evidence, by_id, owner):
     for ref in evidence:
         quote=ref['quote']
         row=by_id[ref['source_id']]['text']
-        if not owner and quote==row and _is_teaching_example(row):
+        if not owner and _descriptive_sentence_for_quote(quote,row):
             categories.add('topic')
             continue
         if requested=='topic' and _is_guidance(row) and not owner:
@@ -408,6 +431,10 @@ def validate_items(raw: str, rows: list[dict], language: str, *, source_only_on_
         owner=_literal(item['owner'],quotes)
         due=_literal(item['due'],quotes)
         category, actor=_evidence_category(item['category'],evidence,by_id,owner)
+        # Metadata accompanying a descriptive quote must still be reviewed.
+        if category=='topic' and (owner or due) and any(
+                _descriptive_sentence_for_quote(ref['quote'],by_id[ref['source_id']]['text']) for ref in evidence):
+            category='review'
         # Only recover a model's review classification when the entire
         # cited row explicitly describes discussion, with no task metadata.
         # Use source wording for the recovered record, not the model's
@@ -576,6 +603,9 @@ def explicit_source_items(rows, language):
                     and prior['sources'][-1]['source_id']==row['id']
                     and _STANDALONE_NON_APPROVAL.fullmatch(quote)):
                 items[-1]=create('proposal',[*prior['sources'],source])
+                continue
+            # Explanations and comparisons can mention proposals as concepts.
+            if _is_teaching_example(quote) or _is_descriptive_discussion(quote):
                 continue
             # Quoted or hypothetical speech cannot create confirmed evidence.
             if _UNCERTAIN.search(quote) or _UNSAFE_STATEMENT.search(quote) or _PERSONAL_TENTATIVE.search(quote):

@@ -263,6 +263,27 @@ def _is_unassigned_question(text):
                 not affirmative_agreement_matches(text))
 
 
+# Explicit discussion of an activity is not an assigned activity or a
+# proposal awaiting approval. Restrict recovery to complete, single-clause
+# descriptive statements; operational and ambiguous markers take precedence.
+_DISCUSSION_ONLY = re.compile(
+    r'^(?:(?:al final|al inicio|durante la reunión|durante la sesión)\s*,?\s+)?'
+    r'se habló de\s+(?:preparar|revisar|organizar|elaborar|explicar|mejorar|mantener|distribuir)\b'
+    r'[^.!?\n;:]{1,1000}\.$', re.IGNORECASE)
+_DISCUSSION_OPERATIONAL = re.compile(
+    r'\b(?:decid(?:ió|ieron|imos)|resolv(?:ió|ieron|imos)|asign(?:ó|aron|amos)|'
+    r'encarg(?:ó|aron|amos)|compromet(?:ió|ieron|imos)|promet(?:ió|ieron|imos)|'
+    r'deberá|deberán|tendrá que|tendrán que|responsable|fecha límite|plazo|'
+    r'confirm(?:ó|aron|ado|ada)|se hará|se realizará|se enviará)\b',re.IGNORECASE)
+
+
+def _is_descriptive_discussion(text):
+    return bool(_DISCUSSION_ONLY.fullmatch(text.strip()) and not any(
+        pattern.search(text) for pattern in (_AGREEMENT,_PROPOSAL,_UNCERTAIN,_PENDING,
+        _NOTICE,_RESERVED_SCHEDULE,_ANNOUNCED_START,_DISAGREEMENT,_IMPLEMENTATION,
+        _COMMITMENT,_AMOUNT,_DISCUSSION_OPERATIONAL)))
+
+
 def _evidence_category(requested, evidence, by_id, owner):
     categories=set()
     owners=set()
@@ -370,6 +391,14 @@ def validate_items(raw: str, rows: list[dict], language: str, *, source_only_on_
         owner=_literal(item['owner'],quotes)
         due=_literal(item['due'],quotes)
         category, actor=_evidence_category(item['category'],evidence,by_id,owner)
+        # Only recover a model's review classification when the entire
+        # cited row explicitly describes discussion, with no task metadata.
+        # Use source wording for the recovered record, not the model's
+        # unsupported proposal/confirmation interpretation.
+        if (category=='review' and item['category']=='review' and owner is None and due is None
+                and len(evidence)==1 and evidence[0]['quote']==by_id[evidence[0]['source_id']]['text']
+                and _is_descriptive_discussion(evidence[0]['quote'])):
+            category='topic'
         if actor and owner and owner!=actor and not actor.endswith(' '+owner) and not actor.startswith(owner+' '):
             category='review'
         if category=='action' and actor:

@@ -77,7 +77,7 @@ def editorial_request(sources, language):
     return messages, schema
 
 
-def validate_editorial(raw, sources, language, *, rejected=None):
+def validate_editorial(raw, sources, language, *, rejected=None, on_rejection=None):
     document = json.loads(raw, object_pairs_hook=_unique_keys)
     if not isinstance(document,dict) or set(document)!={'themes'}:
         raise ValueError('Invalid editorial document')
@@ -111,7 +111,9 @@ def validate_editorial(raw, sources, language, *, rejected=None):
                 raise ValueError('Duplicate editorial theme')
             seen.add(key)
             result.append({'sources':refs,**texts})
-        except ValueError:
+        except ValueError as exc:
+            if on_rejection is not None:
+                on_rejection(theme, exc)
             if rejected is None:
                 raise
             ids = theme.get('source_ids') if isinstance(theme, dict) else None

@@ -95,3 +95,7 @@ Read exact artifact 15205494850 trace: extraction requested review for full row 
 ## Final classification integration checkpoint
 
 CI #46024213286 succeeded: 283 engine tests, 2 skipped, 11 browser tests, dependency audit no known findings. Exact replay #46024353373 passed 32 focused tests; only row 12 reclassified from review to descriptive topic; every other evidence record and source unchanged. Artifact 15211181219. Integrate the narrow correction in draft PR #7. Full validation on the combined revision is still required; no claim of semantic certification or a completed frozen Windows/GPU workload. No public release.
+
+## Independent varied source acceptance
+
+Full CI #46024899679 succeeded (291 engine +11 browser, two skipped); exact full-pipeline replay #46025010689 passed 9/9. This isolated fixture has 54 distinct descriptive utterances in nine thematic sections, 17 explicit expected outcomes, no repeated filler, and timestamps spanning 2h15m. It is intentionally not equivalent to 2h15m of continuous speech, nor the unavailable 29-block original. Uses the same pinned Qwen3.5 9B digest and Ollama 0.40.18, final localized strategy, standard CPU runner, records raw synthetic responses and extraction checkpoints. Strict rubric includes literal sources, expected outcomes, topic presence, no unresolved warnings, no translation failures. No semantic acceptance solely from IDs. No package or release yet.

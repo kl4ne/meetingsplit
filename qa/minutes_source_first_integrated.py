@@ -87,6 +87,7 @@ def main(output):
             'no_grouping_fallbacks':all(d['no_grouping_fallbacks'] for d in langchecks),
             'no_structured_translation_rejects':all(not d['rejected'] for d in evidence['localization']),
             'no_structural_gaps':not evidence['coverage_gaps'],
+            'no_extraction_failures':not evidence['source_first_extraction_failures'],
             'no_unresolved_review':not evidence['repetition_coverage']['unresolved_review_indices'],
             'two_sections':'# Minuta de reunión' in report and '# Meeting minutes' in report and '## Temas tratados' in report and '## Topics discussed' in report,
             'no_visible_timecodes_or_tables':not re.search(r'\[\d{2}:\d{2}:\d{2}\]',report) and not any(l.startswith('|') for l in report.splitlines())}

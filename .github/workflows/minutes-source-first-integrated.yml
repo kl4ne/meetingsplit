@@ -26,6 +26,7 @@ jobs:
         run: |
           python -m pip install pytest
           python -m pytest -q tests/test_minutes_source_first.py tests/test_minutes_varied_coverage.py tests/test_minutes_localized_pipeline.py tests/test_minutes_consolidated_strategy.py
+      # Metadata-only retry after the first 900-second extraction timeout.
       - name: Validate independent fixture before model setup
         run: python -c "from qa.minutes_source_first_integrated import fixture; t,c,s=fixture(); print(len(t.splitlines()),len(c),len(s))"
       - name: Prepare isolated pinned Ollama (synthetic QA only)
@@ -44,7 +45,7 @@ jobs:
           for i in {1..60}; do curl -fsS http://127.0.0.1:11434/api/version && break; sleep 1; done
           timeout 600 "$exe" pull qwen3.5:9b
           "$exe" list
-      - name: Run fresh optional engine strategy in both languages
+      - name: Run bounded metadata extraction and optional bilingual engine strategy
         shell: bash
         run: python qa/minutes_source_first_integrated.py "$RUNNER_TEMP/integrated"
       - uses: actions/upload-artifact@v4

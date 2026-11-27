@@ -116,3 +116,53 @@ def test_optional_real_engine_path_preserves_bilingual_units_and_fallbacks(monke
     assert '## Temas tratados' in report and '## Topics discussed' in report
     assert 'La guía describe las rutas accesibles.' in report and 'The use of reference materials was explained.' in report
     assert evidence['narrative_strategy']=='source_first'
+
+
+def test_metadata_extraction_omits_duplicate_language_descriptions():
+    from engine.minutes_source_first import source_first_extraction_request,validate_source_first_extraction
+    rows=next(source_blocks('[00:00:01] Se aprobó mantener el horario actual.'))
+    messages,schema=source_first_extraction_request(rows)
+    fields=schema['properties']['items']['items']['properties']
+    assert set(fields)=={'category','sources','owner','due'}
+    assert len(messages[0]['content'])<1500
+    raw=json.dumps({'items':[{'category':'decision','sources':[{'id':1,'quote':rows[0]['text']}],
+                             'owner':None,'due':None}]})
+    items=validate_source_first_extraction(raw,rows,'both')
+    assert items[0]['category']=='decision'
+    assert items[0]['sources'][0]['quote']==rows[0]['text']
+    assert 'text_es' in items[0] and 'text_en' in items[0]
+    with pytest.raises(ValueError):
+        validate_source_first_extraction(raw.replace('horario actual','horario nuevo'),rows,'both')
+
+def test_metadata_timeout_split_once_and_keeps_unresolved_rows():
+    from engine.minutes_source_first import extract_source_first_block
+    rows=next(source_blocks('\n'.join(f'[00:00:0{i}] Se revisó el documento {i}.' for i in range(1,5))))
+    calls=[]
+    def request(messages,schema,**kw):
+        ids=kw['scope']['source_ids'];calls.append(ids)
+        if 4 in ids:raise TimeoutError('test')
+        return '{"items":[]}'
+    items,failures=extract_source_first_block(rows,1,'both','qwen3.5:9b',request)
+    assert calls==[[1,2,3,4],[1,2],[3,4]]
+    assert failures==[{'block':1,'source_ids':[3,4],'reason':'TimeoutError'}]
+    assert [i['sources'][0]['source_id'] for i in items]==[3,4]
+    assert all(i['category']=='review' for i in items)
+
+def test_metadata_cache_reuses_completed_empty_and_nonempty_results():
+    from engine.minutes_source_first import extract_source_first_block
+    rows=next(source_blocks('[00:00:01] Se explicó la guía.'))
+    cache={};calls=[]
+    def request(*args,**kwargs):
+        calls.append(kwargs);return '{"items":[]}'
+    kwargs={'read_block':cache.get,'write_block':cache.__setitem__}
+    for _ in range(2):
+        assert extract_source_first_block(rows,1,'es','qwen3.5:9b',request,**kwargs)==([],[])
+    assert len(calls)==1 and len(cache)==1
+
+def test_metadata_cancellation_not_swallowed():
+    from engine.minutes_source_first import extract_source_first_block
+    from engine.control import JobCancelled
+    rows=next(source_blocks('[00:00:01] Se explicó la guía.'))
+    def stop(*args,**kwargs):raise JobCancelled()
+    with pytest.raises(JobCancelled):
+        extract_source_first_block(rows,1,'es','qwen3.5:9b',stop)

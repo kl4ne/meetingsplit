@@ -93,6 +93,8 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     def request(messages, schema=False, *, stage, scope):
         nonlocal cpu_only
         options={'think':False} if not schema or stage.startswith('source_first_') else {}
+        if stage=='source_first_extraction':
+            options['timeout']=240
         def invoke():
             start=time.monotonic()
             trace(stage,'request',scope,messages=messages,schema=schema,cpu_only=cpu_only)
@@ -175,9 +177,16 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         midpoint=len(rows)//2
         return extract(rows[:midpoint],number)+extract(rows[midpoint:],number)
 
+    source_first_extraction_failures=[]
     for number,rows in enumerate(blocks,1):
         progress(f'Analizando evidencias / Checking evidence: {number}/{len(blocks)}')
-        extracted=extract(rows,number)
+        if narrative_strategy=='source_first':
+            from .minutes_source_first import extract_source_first_block
+            extracted,failed=extract_source_first_block(rows,number,language,model,request,
+                cancel=cancel,read_block=read_block,write_block=write_block,progress=progress)
+            source_first_extraction_failures.extend(failed)
+        else:
+            extracted=extract(rows,number)
         if not extracted: empty.append(number)
         for item in extracted:
             # Deduplicate identical evidence only; do not merge distinct obligations.
@@ -213,11 +222,13 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                               for t in local_themes]
             representative_themes=[{'summary_'+lang:r} for r in composed['representatives']]
             overview[lang]=build_overview(presentation,representative_themes,lang)
-            if composed['grouping_failures'] or composed['translation_rejected']:
+            if composed['grouping_failures'] or composed['translation_rejected'] or source_first_extraction_failures:
                 fallbacks.append({'language':lang,'theme_ids':[],
                     'reason':'source_first incomplete validation'})
             trace('source_first','accepted',{'language':lang},diagnostics=composed)
-        repetition=repeated_topic_coverage(blocks,items,themes,empty)
+        # An empty metadata extraction is valid for a purely descriptive block.
+        # Preserve the raw empty IDs; separately flag every actual extraction failure.
+        repetition=repeated_topic_coverage(blocks,items,themes,[])
         report=render_minutes(presentation,mode,language,repetition['unresolved_empty_block_ids'],coverage_gaps,
             editorial_gaps=[],narratives=narratives,narrative_fallbacks=fallbacks,
             executive_overview=overview,show_timestamps=False,repetition_coverage=repetition,localization=localization)
@@ -227,7 +238,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                 'coverage_gaps':coverage_gaps,'editorial_themes':themes,'editorial_gaps':[],
                 'editorial_initial_omissions':[],'narrative_fallbacks':fallbacks,'narrative_strategy':narrative_strategy,
                 'repetition_coverage':repetition,'localization':localization,'presentation':presentation,
-                'source_first':diagnostics,'items':items})
+                'source_first':diagnostics,'source_first_extraction_failures':source_first_extraction_failures,'items':items})
         return report
     from .control import JobCancelled
     from .minutes_brief import (editorial_input, editorial_request, validate_editorial,

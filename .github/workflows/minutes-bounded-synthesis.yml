@@ -1,0 +1,50 @@
+name: Bounded synthesis offline QA
+on:
+  push:
+    branches: [qa/minutes-bounded-synthesis-0819]
+    paths: ['.github/workflows/minutes-bounded-synthesis.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - name: Focused offline prototype tests
+        run: |
+          python -m pip install pytest
+          python -m pytest -q tests/test_minutes_bounded_synthesis.py
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46031770427
+          name: varied-targeted-repair
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/varied
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46059887920
+          name: source-first-dense-qa
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/dense
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46064492706
+          name: source-first-dense-classification-replay
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/replay
+      - name: Audit existing artifacts without inference
+        run: python qa/minutes_bounded_synthesis_audit.py "$RUNNER_TEMP/varied" "$RUNNER_TEMP/dense" "$RUNNER_TEMP/replay" "$RUNNER_TEMP/audit"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bounded-synthesis-offline-audit
+          path: ${{ runner.temp }}/audit
+          if-no-files-found: warn
+          retention-days: 7

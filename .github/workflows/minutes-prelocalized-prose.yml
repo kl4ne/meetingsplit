@@ -1,0 +1,68 @@
+name: Prelocalized prose focal comparison
+on:
+  push:
+    branches: [qa/minutes-prelocalized-prose-0819]
+    paths: ['.github/workflows/minutes-prelocalized-prose.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      OLLAMA_HOST: 127.0.0.1:11434
+      OLLAMA_NO_CLOUD: '1'
+      OLLAMA_NUM_PARALLEL: '1'
+      OLLAMA_MAX_LOADED_MODELS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - name: Focused prelocalized prose regressions
+        run: |
+          python -m pip install pytest
+          python -m pytest -q tests/test_minutes_prelocalized_prose.py
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46055337219
+          name: source-first-integrated-qa
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/original
+      - name: Verify saved source and translation inputs before model setup
+        run: python qa/minutes_prelocalized_prose_focal.py "$RUNNER_TEMP/original/evidence.json" "$RUNNER_TEMP/prose" --preflight
+      - name: Prepare isolated pinned Ollama (synthetic QA only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OLLAMA_MODELS="$RUNNER_TEMP/ms-models"
+          echo "OLLAMA_MODELS=$OLLAMA_MODELS" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/ms-ollama" "$OLLAMA_MODELS"
+          curl --fail --location --retry 2 --max-time 360 -o "$RUNNER_TEMP/ollama.tar.zst" https://github.com/ollama/ollama/releases/download/v0.40.18/ollama-linux-amd64.tar.zst
+          echo "b82649006cb5b54ed1237fa2d1a26a7f939a4fd03150033759acbff7ff315adf  $RUNNER_TEMP/ollama.tar.zst" | sha256sum --check
+          tar --zstd -xf "$RUNNER_TEMP/ollama.tar.zst" -C "$RUNNER_TEMP/ms-ollama"
+          exe="$RUNNER_TEMP/ms-ollama/bin/ollama"
+          "$exe" serve > "$RUNNER_TEMP/ollama-server.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/ollama.pid"
+          for i in {1..60}; do curl -fsS http://127.0.0.1:11434/api/version && break; sleep 1; done
+          timeout 600 "$exe" pull qwen3.5:9b
+          "$exe" list
+      - name: Compare one fixed group window per language
+        shell: bash
+        run: python qa/minutes_prelocalized_prose_focal.py "$RUNNER_TEMP/original/evidence.json" "$RUNNER_TEMP/prose"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prelocalized-prose-focal-qa
+          path: |
+            ${{ runner.temp }}/prose/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Stop isolated service
+        if: always()
+        shell: bash
+        run: |
+          if test -f "$RUNNER_TEMP/ollama.pid"; then kill "$(cat "$RUNNER_TEMP/ollama.pid")" || true; fi

@@ -20,6 +20,8 @@ Prueba bilingüe #46049354590: timeout de primera extracción (900 s), 34 prueba
 
 Extracción bilingüe metadata-only #46055337219 completó 8/8 hechos, preservó 18 filas descriptivas en ambos idiomas; falló aceptación por traducciones. Reparación aislada focalizada #46057746118 en curso, leer HANDOFF.md. No integración ni paquete.
 
+Replay bilingüe #46057746118 aprobado: 7/7 traducciones, 8/8 hechos; continúa evaluación de calidad. Nuevo caso de capacidad y densidad #46059887920, fuente acotada y modos distintos, aislado. Leer HANDOFF.md. No integración ni paquete.
+
 ---
 
 ## Continuity checkpoint — timeout recovery / main integration 2026-10-21

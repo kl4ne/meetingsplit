@@ -1,3 +1,10 @@
+## v0.8.17 - Source notices and sentence citations
+
+- Preserve distinct announcements and their source wording when drafting the summary.
+- Validate sentences with individual citations while retaining the model's paragraph structure.
+- Add an isolated recovery check to the frozen Windows executable for synthetic data and an already configured local Ollama model.
+- Private portable candidate for QA. Formal release and installer distribution remain gated.
+
 ## v0.8.16 - Windows rendering and minutes recovery
 
 - Paints the desktop interface in software on Windows to avoid GPU compositor blank frames.

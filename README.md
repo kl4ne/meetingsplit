@@ -15,7 +15,7 @@
 </div>
 
 > [!IMPORTANT]
-> **Windows development candidate · v0.8.16.** The public release and installer remain gated. See [current status](MASTER_STATUS.md).
+> **Windows development candidate · v0.8.17.** The public release and installer remain gated. See [current status](MASTER_STATUS.md).
 
 ---
 
@@ -123,6 +123,8 @@ Building a Windows executable: read [`COMPILACION_WINDOWS.md`](COMPILACION_WINDO
 
 The project includes [a manually triggered Windows build workflow](.github/workflows/windows-build.yml) (`workflow_dispatch`). The workflow is a **build/test aid, not evidence that the installer works on the target PC**. Release packaging, third-party license notices, executable verification, privacy review, and hardware QA remain gates before distribution.
 
+The extracted portable supports `MeetingSplit.exe --minutes-qa <synthetic QA folder>` for local recovery QA. Supply only `synthetic-transcript.json` (a `segments` array with `start`, `end` and `text`) and `synthetic-part.mp3` in that folder. The command uses an existing verified local Ollama model and writes the report and ZIP in a new test project. It exercises recovery and export. Review the generated minutes separately for factual coverage.
+
 ## Development
 
 ```text
@@ -189,7 +191,7 @@ MeetingSplit es una aplicación de escritorio para **Windows 11** que divide gra
 
 ### ¿Ya puedo instalarlo?
 
-**La versión de desarrollo en Windows es 0.8.16.** La minuta local usa `qwen3.8:27b` y se presenta sin tablas ni marcas de tiempo. La transcripción y el JSON conservan las referencias. El ZIP de la reunión agrupa los resultados en una sola carpeta `RESULTADOS_COMPLETOS`.
+**La versión de desarrollo en Windows es 0.8.17.** La minuta local usa `qwen3.8:27b` y se presenta sin tablas ni marcas de tiempo. La transcripción y el JSON conservan las referencias. El ZIP de la reunión agrupa los resultados en una sola carpeta `RESULTADOS_COMPLETOS`.
 
 ### Compilación y estado de la minuta
 
@@ -217,7 +219,7 @@ This project depends on software with **separate licenses** (including Qt/PySide
 
 **Designed & Developed by Roberto S. Macfie**
 
-<sub>MeetingSplit · Independent Windows desktop software · Private Windows portable v0.8.16</sub>
+<sub>MeetingSplit · Independent Windows desktop software · Private Windows portable v0.8.17</sub>
 
 </div>
 

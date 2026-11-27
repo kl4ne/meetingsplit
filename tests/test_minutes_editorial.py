@@ -131,7 +131,11 @@ def test_revised_prose_uses_draft_history_and_preserves_original_evidence(monkey
         assert 'Se habló de cómo explicar la orientación.' in report
         assert not evidence['narrative_fallbacks']
     else:
-        assert 'Se habló de la preparación del equipo.' in report
+        if revision=='La sesión trató la preparación del equipo. [E1]':
+            # A valid but incomplete revision retains its independently cited paragraph.
+            assert 'La sesión trató la preparación del equipo.' in report
+        else:
+            assert 'Se habló de la preparación del equipo.' in report
         assert 'Se habló de cómo explicar la orientación.' in report
         assert evidence['narrative_fallbacks']==[{'language':'es','theme_ids':[1,2]}]
         assert 'Parte de la revisión editorial no se completó.' in report

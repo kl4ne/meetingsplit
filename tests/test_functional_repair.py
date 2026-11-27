@@ -138,9 +138,9 @@ def test_minutes_retries_only_failed_block_using_verified_transcript(tmp_path, m
             for record in payload['records']:
                 original = record['source']
                 if 'US$200' in original:
-                    text = 'Se acordó gastar US$200.' if spanish else 'It was agreed to spend US$200.'
+                    text = 'Se acordó el gasto de US$200.' if spanish else 'It was agreed to spend US$200.'
                 elif '300 pesos' in original:
-                    text = 'Se acordó invertir 300 pesos.' if spanish else 'It was agreed to invest 300 pesos.'
+                    text = 'Se acordó la inversión de 300 pesos.' if spanish else 'It was agreed to invest 300 pesos.'
                 elif '$100' in original:
                     text = 'Se aprobó $100.' if spanish else 'The amount of $100 was approved.'
                 else:
@@ -171,7 +171,12 @@ def test_minutes_retries_only_failed_block_using_verified_transcript(tmp_path, m
     job.retry_minutes(folder, tmp_path, lambda *_: None)
     assert calls == [[3]]
     assert localization_calls
-    assert read_manifest(folder)['summary_status'] == 'complete', (folder / 'MINUTA_NO_GENERADA.txt').read_text(encoding='utf-8') if (folder / 'MINUTA_NO_GENERADA.txt').exists() else read_manifest(folder)
+    diagnostic = folder / 'MINUTA_NO_GENERADA.txt'
+    sidecar = folder / 'MINUTA_EVIDENCIAS.json'
+    details = (diagnostic.read_text(encoding='utf-8') if diagnostic.exists()
+               else json.loads(sidecar.read_text(encoding='utf-8')).get('localization', [])
+               if sidecar.exists() else read_manifest(folder))
+    assert read_manifest(folder)['summary_status'] == 'complete', details
     assert read_manifest(folder)['resume_signature']['settings']['ollama_model'] == job.MODEL
     assert not (folder / 'MINUTA_NO_GENERADA.txt').exists()
     report = (folder / 'RESUMEN_Y_MINUTA_LOCAL.md').read_text(encoding='utf-8')

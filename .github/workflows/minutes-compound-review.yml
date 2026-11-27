@@ -1,0 +1,52 @@
+name: Compound quotation review offline audit
+on:
+  push:
+    branches: [qa/minutes-compound-review-0819]
+    paths: ['.github/workflows/minutes-compound-review.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46025010689
+          name: final-short-replay
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/short
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46075439142
+          name: current-minutes-replay
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/varied
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46059887920
+          name: source-first-dense-qa
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/dense
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46064492706
+          name: source-first-dense-classification-replay
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/reclassified
+      - name: Audit and render without model inference
+        run: python qa/minutes_compound_review_audit.py "$RUNNER_TEMP/short" "$RUNNER_TEMP/varied" "$RUNNER_TEMP/dense" "$RUNNER_TEMP/reclassified" "$RUNNER_TEMP/audit"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compound-review-offline-audit
+          path: ${{ runner.temp }}/audit
+          if-no-files-found: warn
+          retention-days: 7

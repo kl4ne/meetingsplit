@@ -14,6 +14,8 @@ Agrupación source-first #46038580739 aprobada: 55 unidades, nueve grupos, 26 tr
 
 Resumen ejecutivo libre #46046370941 falló por omitir grupo; nueva comparación de frases por grupo #46047669072 en QA. No integrado; leer HANDOFF.md.
 
+Serie de resumen ejecutivo cerrada: #46047669072 pasó formalmente pero no justifica costo/redacción. Opción source_first acotada en rama QA, prueba bilingüe fresca #46049354590 en cola. Leer HANDOFF.md. Desktop y main intactos.
+
 ---
 
 ## Continuity checkpoint — timeout recovery / main integration 2026-10-21

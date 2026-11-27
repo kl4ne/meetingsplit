@@ -64,7 +64,7 @@ def _normalize_weekday_relations(text):
         return match['lead']+' RELATION_include_'+day+' '
     text=re.sub(r'\b(?P<lead>extend(?:ing)?\s+[^.!?;]{0,100}?\bhours)\s+to\s+(?P<day>'+weekdays+r')\b',
                 include,text,flags=re.IGNORECASE)
-    text=re.sub(r'\b(?P<lead>ampliar\s+[^.!?;]{0,100}?\bhorarios?[^.!?;]{0,60}?)\s+(?:para\s+)?incluir\s+el\s+(?P<day>'+dias+r')\b',
+    text=re.sub(r'\b(?P<lead>ampliar\s+[^.!?;]{0,100}?\b(?:horarios?|horas)[^.!?;]{0,60}?)\s+(?:para\s+)?incluir\s+el\s+(?P<day>'+dias+r')\b',
                 include,text,flags=re.IGNORECASE)
     text=re.sub(r'\b(?:the )?deadline (?:for [^.!?]{1,80} )?is\s+(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b',r'deadline by \1',text,flags=re.IGNORECASE)
     text=re.sub(r'\b(?:el )?(?:plazo(?: límite)?|fecha límite) (?:para [^.!?]{1,80} )?es el\s+(lunes|martes|miércoles|jueves|viernes|sábado|domingo)\b',r'plazo a más tardar el \1',text,flags=re.IGNORECASE)
@@ -128,6 +128,15 @@ def translation_request(items,indices,lang):
         {'role':'user','content':json.dumps({'records':records},ensure_ascii=False)}]
     return messages,schema
 
+# Accept a narrow English impersonal passive approval equivalent only for
+# translation validation. Do not expand extraction's agreement classifier.
+_PASSIVE_APPROVAL=re.compile(r'^Approval was granted to [^.!?;:]{1,300}\.$',re.IGNORECASE)
+_APPROVAL_CONDITIONS=re.compile(r'\b(?:if|unless|not|never|subject to|would|might|could|pending|conditional|only|except)\b',re.IGNORECASE)
+
+def _translation_approval(text):
+    return bool(affirmative_agreement_matches(text) or
+                (_PASSIVE_APPROVAL.fullmatch(text) and not _APPROVAL_CONDITIONS.search(text)))
+
 def _validate_translation(text,item,lang):
     original=source_text(item)
     if not isinstance(text,str) or not text.strip() or text!=text.strip() or len(text)>2400:
@@ -148,7 +157,7 @@ def _validate_translation(text,item,lang):
                 raise ValueError('Translation omitted or changed date')
         elif local_day(due,lang).casefold() not in text.casefold():
             raise ValueError('Translation omitted or changed date')
-    if bool(affirmative_agreement_matches(text))!=bool(affirmative_agreement_matches(original)):
+    if _translation_approval(text)!=_translation_approval(original):
         raise ValueError('Translation changed affirmative approval')
     if bool(_EDITORIAL_NON_APPROVAL.search(text))!=bool(_EDITORIAL_NON_APPROVAL.search(original)):
         raise ValueError('Translation changed non-approval')

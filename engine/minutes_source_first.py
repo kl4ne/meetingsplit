@@ -17,11 +17,11 @@ from .minutes_localization import _language,translation_request,apply_translatio
 def source_units(blocks,items,presentation,lang,localization=(),*,explicit_items=None):
     """Derive input from production evidence; never from an expected-answer list."""
     by_key={}
-    failed={i for d in localization if d['language']==lang for i in (r['id'] for r in d['rejected'])}
+    # Complete structured events are displayed in their own section even
+    # when translation fails: the renderer retains the original quotation
+    # and warning. Never split a proposal's negation into a separate topic.
     for i,item in enumerate(items):
-        if item['category'] not in ('proposal','pending') or i in failed:
-            continue
-        if _presentation_text(presentation[i],lang)==_LOCALES[lang]['source_only']:
+        if item['category'] not in ('proposal','pending'):
             continue
         refs=item['sources']
         if len({r['source_id'] for r in refs})==1:

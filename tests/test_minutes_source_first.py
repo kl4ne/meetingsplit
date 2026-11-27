@@ -166,3 +166,46 @@ def test_metadata_cancellation_not_swallowed():
     def stop(*args,**kwargs):raise JobCancelled()
     with pytest.raises(JobCancelled):
         extract_source_first_block(rows,1,'es','qwen3.5:9b',stop)
+
+
+def test_complete_proposal_not_split_if_localization_rejected():
+    from engine.minutes_evidence import explicit_source_items
+    source='Proposal only: extend support hours to Saturday. Not approved.'
+    blocks=list(source_blocks('[00:00:01] '+source+'\n[00:00:02] Se explicó el uso de materiales.'))
+    items=explicit_source_items([r for b in blocks for r in b],'es')
+    assert len(items)==1 and items[0]['category']=='proposal'
+    diagnostics=[{'language':'es','rejected':[{'id':0,'reason':'test'}]}]
+    units=source_units(blocks,items,items,'es',diagnostics)
+    assert [u['source']['source_id'] for u in units]==[2]
+
+def test_partial_structured_quote_never_hides_unique_source_content():
+    blocks=list(source_blocks('[00:00:01] Proposal only: extend support hours to Saturday. The entrance has a ramp.'))
+    item={'category':'proposal','owner':None,'due':None,'text_es':'Consulta las palabras originales en la cita.',
+          'sources':[{'source_id':1,'timestamp':'00:00:01','quote':'Proposal only: extend support hours to Saturday.'}]}
+    units=source_units(blocks,[item],[item],'es')
+    assert any('ramp' in u['text'] for u in units)
+
+@pytest.mark.parametrize('text,valid',[
+    ('Propuesta: ampliar las horas de soporte para incluir el sábado. No aprobado.',True),
+    ('Propuesta: ampliar las horas de soporte hasta el sábado. No aprobado.',False),
+    ('Propuesta: ampliar las horas de soporte para incluir el domingo. No aprobado.',False),
+])
+def test_observed_support_hours_translation(text,valid):
+    from engine.minutes_localization import apply_translations
+    item={'category':'proposal','owner':None,'due':None,'text_es':'Consulta las palabras originales en la cita.',
+          'sources':[{'source_id':1,'quote':'Proposal only: extend support hours to Saturday.'},{'source_id':1,'quote':'Not approved.'}]}
+    good,bad=apply_translations(json.dumps({'translations':[{'id':0,'text':text}]}),[item],[0],'es')
+    assert bool(good)==valid and bool(bad)!=valid
+
+@pytest.mark.parametrize('text,valid',[
+    ('Approval was granted to maintain the current format of the visitor form.',True),
+    ('Approval was not granted to maintain the current format of the visitor form.',False),
+    ('Approval was granted to maintain the current format of the visitor form if the committee agrees.',False),
+    ('Approval was pending for the current format of the visitor form.',False),
+])
+def test_narrow_passive_approval_translation(text,valid):
+    from engine.minutes_localization import apply_translations
+    item={'category':'decision','owner':None,'due':None,'text_en':'See the original wording in the source quotation.',
+          'sources':[{'source_id':1,'quote':'Se aprobó mantener el formato actual del formulario de visitantes.'}]}
+    good,bad=apply_translations(json.dumps({'translations':[{'id':0,'text':text}]}),[item],[0],'en')
+    assert bool(good)==valid and bool(bad)!=valid

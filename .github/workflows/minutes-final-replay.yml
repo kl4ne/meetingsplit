@@ -1,0 +1,34 @@
+name: Full recorded minutes pipeline replay
+on:
+  push:
+    branches: [qa/minutes-final-replay-0819]
+    paths: ['.github/workflows/minutes-final-replay.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46015163014
+          name: integrated-localized-short
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/original
+      - name: Replay entire pipeline with exact recorded responses
+        run: python qa/minutes_final_replay.py "$RUNNER_TEMP/original" "$RUNNER_TEMP/replayed"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-short-replay
+          path: ${{ runner.temp }}/replayed
+          if-no-files-found: warn
+          retention-days: 7

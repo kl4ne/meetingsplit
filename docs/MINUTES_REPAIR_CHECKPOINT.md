@@ -33,3 +33,11 @@ Prepared on a separate branch pending CI acceptance of selective narrative recov
 ## Isolated optimization candidate — exact quotation retry
 
 Original A/B trace: 273.226 s extraction and 252.428 s retry; first record inserted "los" into "atención a visitantes" while citing rows 1 and 2. Preserve independently validated disjoint records and retry only affected, uncited and linked rows. Maximum five rows and half the input; unknown IDs, other validation errors, or larger scope use the existing retry. Missing targeted rows remain explicit review entries. No approximate matching. Recursive retry strictly shrinks input. Seven deterministic synthetic tests; performance improvement not yet measured. Planned version 0.8.19 only after quality validation if still available.
+
+## Isolated citation and presentation repair (short artifact 15179585459)
+
+Actual result: 819.771 s, five requests, 2432 characters; zero editorial gaps, one narrative fallback. The review used confidentiality and examples IDs in an inventory-only paragraph. Recovery counted those as covered, suppressing both validated themes. Add conservative distinct-word anchor checking to multi-theme narrative validation; it can reject a valid paraphrase and is not semantic proof. Retain warnings and validated source themes. For language presentation, translate only exact standalone budget templates deterministically; label clearly foreign verbatim statements as original quotations, not generated prose. Other arbitrary translations still need validation. Original evidence is unmodified. Five regressions; no inference or build yet. Branch independent of quotation retry.
+
+## Combined validation candidate
+
+Isolated quotation retry run #45959062442 passed all 89 focused regressions. Combined with the citation/presentation repair; full engine/browser/dependency CI must pass before any new real inference. No main change or version change yet.

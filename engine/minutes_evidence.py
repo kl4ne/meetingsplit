@@ -596,6 +596,45 @@ def _markdown(value):
     return re.sub(r'([\\\x60*_{}\[\]()<>#+!|&~-])',r'\\\1',value)
 
 
+def _presentation_text(item, lang):
+    """Keep literal evidence separate from prose in the selected language.
+
+    Only translate narrow, exact standalone budget statements deterministically.
+    Other clearly foreign verbatim strings remain visibly attributed quotations,
+    not a purported translation. The original item and evidence are unchanged.
+    """
+    value=item['text_'+lang]
+    quotes=list(dict.fromkeys(ref['quote'] for ref in item['sources']))
+    if value!=' '.join(quotes):
+        return value
+    if item['category']=='topic' and len(quotes)==1:
+        patterns={
+            'es':r'The budget is (?P<amount>.+?)\.?',
+            'en':r'El presupuesto es(?: de)? (?P<amount>.+?)\.?',
+        }
+        match=re.fullmatch(patterns[lang],value,re.IGNORECASE)
+        if match and _AMOUNT.fullmatch(match['amount']):
+            prefix='El presupuesto es de ' if lang=='es' else 'The budget is '
+            return prefix+match['amount']+'.'
+    # Use several unambiguous markers; short names or amounts alone do not
+    # identify a language. Never rewrite an arbitrary source into a new fact.
+    other={
+        'es':{'the','and','is','was','were','should','would','when','who','will','only','not','approved','for'},
+        'en':{'el','la','los','las','se','que','para','por','de','del','y','fue','debería','cuando','sin','aprobación'},
+    }[lang]
+    own={
+        'es':{'el','la','los','las','se','que','para','por','de','del','y','fue','debería','cuando','sin','aprobación'},
+        'en':{'the','and','is','was','were','should','would','when','who','will','only','not','approved','for'},
+    }[lang]
+    words=set(re.findall(r'\b[^\W\d_]+\b',value.casefold()))
+    if len(words&other)>=2 and len(words&other)>len(words&own):
+        if item['category']=='proposal' and _EDITORIAL_NON_APPROVAL.search(value):
+            return ('Propuesta sin aprobación confirmada; consulta la cita original.' if lang=='es'
+                    else 'Proposal without confirmed approval; see the source quotation.')
+        return _LOCALES[lang]['source_only']
+    return value
+
+
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
                    narratives=None, narrative_fallbacks=(), show_timestamps=True) -> str:
     documents=[]
@@ -661,7 +700,8 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                     repeated[key]=item
                 grouped.append(item)
             for item in grouped:
-                lines.append('- '+_markdown(item[field]))
+                display=_presentation_text(item,lang)
+                lines.append('- '+_markdown(display))
                 if category=='action':
                     lines.append('  - '+loc['owner']+': '+_markdown(item['owner'] or loc['unknown']))
                     lines.append('  - '+loc['due']+': '+_markdown(item['due'] or loc['unknown']))
@@ -669,7 +709,7 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 for ref in item['sources']:
                     quotations.setdefault(ref['quote'],[]).append(ref)
                 # An explicit budget or notice is already readable as a verbatim statement.
-                if show_timestamps or category not in ('notice', 'topic') or item[field] != ' '.join(quotations):
+                if show_timestamps or category not in ('notice', 'topic') or display != ' '.join(quotations):
                     for quote,refs in quotations.items():
                         lines.append('  - '+loc['evidence']+': '+times(refs)+' "'+_markdown(quote)+'"')
                 lines.append('')

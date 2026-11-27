@@ -15,7 +15,7 @@
 </div>
 
 > [!IMPORTANT]
-> **Windows development candidate · v0.8.18.** The public release and installer remain gated. See [current status](MASTER_STATUS.md).
+> **Windows review-only QA candidate · v0.8.19.** The owner authorized preparation for private evaluation with documented editorial limitations. The public release and installer remain gated. See [current status](MASTER_STATUS.md).
 
 ---
 
@@ -191,13 +191,13 @@ MeetingSplit es una aplicación de escritorio para **Windows 11** que divide gra
 
 ### ¿Ya puedo instalarlo?
 
-**La versión de desarrollo en Windows es 0.8.18.** La minuta local usa `qwen3.5:9b` y se presenta sin tablas ni marcas de tiempo. La transcripción y el JSON conservan las referencias. El ZIP de la reunión agrupa los resultados en una sola carpeta `RESULTADOS_COMPLETOS`.
+**La versión de evaluación en Windows es 0.8.19 (borrador de revisión, no release pública).** La minuta local usa `qwen3.5:9b` y se presenta sin tablas ni marcas de tiempo. La transcripción y el JSON conservan las referencias. El ZIP de la reunión agrupa los resultados en una sola carpeta `RESULTADOS_COMPLETOS`.
 
 ### Compilación y estado de la minuta
 
 El flujo [Windows build](https://github.com/kl4ne/meetingsplit/actions/workflows/windows-build.yml) ejecuta pruebas automatizadas. La opción manual de portable para QA compila el ZIP completo, verifica el ejecutable extraído y publica el artefacto con su SHA-256.
 
-La 0.8.18 usa Qwen3.5 9B para las minutas locales. La prueba larga con 27B se detuvo al cambiar de modelo. La duración y la calidad de la 0.8.18 se verifican con las mismas regresiones de avisos, acuerdos y recuperación antes de entregar el portátil.
+La 0.8.18 usa Qwen3.5 9B para las minutas locales. La prueba larga con 27B se detuvo al cambiar de modelo. La 0.8.19 incorpora mejoras de clasificación, conservación de citas, plazos y presentación; sigue pendiente la aceptación editorial completa y la prueba del portable exacto en ASUS.
 
 ### Privacidad
 
@@ -219,7 +219,7 @@ This project depends on software with **separate licenses** (including Qt/PySide
 
 **Designed & Developed by Roberto S. Macfie**
 
-<sub>MeetingSplit · Independent Windows desktop software · Private Windows portable v0.8.18</sub>
+<sub>MeetingSplit · Independent Windows desktop software · Windows review-only QA candidate v0.8.19</sub>
 
 </div>
 

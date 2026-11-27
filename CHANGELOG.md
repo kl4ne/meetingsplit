@@ -1,3 +1,11 @@
+## v0.8.19 - Review-only Windows portable QA candidate
+
+- Retain Qwen3.5 9B and the local-only transcription/minutes architecture.
+- Improve source-backed classification, reject unsupported proposals, preserve explicit weekday/deadline relationships, and retain original source passages for review.
+- Distinguish executive summary, minutes and combined output; include disagreements and explicitly indicate sampled/unsampled topics.
+- Account for uncited sentences and compound quotations with conservative review cues. These checks do not establish semantic fidelity.
+- Owner authorized preparation of a private portable for evaluation despite documented editorial limitations. Full editorial acceptance, long/bilingual generation, exact portable and ASUS validation remain outstanding. No public release, tag or installer authorized.
+
 ## v0.8.18 - Qwen3.5 9B local minutes
 
 - Use `qwen3.5:9b` for local minutes and update the optional setup and interface.

@@ -1,0 +1,66 @@
+name: MeetingSplit 1.0.0 private installer QA
+on:
+  push:
+    branches: [qa/installer-100-owner]
+    paths: ['.github/workflows/installer-100-owner.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  installer:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: MeetingSplit-1.0.0-Windows-portable-review-QA
+          run-id: 46144015837
+          github-token: ${{ github.token }}
+          path: input
+      - name: Verify source archive and private-only gate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $g = Get-Content qa/release_gate.json -Raw | ConvertFrom-Json
+          if ($g.release_allowed -ne $false) { throw 'Public release must stay blocked.' }
+          $zip = 'input/MeetingSplit-v1.0.0-Windows-portable-candidate.zip'
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne 'd81ddba281432ec64f5dda1cb35e6dadbafdda539c27fcb749e2ebfb16de1e0a') { throw 'Wrong source ZIP.' }
+          Expand-Archive -LiteralPath $zip -DestinationPath dist/MeetingSplit
+          if (!(Test-Path -LiteralPath dist/MeetingSplit/MeetingSplit.exe)) { throw 'Missing frozen application.' }
+      - name: Compile existing Inno Setup recipe
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'
+          if (!(Test-Path -LiteralPath $iscc)) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Inno Setup installation failed.' }
+          }
+          & $iscc scripts/MeetingSplit.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed.' }
+      - name: Install, verify app version and launch, reinstall, uninstall
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $smoke = (Get-Content qa/windows_installer_smoke.ps1 -Raw).Replace('MeetingSplit_Setup_v0.8.6.exe','MeetingSplit_Setup_v1.0.0.exe')
+          $needle = 'if (-not $checkTask.packaged)'
+          if (!$smoke.Contains($needle)) { throw 'Existing smoke script changed.' }
+          $smoke = $smoke.Replace($needle, 'if ($checkTask.version -ne "1.0.0") { throw "Wrong installed version." }' + [Environment]::NewLine + $needle)
+          $smokePath = 'qa/installer-100-smoke-generated.ps1'
+          Set-Content -LiteralPath $smokePath -Value $smoke
+          & $smokePath
+          $setup = Get-Item -LiteralPath dist/MeetingSplit_Setup_v1.0.0.exe
+          $sha = (Get-FileHash -LiteralPath $setup.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -LiteralPath ($setup.FullName + '.sha256') -Value "$sha  $($setup.Name)" -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-1.0.0-Windows-private-Setup
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            dist/MeetingSplit_Setup_v1.0.0.exe
+            dist/MeetingSplit_Setup_v1.0.0.exe.sha256
+            work/installer-smoke/installer-qa.json

@@ -135,3 +135,7 @@ Portable 0.8.19 ejecutado en ASUS según manifest y confirmación del propietari
 ## 19. Contexto de fragmentos ASR (2026-11-27)
 
 Candidato aislado 81ae72fd1497ae5e8d2553218a8967eb1e2050d9, run #46087671575, in_progress. Ventanas cronológicas acotadas, referencias originales inmutables, género y citas ficticias explícitos, presupuesto una llamada por ventana, fallback no semántico. Fixture inventado de 36 fragmentos y diez criterios independientes; comprobar invariantes antes de cualquier inferencia. No cambio de default, modelo, audio, versión, portable o gate. Próxima comparación limitada solo si preflight exitoso. Ver checkpoint.
+
+## 20. Preflight contextual verde y A/B limitado
+
+#46087671575 verde: 14 pruebas, 36 filas exactas (32 en siete unidades, cuatro estructuradas); dos ventanas frente a una anterior, cero inferencia. Comparación real aislada d446f7184d305501d39a43b0364d8a05f26cd324, run #46087774311, in_progress; una solicitud baseline y dos contextual, misma entrada sintética, modelo fijado, sin reintentos. Evaluar diez criterios de fidelidad y prosa manualmente; no promover por CI ni confundir con end-to-end. Main/gate/0.8.19 intactos.

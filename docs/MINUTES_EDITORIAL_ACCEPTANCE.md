@@ -88,3 +88,5 @@ Editorial: 100 temas, 87 excerpts sin síntesis (121 iniciales), 26 registros re
 ## Nueva evaluación de diseño: fragmentos ASR
 
 Candidato aislado 81ae72fd1497ae5e8d2553218a8967eb1e2050d9 (run #46087671575, in_progress), sin inferencia ni datos privados: agrupación contextual cronológica con fuentes originales y género según contenido. Un ID de unidad no certifica cada cláusula. Preflight estructural y rúbrica independiente pendientes de inspección. No se modifica 0.8.19 ni se declara resuelta calidad editorial.
+
+Preflight contextual #46087671575 verde (14 regresiones; 36 referencias preservadas); A/B focal d446f7184d305501d39a43b0364d8a05f26cd324, run #46087774311, in_progress. Tres llamadas como máximo; aceptación semántica pendiente. No modifica candidato 0.8.19.

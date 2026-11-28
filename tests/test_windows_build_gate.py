@@ -10,7 +10,7 @@ ROOT=Path(__file__).resolve().parents[1]
 def test_self_check_never_requires_online_services():
     report,code=run_checks()
     assert report['offline'] is True
-    assert report['version']=='0.8.19'
+    assert report['version']=='1.0.0'
     assert {'qt_webengine','ffmpeg','ffprobe','whisper','cuda'} <= set(report['checks'])
     assert all(isinstance(row['ok'],bool) for row in report['checks'].values())
     assert all(not row['required'] for key,row in report['checks'].items() if key in ('cuda','platform'))
@@ -29,15 +29,15 @@ def test_build_script_has_required_release_gates_and_version():
     build=(ROOT/'scripts/compilar_windows.bat').read_text(encoding='utf-8')
     setup=(ROOT/'scripts/MeetingSplit.iss').read_text(encoding='utf-8')
     resource=(ROOT/'scripts/windows_version.txt').read_text(encoding='utf-8')
-    assert 'set "RELEASE=0.8.19"' in build
-    assert 'filevers=(0, 8, 19, 0)' in resource and 'prodvers=(0, 8, 19, 0)' in resource
-    assert "StringStruct('ProductVersion', '0.8.19')" in resource
+    assert 'set "RELEASE=1.0.0"' in build
+    assert 'filevers=(1, 0, 0, 0)' in resource and 'prodvers=(1, 0, 0, 0)' in resource
+    assert "StringStruct('ProductVersion', '1.0.0')" in resource
     assert "-ArgumentList @('--self-check'" in build
     assert 'WaitForExit(60000)' in build
     assert 'QtWebEngineWidgets' in build
     assert '--add-binary "bin\\ffmpeg.exe;bin"' in build
     assert 'if not "%PROBE_EXIT%"=="0"' in build
-    assert '#define MyAppVersion "0.8.19"' in setup
+    assert '#define MyAppVersion "1.0.0"' in setup
     assert 'OutputBaseFilename=MeetingSplit_Setup_v{#MyAppVersion}' in setup
     assert 'AppVersion={#MyAppVersion}' in setup
     assert (ROOT/'assets/meetingsplit.ico').is_file()
@@ -87,7 +87,7 @@ def test_frozen_minutes_qa_refuses_to_generate_without_a_local_model(tmp_path, m
 
 def test_current_candidate_version_matches_bilingual_ui_and_release_gate():
     from desktop.version import VERSION
-    assert VERSION == '0.8.19'
+    assert VERSION == '1.0.0'
     html=(ROOT/'ui/index.html').read_text(encoding='utf-8')
     locales=(ROOT/'ui/locales.js').read_text(encoding='utf-8')
     preview=(ROOT/'MEETINGSPLIT_PREVIEW_v0.8.6.html').read_text(encoding='utf-8')

@@ -15,7 +15,7 @@
 </div>
 
 > [!IMPORTANT]
-> **Windows review-only QA candidate · v0.8.19.** The owner authorized preparation for private evaluation with documented editorial limitations. The public release and installer remain gated. See [current status](MASTER_STATUS.md).
+> **Windows owner-use portable candidate · v1.0.0.** Audio splitting and transcription are retained; optional Ollama minutes remain unapproved and editorial work is paused. The public release and installer remain gated. See [current status](MASTER_STATUS.md).
 
 ---
 
@@ -191,7 +191,7 @@ MeetingSplit es una aplicación de escritorio para **Windows 11** que divide gra
 
 ### ¿Ya puedo instalarlo?
 
-**La versión de evaluación en Windows es 0.8.19 (borrador de revisión, no release pública).** La minuta local usa `qwen3.5:9b` y se presenta sin tablas ni marcas de tiempo. La transcripción y el JSON conservan las referencias. El ZIP de la reunión agrupa los resultados en una sola carpeta `RESULTADOS_COMPLETOS`.
+**La versión portable para uso del propietario en Windows es 1.0.0 (sin release pública).** Para dividir y transcribir sin Ollama, deja desmarcada la minuta automática local. La minuta local usa `qwen3.5:9b` y se presenta sin tablas ni marcas de tiempo. La transcripción y el JSON conservan las referencias. El ZIP de la reunión agrupa los resultados en una sola carpeta `RESULTADOS_COMPLETOS`.
 
 ### Compilación y estado de la minuta
 
@@ -219,7 +219,7 @@ This project depends on software with **separate licenses** (including Qt/PySide
 
 **Designed & Developed by Roberto S. Macfie**
 
-<sub>MeetingSplit · Independent Windows desktop software · Windows review-only QA candidate v0.8.19</sub>
+<sub>MeetingSplit · Independent Windows desktop software · Windows owner-use portable candidate v1.0.0</sub>
 
 </div>
 

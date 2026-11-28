@@ -1,6 +1,6 @@
 {
   "release_allowed": false,
-  "version_policy": "0.8.19 identifies an owner-authorized review-only Windows portable QA candidate; editorial acceptance outstanding; no public release, tag or installer delivery",
+  "version_policy": "1.0.0 identifies an owner-authorized Windows portable candidate for audio splitting and transcription; optional minutes not editorially accepted; no public release, tag or installer delivery",
   "required": {
     "asus_gpu_real_speech": false,
     "frozen_app_gpu_and_ollama_on_asus": false,

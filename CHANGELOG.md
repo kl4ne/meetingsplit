@@ -1,3 +1,9 @@
+## v1.0.0 - Owner-use Windows portable candidate
+
+- Version-only promotion of the tested 0.8.19 audio and transcription implementation for owner use; no engine, model or behavior changes.
+- Local Ollama minutes remain optional, off by default and not editorially accepted. Preserve the research and stop further experiments until authorized.
+- Public release and installer remain blocked. See `docs/MINUTES_FUTURE_HANDOFF.md` for historical evidence and limitations.
+
 ## v0.8.19 - Review-only Windows portable QA candidate
 
 - Retain Qwen3.5 9B and the local-only transcription/minutes architecture.

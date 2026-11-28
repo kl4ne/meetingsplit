@@ -94,7 +94,7 @@ def restore_full_row_quote_pair(proposed,source):
         return None
     return source
 
-def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=False,repair_quote_pairs=False):
+def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=False,repair_quote_pairs=False,neutralize_partial_titles=False):
     """Return valid claim groups and explicit original-source gaps.
 
     Quotes must be verbatim within the specific row. Even a correct quote
@@ -116,7 +116,7 @@ def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=Fals
     title_fields={'title_'+l for l in langs};text_fields={'text_'+l for l in langs}
     flagged={i for t in interrupted_tails(blocks or []) for i in t['source_ids']} & set(byid)
     review=set(doc['review_ids'])|flagged;failed=set();covered=set()
-    themes=[];rejections=[];seen=set();repairs=[]
+    themes=[];rejections=[];seen=set();repairs=[];neutralized=[]
     def candidate_ids(claim):
         refs=claim.get('sources') if isinstance(claim,dict) else None
         if not isinstance(refs,list) or not refs:return list(byid)
@@ -175,13 +175,20 @@ def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=Fals
         refs.sort(key=lambda r:r['source_id'])
         try:
             titles={k:_field(theme[k],100) for k in title_fields}
+            partial=neutralize_partial_titles and len(valid)<len(theme['claims'])
+            if partial:
+                # A rejected claim must not survive indirectly in the heading.
+                titles={'title_'+l:('Tema con revisión pendiente' if l=='es' else
+                    'Topic with pending review') for l in langs}
             quotes=' '.join(r['quote'] for r in refs)
             for value in titles.values():_check_text(value,quotes)
             key=tuple(titles['title_'+l].casefold() for l in langs)
-            if key in seen:raise ClaimRejected('duplicate_title')
-            seen.add(key)
+            if not partial:
+                if key in seen:raise ClaimRejected('duplicate_title')
+                seen.add(key)
         except ValueError as exc:
             reject(getattr(exc,'code','invalid_title'),[r['source_id'] for r in refs],theme,ti);continue
+        if partial:neutralized.append({'theme_index':ti,'code':'partial_theme_neutral_title'})
         repairs.extend(theme_repairs)
         covered.update(r['source_id'] for r in refs if r['quote']==byid[r['source_id']]['quote'])
         themes.append({'sources':refs,'claims':valid,**titles,
@@ -191,7 +198,8 @@ def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=Fals
         'gaps':[byid[i] for i in sorted(missing)],'review_ids':sorted(review),
         'rejections':rejections,'review_required':True,
         'verification':'claim_local_literal_citations_not_semantic',
-        **({'quote_repairs':repairs} if repair_quote_pairs else {})}
+        **({'quote_repairs':repairs} if repair_quote_pairs else {}),
+        **({'neutralized_titles':neutralized} if neutralize_partial_titles else {})}
 
 def recovery_targets(units,result,*,maximum=8):
     """Choose one bounded cluster from actual claim rejections; no inference.

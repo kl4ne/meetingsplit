@@ -68,12 +68,13 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                                    extraction_prompt, extraction_schema, find_coverage_gaps,
                                    explicit_source_items, reconcile_source_items, recover_evidence_items,
                                    plan_quote_retry, unresolved_retry_items)
-    if narrative_strategy not in ('reviewed','validated_editorial','localized_editorial','contextual_qa'):
+    if narrative_strategy not in ('reviewed','validated_editorial','localized_editorial','contextual_qa','contextual_claim_qa'):
         raise ValueError('Invalid narrative strategy')
     if mode not in ('summary','minutes','both') or language not in ('es','en','both'):
         raise ValueError('Invalid report mode or language')
-    localized=narrative_strategy in ('localized_editorial','contextual_qa')
-    contextual=narrative_strategy=='contextual_qa'
+    localized=narrative_strategy in ('localized_editorial','contextual_qa','contextual_claim_qa')
+    claim_mode=narrative_strategy=='contextual_claim_qa'
+    contextual=narrative_strategy in ('contextual_qa','contextual_claim_qa')
     guide_path = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[1])) / 'docs' / 'Guia_Owll_y_Minutas_para_Ollama.md'
     guide = guide_path.read_text(encoding='utf-8')
 
@@ -202,7 +203,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     if contextual:
         from .minutes_context_adapter import contextual_editorial
         outcome=contextual_editorial(blocks,items,language,request,cancel=cancel,
-                                     progress=progress,trace=trace)
+                                     progress=progress,trace=trace,claim_mode=claim_mode)
         editorial=outcome['themes']
         editorial_gaps=outcome['gaps']
         context_diagnostics=outcome['diagnostics']
@@ -303,7 +304,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             narratives[lang]=paragraphs
     displayed_themes=editorial
     repeated_themes=[]
-    if localized:
+    if localized and not claim_mode:
         from .minutes_theme_presentation import compact_repeated_theme_sources
         displayed_themes,repeated_themes=compact_repeated_theme_sources(blocks,editorial)
     overview=None
@@ -318,7 +319,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             localization.append(diagnostic)
             trace('localization','accepted',{'language':lang},diagnostic=diagnostic)
     structured_theme_moves=[]
-    if localized:
+    if localized and not claim_mode:
         from .minutes_theme_presentation import separate_structured_themes
         languages=('es','en') if language=='both' else (language,)
         prior_themes=displayed_themes
@@ -333,7 +334,8 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     if (localized or narrative_strategy=='validated_editorial') and (editorial or items):
         from .minutes_overview import build_overview
         overview={lang:build_overview(presentation,displayed_themes,lang,
-                      detail_included=not (localized and mode=='summary'))
+                      detail_included=not (localized and mode=='summary'),
+                      compact_combined=claim_mode and mode=='both')
                   for lang in (('es','en') if language=='both' else (language,))}
         trace('narrative','strategy',{'language':language},
               strategy=narrative_strategy,retained_themes=len(editorial))
@@ -348,7 +350,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         trace('source_accounting','accepted',{'language':language},diagnostics=source_accounting)
     visible_editorial_gaps=editorial_gaps
     gap_compaction=[]
-    if contextual:
+    if contextual and not claim_mode:
         from .minutes_context_gap_presentation import compact_context_gaps
         visible_editorial_gaps,gap_compaction=compact_context_gaps(
             blocks,items,editorial,editorial_gaps,context_diagnostics,repetition)

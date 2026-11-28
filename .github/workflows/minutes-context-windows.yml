@@ -1,4 +1,4 @@
-name: Restore original typographic quote pair exact replay
+name: Integrated claim QA and compact combined report offline
 on:
   push:
     branches: [qa/minutes-context-windows-0819]
@@ -23,16 +23,22 @@ jobs:
           name: claim-attribution-live
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/original
-      - name: Claim-local regression tests
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46096627138
+          name: claim-quote-pair-replay
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/prior
+      - name: Integrated and previous QA regressions
         run: |
           python -m pip install pytest
-          python -m pytest -q tests/test_minutes_context_claims.py tests/test_minutes_context_row_citations.py tests/test_minutes_context_interruptions.py
-      - name: Strict archived claim response replay
-        run: python qa/minutes_context_quote_pair_replay.py "$RUNNER_TEMP/original" "$RUNNER_TEMP/quote-replay"
+          python -m pytest -q tests/test_minutes_context_claim_integration.py tests/test_minutes_context_claims.py tests/test_minutes_context_adapter.py tests/test_minutes_context_row_citations.py tests/test_minutes_context_interruptions.py tests/test_minutes_compact_overview.py
+      - name: Archived synthetic claim through integrated pipeline
+        run: python qa/minutes_context_claim_integration_replay.py "$RUNNER_TEMP/original" "$RUNNER_TEMP/prior" "$RUNNER_TEMP/integrated"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: claim-quote-pair-replay
-          path: ${{ runner.temp }}/quote-replay
+          name: claim-integration-replay
+          path: ${{ runner.temp }}/integrated
           if-no-files-found: warn
           retention-days: 7

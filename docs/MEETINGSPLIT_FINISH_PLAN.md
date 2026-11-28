@@ -171,3 +171,7 @@ Durante #46090327742 en ejecución, reproducción local de funciones exactas de 
 ## 28. Replay completo de presentación validado
 
 #46093000998 verde, 98 tests, ZIP 15242335814 inspeccionado. Cinco respuestas exactas sin inferencia, evidencia anterior íntegra y compactación visible de IDs 12/13. 505→513 palabras; no reducción de extensión ni aceptación editorial. No repetir el fixture. Próximo: preparar comparación privada local basada en transcripción ya existente, consentimiento antes de inferencia, herramientas verificadas y sin modificación/retranscripción/upload. Main/gate/0.8.19 intactos.
+
+## 29. Herramienta de comparación privada preparada
+
+QA a6e2d50ca6c6bd38a835b13d867f3ac2e43b55c8, #46093403762 en curso, inspección de ZIP de 0.8.19 sin red/audio, live requiere consentimiento y modelo local ya instalado; salida separada, no modificar fuente. CI mock Windows y bundle de código Python sin EXE. Verificar artefacto antes de entregar; entorno ASUS aún por confirmar. No inferencia privada ni cambio de versión/default/gate. Ver checkpoint.

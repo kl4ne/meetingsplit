@@ -1,0 +1,153 @@
+name: Windows 1.0.0 owner-use portable QA
+on:
+  push:
+    branches: [qa/portable-100-owner]
+    paths: ['.github/workflows/portable-100-owner.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: portable-100-owner
+  cancel-in-progress: false
+jobs:
+  confirm-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Require successful original 0.8.19 source CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..30}; do
+            data=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/46078498354")
+            sha=$(jq -r .head_sha <<<"$data")
+            status=$(jq -r .status <<<"$data")
+            conclusion=$(jq -r .conclusion <<<"$data")
+            if [[ "$sha" != "448a8502521192034e939145d43cc6b18b90898e" ]]; then
+              echo "Unexpected CI source SHA"; exit 1
+            fi
+            if [[ "$status" == "completed" ]]; then
+              [[ "$conclusion" == "success" ]] || exit 1
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "Candidate CI did not complete successfully within the QA preflight budget"
+          exit 1
+  portable:
+    needs: confirm-source
+    if: github.event_name == 'push' && github.ref == 'refs/heads/qa/portable-100-owner'
+    runs-on: windows-2022
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify exact QA source and closed release gate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $parent = git rev-parse HEAD^
+          if ($parent -ne '69a009e1ca0e96815efe8d3d1220901915dde8c3') { throw 'Unexpected source commit' }
+          $changed = @(git diff-tree --no-commit-id --name-only -r HEAD)
+          if ($changed.Count -ne 1 -or $changed[0] -ne '.github/workflows/portable-100-owner.yml') { throw 'Unexpected QA changes' }
+          # Prove the working implementation is unchanged from the previously tested portable.
+          git fetch --no-tags --depth=1 origin 448a8502521192034e939145d43cc6b18b90898e
+          git diff --quiet 448a8502521192034e939145d43cc6b18b90898e HEAD -- engine desktop/main.py desktop/components.py desktop/component_setup.py desktop/storage.py desktop/cuda_probe.py desktop/self_check.py ui/app.js ui/styles.css requirements.txt scripts/prepare_lgpl_media.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Unexpected engine or runtime changes' }
+          $gate = Get-Content qa/release_gate.json -Raw | ConvertFrom-Json
+          if ($gate.release_allowed -ne $false) { throw 'Release gate must be closed' }
+          if (@($gate.required.PSObject.Properties | Where-Object { $_.Value -ne $false }).Count -ne 0) { throw 'Unexpected acceptance gate' }
+          if ((Get-Content desktop/version.py -Raw) -notmatch 'VERSION = "1\.0\.0"') { throw 'Wrong candidate version' }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+          architecture: 'x64'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+      - name: Install build dependencies
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install --upgrade 'pip==26.3'
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+          choco install ffmpeg --yes --no-progress
+          # Installer tooling is needed only for an explicit packaging run.
+          # Chocolatey .exe shims cannot be copied into the binary package.
+          $packageDir = Join-Path $env:ChocolateyInstall 'lib\ffmpeg'
+          $ffmpeg = Get-ChildItem -Path $packageDir -Recurse -File -Filter 'ffmpeg.exe' |
+            Select-Object -First 1 -ExpandProperty FullName
+          $ffprobe = Get-ChildItem -Path $packageDir -Recurse -File -Filter 'ffprobe.exe' |
+            Select-Object -First 1 -ExpandProperty FullName
+          if (-not $ffmpeg -or -not $ffprobe) { throw 'Chocolatey FFmpeg binaries not found' }
+          New-Item -ItemType Directory -Force 'bin' | Out-Null
+          Copy-Item -LiteralPath $ffmpeg -Destination 'bin\ffmpeg.exe' -Force
+          Copy-Item -LiteralPath $ffprobe -Destination 'bin\ffprobe.exe' -Force
+          .\bin\ffmpeg.exe -version | Select-Object -First 1
+          .\bin\ffprobe.exe -version | Select-Object -First 1
+      - name: Preflight pinned build runtime
+        shell: pwsh
+        run: .\.venv\Scripts\python.exe qa/check_build_runtime.py
+      - name: Prepare verified LGPL FFmpeg and source-built PyAV
+        shell: pwsh
+        run: ./scripts/prepare_lgpl_media.ps1
+      - name: Compile Windows portable review candidate only
+        shell: cmd
+        run: scripts\compilar_windows.bat --portable-only
+      - name: Validate exact extracted ZIP and record checksum
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $packages = @(Get-ChildItem dist -File -Filter 'MeetingSplit-v*-Windows-portable-candidate.zip')
+          if ($packages.Count -ne 1) { throw 'Expected exactly one portable ZIP' }
+          $zip = $packages[0]
+          if ($zip.Name -ne 'MeetingSplit-v1.0.0-Windows-portable-candidate.zip') { throw 'Incorrect portable name' }
+          if (@(Get-ChildItem dist -File -Filter '*Setup*.exe').Count -ne 0) { throw 'Installer is prohibited' }
+          $root = Join-Path $env:RUNNER_TEMP 'meetingsplit-portable'
+          Expand-Archive -LiteralPath $zip.FullName -DestinationPath $root
+          .\.venv\Scripts\python.exe qa/native_inventory.py $root --output build/extracted-native-inventory.json
+          if ($LASTEXITCODE -ne 0) { throw 'Extracted inventory failed' }
+          .\.venv\Scripts\python.exe -c "import json,pathlib; a=json.loads(pathlib.Path('build/native-inventory.json').read_text(encoding='utf-8')); b=json.loads(pathlib.Path('build/extracted-native-inventory.json').read_text(encoding='utf-8')); assert a['files']==b['files'], 'ZIP differs from audited frozen package'; print('Exact frozen file inventory verified:', b['file_count'])"
+          if ($LASTEXITCODE -ne 0) { throw 'Extracted files differ' }
+          $exe = Join-Path $root 'MeetingSplit.exe'
+          $result = Join-Path $env:RUNNER_TEMP 'meetingsplit-portable-self-check.json'
+          $process = Start-Process -FilePath $exe -ArgumentList @('--self-check', ('"' + $result + '"')) -PassThru -WindowStyle Hidden
+          if (-not $process.WaitForExit(60000)) { Stop-Process -Id $process.Id -Force; throw 'Extracted executable self-check timed out' }
+          if ($process.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $result)) { throw 'Extracted executable self-check failed' }
+          $check = Get-Content -LiteralPath $result -Raw | ConvertFrom-Json
+          if ($check.version -ne '1.0.0' -or -not $check.packaged -or -not $check.offline) { throw 'Unexpected extracted executable metadata' }
+          if ($check.python -ne '3.14.10') { throw 'Unexpected frozen Python' }
+          if ($check.openssl -notmatch '^OpenSSL (\d+\.\d+\.\d+)') { throw 'Unknown OpenSSL' }
+          if ([version]$Matches[1] -lt [version]'3.5.9' -or [version]$check.sqlite -lt [version]'3.50.4') { throw 'Frozen runtime security floor failed' }
+          Copy-Item -LiteralPath $result -Destination build/portable-self-check.json
+          $hash = (Get-FileHash -LiteralPath $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -LiteralPath ($zip.FullName + '.sha256') -Value "$hash  $($zip.Name)" -Encoding ascii
+          $receipt = @{ source_sha = '69a009e1ca0e96815efe8d3d1220901915dde8c3'; qa_sha = $env:GITHUB_SHA; version = $check.version; zip_name = $zip.Name; zip_sha256 = $hash; zip_bytes = $zip.Length; extracted_inventory_verified = $true; self_check = $check; release_allowed = $false; editorial_acceptance = $false; scope = 'owner-use portable candidate; minutes not accepted; no public release; exact v1.0.0 ASUS validation outstanding' }
+          $receipt | ConvertTo-Json -Depth 12 | Set-Content build/portable-receipt.json -Encoding UTF8
+          Get-Content build/portable-receipt.json
+      - name: Upload verification evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-100-owner-verification
+          path: |
+            build/portable-receipt.json
+            build/portable-self-check.json
+            build/native-inventory.json
+            build/extracted-native-inventory.json
+            build/native-provenance.json
+            build/lgpl-wheel/lgpl-media-receipt.json
+            build/legal
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload complete QA portable and SHA-256
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingSplit-1.0.0-Windows-portable-review-QA
+          path: |
+            dist/MeetingSplit-v1.0.0-Windows-portable-candidate.zip
+            dist/MeetingSplit-v1.0.0-Windows-portable-candidate.zip.sha256
+          if-no-files-found: error
+          retention-days: 14

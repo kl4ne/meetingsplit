@@ -98,3 +98,5 @@ A/B contextual #46087774311 revisado (ZIP 15240565472): método anterior timeout
 Replay #46089994282 verde, 34 pruebas, ZIP 15240797595 verificado: cuarentena de interpretación de 19/20, citas preservadas; no certifica calidad de prosa restante. No volver a inferir el mismo fixture. Siguiente adaptador aislado y caso independiente. 0.8.19/gate intactos.
 
 Adaptador integral contextual_qa aislado e012dacacd565e3647ad79c3455601a7bc20a15c (#46090234942, in_progress); validación estructural sin modelo y nuevo fixture independiente. Pendiente ejecución real y evaluación editorial; no cambio de portable/default/gate.
+
+Adaptador contextual_qa preflight #46090234942 verde (92 pruebas, contratos mock); ejecución real independiente 09378690b2b356c6c2dad0c7b8531bb1080d9672 (#46090327742, in_progress) bajo presupuesto. Pendiente lectura de la salida. No certifica calidad ni cambia 0.8.19.

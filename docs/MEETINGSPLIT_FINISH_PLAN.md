@@ -155,3 +155,7 @@ Candidato aislado 81ae72fd1497ae5e8d2553218a8967eb1e2050d9, run #46087671575, in
 ## 24. Adaptador contextual integral opt-in
 
 QA e012dacacd565e3647ad79c3455601a7bc20a15c (#46090234942, in_progress); conecta ventanas y citas originales al motor completo sin modificar default. Pruebas mock de modos/idiomas/fallos/cancelación; fixture independiente 22 fragmentos y rúbrica fija. Preflight primero; luego una inferencia integral acotada solo si justificada. No promoción ni build por CI verde. Ver checkpoint.
+
+## 25. Preflight integral aprobado y ejecución independiente
+
+#46090234942 verde, 92 tests, 22 filas, cuatro hechos, dos ventanas, cero inferencia. Prueba real aislada 09378690b2b356c6c2dad0c7b8531bb1080d9672 (#46090327742, in_progress), ES ambos, cap 6 llamadas y 900 s agregado. Evaluación manual independiente pendiente. No promoción por CI, no cambio del portable/default/gate. Ver checkpoint.

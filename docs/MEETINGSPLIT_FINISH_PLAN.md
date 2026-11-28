@@ -163,3 +163,7 @@ QA e012dacacd565e3647ad79c3455601a7bc20a15c (#46090234942, in_progress); conecta
 ## 26. Capacidad de planificación sobre prueba real privada
 
 Durante #46090327742 en ejecución, reproducción local de funciones exactas de planificación QA: 273 filas originales, 38 unidades, ocho ventanas, 270 filas contextuales y tres estructuradas; cero pérdidas/overbudget y cero solicitudes. Sin exclusiones: mismas 38 unidades y ocho ventanas. Solo agregados técnicos, ningún texto privado publicado. No prueba semántica ni rendimiento. Siguiente: esperar resultado real independiente y revisarlo, no otra inferencia. 0.8.19/main/gate intactos.
+
+## 27. Prueba integral independiente aprobada estructuralmente
+
+#46090327742 verde, ZIP 15240789431 inspeccionado, 14/14 checks, cuatro resultados, cinco temas, cinco solicitudes/388.45 s CPU, gaps 12/13/14. Lectura manual positiva pero modalidad y repetición pendientes; 505 vs 156 palabras. QA 7bad8132c29f33d2c66d892fb7d707a763444f4c (#46093000998, completed / success), compactación visual exacta con evidencia íntegra, replay sin inferencia. Tras validar, evaluar camino de comparación real privada sin retranscribir ni publicar contenido. No promover default/portable/gate por CI. Ver checkpoint.

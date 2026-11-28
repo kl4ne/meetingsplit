@@ -151,3 +151,7 @@ Candidato aislado 81ae72fd1497ae5e8d2553218a8967eb1e2050d9, run #46087671575, in
 ## 23. Replay de interrupción validado
 
 #46089994282 verde, 34 pruebas, ZIP 15240797595 inspeccionado: tres temas conservados, una interpretación retirada, seis gaps preservados; cero inferencia. Cerrar ciclo del fixture. Próximo adaptador contextual integral aislado y evaluación independiente, sin modificar default ni portable. Ver checkpoint.
+
+## 24. Adaptador contextual integral opt-in
+
+QA e012dacacd565e3647ad79c3455601a7bc20a15c (#46090234942, in_progress); conecta ventanas y citas originales al motor completo sin modificar default. Pruebas mock de modos/idiomas/fallos/cancelación; fixture independiente 22 fragmentos y rúbrica fija. Preflight primero; luego una inferencia integral acotada solo si justificada. No promoción ni build por CI verde. Ver checkpoint.

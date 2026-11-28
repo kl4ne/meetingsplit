@@ -108,3 +108,5 @@ Prueba independiente #46090327742 verde, ZIP 15240789431 verificado: 14 criterio
 Replay completo #46093000998 verde, 98 pruebas, ZIP 15242335814 verificado. Cinco respuestas reproducidas, cero llamadas, evidencia original preservada; 12/13 compactados visualmente, 505→513 palabras por explicación. No resuelve modalidad o síntesis ejecutiva. Próximo hito privado real, sujeto a consentimiento y entorno local. NO-GO editorial/público intacto.
 
 Herramienta QA local a6e2d50ca6c6bd38a835b13d867f3ac2e43b55c8 (#46093403762 en progreso) preparada para comparación con ZIP real existente bajo consentimiento explícito, sin audio ni descargas. CI mock no equivale a aceptación editorial; Python y Ollama local activo son requisitos por verificar. NO-GO editorial/público intacto.
+
+#46093403762 verde, 110 pruebas mock; paquete fuente verificado 15242266995. CLI exacto inspeccionó ZIP real privado (273 filas/38 unidades/8 ventanas) sin inferencia ni modificarlo. Comparación real pendiente en ASUS con consentimiento y entorno local existente. No se certifica mejora editorial ni se cambia 0.8.19; gate público cerrado.

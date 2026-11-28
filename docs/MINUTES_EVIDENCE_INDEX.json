@@ -1,0 +1,1237 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-11-28",
+  "repository": "kl4ne/meetingsplit",
+  "branch": "fix/minutes-editorial-diagnostics",
+  "source": "docs/MINUTES_QA_LEDGER.md",
+  "source_note": "Index of recorded IDs, not a fresh status check of every historical run. See ledger for outcomes, commits and limitations. Artifact expiry is temporary; null means not refreshed at closeout. IDs are string identifiers.",
+  "recorded_runs": [
+    {
+      "id": "45950804921",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45950804921",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45951175096",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45951175096",
+      "sections": [
+        "Ejecuciones y artefactos principales",
+        "Final bounded editorial attempt — 2026-11-28"
+      ]
+    },
+    {
+      "id": "45954020095",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45954020095",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45954418778",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45954418778",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45954649481",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45954649481",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45955097281",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45955097281",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45955174164",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45955174164",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45959062442",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45959062442",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45959366639",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45959366639",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45959540874",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45959540874",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45959825859",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45959825859",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45993971134",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45993971134",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45994422839",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45994422839",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45994530781",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45994530781",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "45994579450",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45994579450",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46000635732",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46000635732",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46000677544",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46000677544",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46001580090",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46001580090",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46008752302",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46008752302",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46009865198",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46009865198",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46010385069",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46010385069",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46010555628",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46010555628",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46015055749",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46015055749",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46015163014",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46015163014",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46023661916",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46023661916",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46023822998",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46023822998",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46024213286",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46024213286",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46024353373",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46024353373",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46024899679",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46024899679",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "46025010689",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46025010689",
+      "sections": [
+        "Ejecuciones y artefactos principales",
+        "Compound-review exact audit complete; source gate decision — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46025742614",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46025742614",
+      "sections": [
+        "Ejecuciones y artefactos principales",
+        "Varied source QA — result verified (2026-11-27)"
+      ]
+    },
+    {
+      "id": "45944749555",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45944749555",
+      "sections": [
+        "Estado de cierre"
+      ]
+    },
+    {
+      "id": "46030916887",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46030916887",
+      "sections": [
+        "Varied source QA — result verified (2026-11-27)",
+        "Varied repair continuation — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46031770427",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46031770427",
+      "sections": [
+        "Varied source QA — result verified (2026-11-27)",
+        "Varied repair continuation — 2026-11-27",
+        "Varied targeted recovery — verified and integrated (2026-11-27)",
+        "Bounded synthesis offline prototype verified — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46033392154",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46033392154",
+      "sections": [
+        "Editorial modality guard integrated — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46033519061",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46033519061",
+      "sections": [
+        "Editorial modality guard integrated — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46034100640",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46034100640",
+      "sections": [
+        "Source-first architecture experiment — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46034184111",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46034184111",
+      "sections": [
+        "Source-first architecture experiment — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46036960062",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46036960062",
+      "sections": [
+        "Source-first architecture experiment — 2026-11-27",
+        "Source-first grouping repair checkpoint — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46038580739",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46038580739",
+      "sections": [
+        "Source-first grouping repair checkpoint — 2026-11-27",
+        "Source-first grouping success and executive synthesis experiment — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46046370941",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46046370941",
+      "sections": [
+        "Source-first grouping success and executive synthesis experiment — 2026-11-27",
+        "Executive free-form failure and bounded topic-clause comparison — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46047669072",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46047669072",
+      "sections": [
+        "Executive free-form failure and bounded topic-clause comparison — 2026-11-27",
+        "Close summary prompt experiments; optional integrated source-first path — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46049354590",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46049354590",
+      "sections": [
+        "Close summary prompt experiments; optional integrated source-first path — 2026-11-27",
+        "Bilingual source-first extraction timeout and bounded metadata candidate — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46055337219",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46055337219",
+      "sections": [
+        "Bilingual source-first extraction timeout and bounded metadata candidate — 2026-11-27",
+        "Bilingual metadata extraction succeeded; targeted translation replay — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46057746118",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46057746118",
+      "sections": [
+        "Bilingual metadata extraction succeeded; targeted translation replay — 2026-11-27",
+        "Bilingual replay passed; source accountability and denser independent QA — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46059848949",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46059848949",
+      "sections": [
+        "Bilingual replay passed; source accountability and denser independent QA — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46059887920",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46059887920",
+      "sections": [
+        "Bilingual replay passed; source accountability and denser independent QA — 2026-11-27",
+        "Dense independent run — classification defects and scaling decision — 2026-11-27",
+        "Bounded synthesis offline prototype verified — 2026-11-27",
+        "Compound-review exact audit complete; source gate decision — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46064492706",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46064492706",
+      "sections": [
+        "Dense independent run — classification defects and scaling decision — 2026-11-27",
+        "Dense metadata replay verified; bounded architecture decision — 2026-11-27",
+        "Bounded synthesis offline prototype verified — 2026-11-27",
+        "Compound-review exact audit complete; source gate decision — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46064556264",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46064556264",
+      "sections": [
+        "Dense metadata replay verified; bounded architecture decision — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46068901708",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46068901708",
+      "sections": [
+        "Bounded synthesis offline prototype verified — 2026-11-27",
+        "Bounded bilingual synthesis candidate and focal QA — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46069171479",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46069171479",
+      "sections": [
+        "Bounded synthesis offline prototype verified — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46069647403",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46069647403",
+      "sections": [
+        "Bounded bilingual synthesis candidate and focal QA — 2026-11-27",
+        "Focal bilingual generation failed; stop combined schema experiment — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46070560237",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46070560237",
+      "sections": [
+        "Report-mode CI green; fixed-group prelocalized prose comparison — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46073480297",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46073480297",
+      "sections": [
+        "Report-mode CI green; fixed-group prelocalized prose comparison — 2026-11-27",
+        "Prelocalized prose experiment closed; source-accounting safety repair — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46073912935",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46073912935",
+      "sections": [
+        "Integrated source-accounting CI and archived-output replay — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46074876355",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46074876355",
+      "sections": [
+        "Current integrated replay, concrete remaining defects and deadline presentation — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46075439142",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46075439142",
+      "sections": [
+        "Current integrated replay, concrete remaining defects and deadline presentation — 2026-11-27",
+        "Compound-review exact audit complete; source gate decision — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46075602257",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46075602257",
+      "sections": [
+        "Deadline CI green; four-source bounded detail repair — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46076686990",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46076686990",
+      "sections": [
+        "Deadline CI green; four-source bounded detail repair — 2026-11-27",
+        "Four-source recovery verified; compound quotation review cue — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46077071845",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46077071845",
+      "sections": [
+        "Compound-review exact audit complete; source gate decision — 2026-11-27",
+        "Owner-authorized review-only portable 0.8.19 — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46077626196",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46077626196",
+      "sections": [
+        "Compound-review exact audit complete; source gate decision — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46078498354",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46078498354",
+      "sections": [
+        "Owner-authorized review-only portable 0.8.19 — 2026-11-27",
+        "Verified 0.8.19 review-only portable ready for owner QA — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46078575131",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46078575131",
+      "sections": [
+        "Owner-authorized review-only portable 0.8.19 — 2026-11-27",
+        "Verified 0.8.19 review-only portable ready for owner QA — 2026-11-27"
+      ]
+    },
+    {
+      "id": "46087671575",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46087671575",
+      "sections": [
+        "Contextual ASR architecture isolated preflight — 2026-11-27",
+        "Context preflight passed; limited real A/B launched"
+      ]
+    },
+    {
+      "id": "46087774311",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46087774311",
+      "sections": [
+        "Context preflight passed; limited real A/B launched",
+        "Contextual A/B reviewed; explicit original-row citation refinement"
+      ]
+    },
+    {
+      "id": "46089422183",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46089422183",
+      "sections": [
+        "Contextual A/B reviewed; explicit original-row citation refinement",
+        "Original-row focal result and conservative interruption replay — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46089994282",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46089994282",
+      "sections": [
+        "Original-row focal result and conservative interruption replay — 2026-11-28 UTC",
+        "Exact interruption replay verified"
+      ]
+    },
+    {
+      "id": "46090234942",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46090234942",
+      "sections": [
+        "Opt-in complete pipeline contextual adapter — 2026-11-28 UTC",
+        "Complete adapter preflight passed; independent full-pipeline QA launched"
+      ]
+    },
+    {
+      "id": "46090327742",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46090327742",
+      "sections": [
+        "Complete adapter preflight passed; independent full-pipeline QA launched",
+        "Private local capacity check while independent contextual run executes",
+        "Independent complete contextual result and exact review-display refinement",
+        "Independent combined-overview presentation experiment — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46093000998",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46093000998",
+      "sections": [
+        "Independent complete contextual result and exact review-display refinement",
+        "Exact complete replay of review presentation verified",
+        "Independent combined-overview presentation experiment — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46093403762",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46093403762",
+      "sections": [
+        "Private transcript-only comparison tool prepared — 2026-11-28 UTC",
+        "Private source comparison package verified, real source read-only inspection passed"
+      ]
+    },
+    {
+      "id": "46095408082",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46095408082",
+      "sections": [
+        "Claim-level attribution and reason-code preflight — 2026-11-28 UTC",
+        "Frozen fictional claim attribution A/B — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46095783519",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46095783519",
+      "sections": [
+        "Frozen fictional claim attribution A/B — 2026-11-28 UTC",
+        "Independent combined-overview presentation experiment — 2026-11-28 UTC",
+        "Focal A/B inspected and narrow quote-pair repair — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46096249121",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46096249121",
+      "sections": [
+        "Independent combined-overview presentation experiment — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46096627138",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46096627138",
+      "sections": [
+        "Focal A/B inspected and narrow quote-pair repair — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46097088516",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46097088516",
+      "sections": [
+        "Integrated opt-in claim QA — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46097162360",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46097162360",
+      "sections": [
+        "Integrated opt-in claim QA — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46097495438",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46097495438",
+      "sections": [
+        "Independent full integrated claim pipeline — 2026-11-28 UTC",
+        "Full claim pipeline timeout and deterministic failure-path repair — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46099113043",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46099113043",
+      "sections": [
+        "Full claim pipeline timeout and deterministic failure-path repair — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46099501926",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46099501926",
+      "sections": [
+        "Private frozen-extraction claim comparison source package — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "46142308455",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46142308455",
+      "sections": [
+        "Final bounded editorial attempt — 2026-11-28",
+        "Final bounded editorial QA — completed, NO-GO — 2026-11-28"
+      ]
+    }
+  ],
+  "recorded_artifact_ids": [
+    {
+      "id": "15177746760",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15178636016",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15179585459",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15180376379",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15180570776",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15180493657",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15195382415",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15194219125",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15196553252",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15198380886",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15198485540",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15198461769",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15201659731",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15202657089",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15203317506",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15203432244",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15205557241",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15205494850",
+      "sections": [
+        "Ejecuciones y artefactos principales",
+        "Current integrated replay, concrete remaining defects and deadline presentation — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15211695482",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15212165509",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15212011213",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15211181219",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15211811984",
+      "sections": [
+        "Ejecuciones y artefactos principales"
+      ]
+    },
+    {
+      "id": "15210253968",
+      "sections": [
+        "Ejecuciones y artefactos principales",
+        "Compound-review exact audit complete; source gate decision — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15214500646",
+      "sections": [
+        "Ejecuciones y artefactos principales",
+        "Varied source QA — result verified (2026-11-27)",
+        "Integrated source-accounting CI and archived-output replay — 2026-11-27",
+        "Current integrated replay, concrete remaining defects and deadline presentation — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15173838121",
+      "sections": [
+        "Estado de cierre"
+      ]
+    },
+    {
+      "id": "15214847836",
+      "sections": [
+        "Varied source QA — result verified (2026-11-27)",
+        "Varied targeted recovery — verified and integrated (2026-11-27)",
+        "Editorial modality guard integrated — 2026-11-27",
+        "Source-first architecture experiment — 2026-11-27",
+        "Integrated source-accounting CI and archived-output replay — 2026-11-27",
+        "Current integrated replay, concrete remaining defects and deadline presentation — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15214819074",
+      "sections": [
+        "Editorial modality guard integrated — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15215453414",
+      "sections": [
+        "Source-first architecture experiment — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15217992924",
+      "sections": [
+        "Source-first grouping repair checkpoint — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15219327638",
+      "sections": [
+        "Source-first grouping success and executive synthesis experiment — 2026-11-27",
+        "Executive free-form failure and bounded topic-clause comparison — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15221834087",
+      "sections": [
+        "Executive free-form failure and bounded topic-clause comparison — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15222594261",
+      "sections": [
+        "Close summary prompt experiments; optional integrated source-first path — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15224861629",
+      "sections": [
+        "Bilingual source-first extraction timeout and bounded metadata candidate — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15227660566",
+      "sections": [
+        "Bilingual metadata extraction succeeded; targeted translation replay — 2026-11-27",
+        "Report-mode CI green; fixed-group prelocalized prose comparison — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15226124448",
+      "sections": [
+        "Bilingual replay passed; source accountability and denser independent QA — 2026-11-27",
+        "Report-mode CI green; fixed-group prelocalized prose comparison — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15228757968",
+      "sections": [
+        "Dense independent run — classification defects and scaling decision — 2026-11-27",
+        "Dense metadata replay verified; bounded architecture decision — 2026-11-27",
+        "Bounded synthesis offline prototype verified — 2026-11-27",
+        "Report-mode CI green; fixed-group prelocalized prose comparison — 2026-11-27",
+        "Integrated source-accounting CI and archived-output replay — 2026-11-27",
+        "Compound-review exact audit complete; source gate decision — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15230466749",
+      "sections": [
+        "Dense metadata replay verified; bounded architecture decision — 2026-11-27",
+        "Integrated source-accounting CI and archived-output replay — 2026-11-27",
+        "Compound-review exact audit complete; source gate decision — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15231902380",
+      "sections": [
+        "Bounded synthesis offline prototype verified — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15233205100",
+      "sections": [
+        "Focal bilingual generation failed; stop combined schema experiment — 2026-11-27",
+        "Report-mode CI green; fixed-group prelocalized prose comparison — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15233533021",
+      "sections": [
+        "Prelocalized prose experiment closed; source-accounting safety repair — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15234354072",
+      "sections": [
+        "Current integrated replay, concrete remaining defects and deadline presentation — 2026-11-27",
+        "Deadline CI green; four-source bounded detail repair — 2026-11-27",
+        "Compound-review exact audit complete; source gate decision — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15234809448",
+      "sections": [
+        "Four-source recovery verified; compound quotation review cue — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15236061286",
+      "sections": [
+        "Compound-review exact audit complete; source gate decision — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15236425376",
+      "sections": [
+        "Verified 0.8.19 review-only portable ready for owner QA — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15235574583",
+      "sections": [
+        "Verified 0.8.19 review-only portable ready for owner QA — 2026-11-27"
+      ]
+    },
+    {
+      "id": "15239553098",
+      "sections": [
+        "Context preflight passed; limited real A/B launched"
+      ]
+    },
+    {
+      "id": "15240565472",
+      "sections": [
+        "Contextual A/B reviewed; explicit original-row citation refinement"
+      ]
+    },
+    {
+      "id": "15240801926",
+      "sections": [
+        "Original-row focal result and conservative interruption replay — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "15240797595",
+      "sections": [
+        "Exact interruption replay verified"
+      ]
+    },
+    {
+      "id": "15240917645",
+      "sections": [
+        "Complete adapter preflight passed; independent full-pipeline QA launched"
+      ]
+    },
+    {
+      "id": "15240789431",
+      "sections": [
+        "Independent complete contextual result and exact review-display refinement"
+      ]
+    },
+    {
+      "id": "15242335814",
+      "sections": [
+        "Exact complete replay of review presentation verified"
+      ]
+    },
+    {
+      "id": "15242266995",
+      "sections": [
+        "Private source comparison package verified, real source read-only inspection passed"
+      ]
+    },
+    {
+      "id": "15243031850",
+      "sections": [
+        "Claim-level attribution and reason-code preflight — 2026-11-28 UTC",
+        "Frozen fictional claim attribution A/B — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "15243129265",
+      "sections": [
+        "Independent combined-overview presentation experiment — 2026-11-28 UTC",
+        "Focal A/B inspected and narrow quote-pair repair — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "15242903218",
+      "sections": [
+        "Focal A/B inspected and narrow quote-pair repair — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "15243294845",
+      "sections": [
+        "Focal A/B inspected and narrow quote-pair repair — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "15243248941",
+      "sections": [
+        "Integrated opt-in claim QA — 2026-11-28 UTC",
+        "Independent full integrated claim pipeline — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "15244652083",
+      "sections": [
+        "Full claim pipeline timeout and deterministic failure-path repair — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "15245035393",
+      "sections": [
+        "Full claim pipeline timeout and deterministic failure-path repair — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "15245021290",
+      "sections": [
+        "Private frozen-extraction claim comparison source package — 2026-11-28 UTC"
+      ]
+    },
+    {
+      "id": "15262042793",
+      "sections": [
+        "Final bounded editorial QA — completed, NO-GO — 2026-11-28"
+      ]
+    }
+  ],
+  "backup_selection": [
+    {
+      "artifact_id": "15177746760",
+      "run_id": "45951175096",
+      "description": "A/B directo inicial",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45951175096/artifacts/15177746760",
+      "expires_at": "2026-12-04T06:39:17Z",
+      "archive_filename": "github-actions-artifact-15177746760.zip"
+    },
+    {
+      "artifact_id": "15196553252",
+      "run_id": "45994579450",
+      "description": "Largo repetitivo",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/45994579450/artifacts/15196553252",
+      "expires_at": "2026-12-04T12:26:50Z",
+      "archive_filename": "github-actions-artifact-15196553252.zip"
+    },
+    {
+      "artifact_id": "15205494850",
+      "run_id": "46015163014",
+      "description": "Corto integrado",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46015163014/artifacts/15205494850",
+      "expires_at": "2026-12-04T14:36:36Z",
+      "archive_filename": "github-actions-artifact-15205494850.zip"
+    },
+    {
+      "artifact_id": "15210253968",
+      "run_id": "46025010689",
+      "description": "Replay corto exacto",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46025010689/artifacts/15210253968",
+      "expires_at": null,
+      "archive_filename": "github-actions-artifact-15210253968.zip"
+    },
+    {
+      "artifact_id": "15214500646",
+      "run_id": "46025742614",
+      "description": "Largo variado",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46025742614/artifacts/15214500646",
+      "expires_at": "2026-12-04T16:03:35Z",
+      "archive_filename": "github-actions-artifact-15214500646.zip"
+    },
+    {
+      "artifact_id": "15214847836",
+      "run_id": "46031770427",
+      "description": "Recuperación variada",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46031770427/artifacts/15214847836",
+      "expires_at": "2026-12-04T16:21:04Z",
+      "archive_filename": "github-actions-artifact-15214847836.zip"
+    },
+    {
+      "artifact_id": "15228757968",
+      "run_id": "46059887920",
+      "description": "Denso source-first",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46059887920/artifacts/15228757968",
+      "expires_at": null,
+      "archive_filename": "github-actions-artifact-15228757968.zip"
+    },
+    {
+      "artifact_id": "15230466749",
+      "run_id": "46064492706",
+      "description": "Replay clasificación densa",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46064492706/artifacts/15230466749",
+      "expires_at": null,
+      "archive_filename": "github-actions-artifact-15230466749.zip"
+    },
+    {
+      "artifact_id": "15231902380",
+      "run_id": "46069171479",
+      "description": "Síntesis acotada offline",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46069171479/artifacts/15231902380",
+      "expires_at": null,
+      "archive_filename": "github-actions-artifact-15231902380.zip"
+    },
+    {
+      "artifact_id": "15234354072",
+      "run_id": "46075439142",
+      "description": "Revalidación variada",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46075439142/artifacts/15234354072",
+      "expires_at": null,
+      "archive_filename": "github-actions-artifact-15234354072.zip"
+    },
+    {
+      "artifact_id": "15235574583",
+      "run_id": "46078575131",
+      "description": "Verificación portable",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46078575131/artifacts/15235574583",
+      "expires_at": "2026-12-11T22:53:53Z",
+      "archive_filename": "github-actions-artifact-15235574583.zip"
+    },
+    {
+      "artifact_id": "15236061286",
+      "run_id": "46077626196",
+      "description": "Auditoría revisión compuesta",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46077626196/artifacts/15236061286",
+      "expires_at": null,
+      "archive_filename": "github-actions-artifact-15236061286.zip"
+    },
+    {
+      "artifact_id": "15239553098",
+      "run_id": "46087671575",
+      "description": "Preflight contextual",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46087671575/artifacts/15239553098",
+      "expires_at": null,
+      "archive_filename": "github-actions-artifact-15239553098.zip"
+    },
+    {
+      "artifact_id": "15240565472",
+      "run_id": "46087774311",
+      "description": "A/B contextual",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46087774311/artifacts/15240565472",
+      "expires_at": null,
+      "archive_filename": "github-actions-artifact-15240565472.zip"
+    },
+    {
+      "artifact_id": "15240789431",
+      "run_id": "46090327742",
+      "description": "Pipeline contextual real",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46090327742/artifacts/15240789431",
+      "expires_at": "2026-12-05T01:01:26Z",
+      "archive_filename": "github-actions-artifact-15240789431.zip"
+    },
+    {
+      "artifact_id": "15242335814",
+      "run_id": "46093000998",
+      "description": "Replay presentación contextual",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46093000998/artifacts/15242335814",
+      "expires_at": null,
+      "archive_filename": "github-actions-artifact-15242335814.zip"
+    },
+    {
+      "artifact_id": "15242903218",
+      "run_id": "46095783519",
+      "description": "A/B por afirmación",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46095783519/artifacts/15242903218",
+      "expires_at": "2026-12-05T02:05:31Z",
+      "archive_filename": "github-actions-artifact-15242903218.zip"
+    },
+    {
+      "artifact_id": "15243031850",
+      "run_id": "46095408082",
+      "description": "Preflight afirmaciones",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46095408082/artifacts/15243031850",
+      "expires_at": null,
+      "archive_filename": "github-actions-artifact-15243031850.zip"
+    },
+    {
+      "artifact_id": "15243129265",
+      "run_id": "46096249121",
+      "description": "Resumen compacto",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46096249121/artifacts/15243129265",
+      "expires_at": "2026-12-05T02:04:41Z",
+      "archive_filename": "github-actions-artifact-15243129265.zip"
+    },
+    {
+      "artifact_id": "15243248941",
+      "run_id": "46097162360",
+      "description": "Replay integración afirmaciones",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46097162360/artifacts/15243248941",
+      "expires_at": "2026-12-05T02:15:42Z",
+      "archive_filename": "github-actions-artifact-15243248941.zip"
+    },
+    {
+      "artifact_id": "15243294845",
+      "run_id": "46096627138",
+      "description": "Replay pares de comillas",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46096627138/artifacts/15243294845",
+      "expires_at": "2026-12-05T02:09:22Z",
+      "archive_filename": "github-actions-artifact-15243294845.zip"
+    },
+    {
+      "artifact_id": "15244652083",
+      "run_id": "46097495438",
+      "description": "Timeout pipeline afirmaciones",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46097495438/artifacts/15244652083",
+      "expires_at": "2026-12-05T02:34:44Z",
+      "archive_filename": "github-actions-artifact-15244652083.zip"
+    },
+    {
+      "artifact_id": "15245021290",
+      "run_id": "46099501926",
+      "description": "Herramienta fuente QA",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46099501926/artifacts/15245021290",
+      "expires_at": "2026-12-12T02:44:17Z",
+      "archive_filename": "github-actions-artifact-15245021290.zip"
+    },
+    {
+      "artifact_id": "15245035393",
+      "run_id": "46099113043",
+      "description": "Replay recuperación timeout",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46099113043/artifacts/15245035393",
+      "expires_at": "2026-12-05T02:39:10Z",
+      "archive_filename": "github-actions-artifact-15245035393.zip"
+    },
+    {
+      "artifact_id": "15262042793",
+      "run_id": "46142308455",
+      "description": "Última generación acotada",
+      "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46142308455/artifacts/15262042793",
+      "expires_at": "2026-12-05T12:01:04Z",
+      "archive_filename": "github-actions-artifact-15262042793.zip"
+    }
+  ],
+  "portable": {
+    "artifact_id": "15236425376",
+    "url": "https://github.com/kl4ne/meetingsplit/actions/runs/46078575131/artifacts/15236425376",
+    "expires_at": "2026-12-11T22:53:54Z",
+    "outer_sha256": "39550f0f2c85f3518455881f911b6c259d30797dce4f77427b72e0b4dbaa7236",
+    "included_in_backup": false,
+    "reason": "Large review-only binary; owner already has installed/extracted copy. Preserve it locally; no new build or distribution."
+  }
+}

@@ -147,3 +147,7 @@ Candidato aislado 81ae72fd1497ae5e8d2553218a8967eb1e2050d9, run #46087671575, in
 ## 22. Citas individuales y revisión de interrupciones
 
 #46089422183: 28 tests, 1 solicitud/130.016 s, cuatro temas, cuatro gaps; review_ids vacío. Cita ficticia rechazada y tema 19/20 añade relación no confirmada. Nuevo QA offline 13583ac3fdfbeb4719621a6601d21a125b48d2ec (#46089994282, completed / success) conserva cláusulas interrumpidas en revisión, sin nueva inferencia. Verificar resultado exacto. No repetir este fixture con modelo, no promover sin evaluación integral independiente. 0.8.19, hardware y gate intactos.
+
+## 23. Replay de interrupción validado
+
+#46089994282 verde, 34 pruebas, ZIP 15240797595 inspeccionado: tres temas conservados, una interpretación retirada, seis gaps preservados; cero inferencia. Cerrar ciclo del fixture. Próximo adaptador contextual integral aislado y evaluación independiente, sin modificar default ni portable. Ver checkpoint.

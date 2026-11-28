@@ -1,20 +1,15 @@
-name: Claim-local versus row-level attribution focal QA
+name: Compact combined overview isolated replay
 on:
   push:
-    branches: [qa/minutes-context-windows-0819]
+    branches: [qa/minutes-compact-overview-0819]
     paths: ['.github/workflows/minutes-context-windows.yml']
 permissions:
   contents: read
   actions: read
 jobs:
-  independent:
+  offline:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
-    env:
-      OLLAMA_HOST: 127.0.0.1:11434
-      OLLAMA_NO_CLOUD: '1'
-      OLLAMA_NUM_PARALLEL: '1'
-      OLLAMA_MAX_LOADED_MODELS: '1'
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,37 +19,26 @@ jobs:
           python-version: '3.14.10'
       - uses: actions/download-artifact@v4
         with:
-          run-id: 46095408082
-          name: claim-attribution-preflight
+          run-id: 46090327742
+          name: context-adapter-live
           github-token: ${{ github.token }}
-          path: ${{ runner.temp }}/preflight
-      - name: Prepare isolated pinned Ollama (synthetic QA only)
-        shell: bash
+          path: ${{ runner.temp }}/original
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 46093000998
+          name: context-gap-replay
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/prior
+      - name: Combined presentation tests
         run: |
-          set -euo pipefail
-          export OLLAMA_MODELS="$RUNNER_TEMP/ms-models"
-          echo "OLLAMA_MODELS=$OLLAMA_MODELS" >> "$GITHUB_ENV"
-          mkdir -p "$RUNNER_TEMP/ms-ollama" "$OLLAMA_MODELS"
-          curl --fail --location --retry 2 --max-time 360 -o "$RUNNER_TEMP/ollama.tar.zst" https://github.com/ollama/ollama/releases/download/v0.40.18/ollama-linux-amd64.tar.zst
-          echo "b82649006cb5b54ed1237fa2d1a26a7f939a4fd03150033759acbff7ff315adf  $RUNNER_TEMP/ollama.tar.zst" | sha256sum --check
-          tar --zstd -xf "$RUNNER_TEMP/ollama.tar.zst" -C "$RUNNER_TEMP/ms-ollama"
-          exe="$RUNNER_TEMP/ms-ollama/bin/ollama"
-          "$exe" serve > "$RUNNER_TEMP/ollama-server.log" 2>&1 &
-          echo "$!" > "$RUNNER_TEMP/ollama.pid"
-          for i in {1..60}; do curl -fsS http://127.0.0.1:11434/api/version && break; sleep 1; done
-          timeout 600 "$exe" pull qwen3.5:9b
-          "$exe" list
-      - name: Execute two focal calls on frozen fictional material
-        run: python qa/minutes_context_claims_live.py "$RUNNER_TEMP/preflight" "$RUNNER_TEMP/context-live"
+          python -m pip install pytest
+          python -m pytest -q tests/test_minutes_compact_overview.py tests/test_minutes_context_adapter.py
+      - name: Strict existing response replay
+        run: python qa/minutes_compact_overview_replay.py "$RUNNER_TEMP/original" "$RUNNER_TEMP/prior" "$RUNNER_TEMP/overview-replay"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: claim-attribution-live
-          path: ${{ runner.temp }}/context-live
+          name: compact-overview-replay
+          path: ${{ runner.temp }}/overview-replay
           if-no-files-found: warn
           retention-days: 7
-      - name: Stop isolated service
-        if: always()
-        shell: bash
-        run: |
-          if test -f "$RUNNER_TEMP/ollama.pid"; then kill "$(cat "$RUNNER_TEMP/ollama.pid")" || true; fi

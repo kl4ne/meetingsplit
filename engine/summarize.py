@@ -333,7 +333,8 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     if (localized or narrative_strategy=='validated_editorial') and (editorial or items):
         from .minutes_overview import build_overview
         overview={lang:build_overview(presentation,displayed_themes,lang,
-                      detail_included=not (localized and mode=='summary'))
+                      detail_included=not (localized and mode=='summary'),
+                      compact_combined=contextual and mode=='both')
                   for lang in (('es','en') if language=='both' else (language,))}
         trace('narrative','strategy',{'language':language},
               strategy=narrative_strategy,retained_themes=len(editorial))

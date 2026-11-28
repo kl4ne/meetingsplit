@@ -30,7 +30,49 @@ def _other_topic_titles(themes, chosen, lang):
     return selected,len(titles)
 
 
-def build_overview(items, themes, lang, *, detail_included=True):
+def build_compact_combined_overview(items,themes,lang):
+    """Navigation digest for combined reports, not an independent synthesis.
+
+    No new factual prose, no duplicate paragraphs or outcome quotations.
+    The caller must retain the complete detail and outcome/review sections.
+    Counts describe records, not unique real-world events or completeness.
+    """
+    labels={
+        'es':('Panorama de los temas tratados (selección de títulos, no una síntesis independiente)',
+              'Se muestran {shown} de {total} títulos distintos; el detalle conserva todos los temas presentados.',
+              'Registros por categoría','Consulta las secciones correspondientes para su contenido y citas.',
+              ('acuerdos','tareas','avisos','pendientes','propuestas','desacuerdos','información financiera')),
+        'en':('Overview of topics discussed (selected titles, not an independent synthesis)',
+              'Showing {shown} of {total} distinct titles; the detail retains all presented topics.',
+              'Records by category','See the corresponding sections for their content and quotations.',
+              ('decisions','tasks','announcements','pending items','proposals','disagreements','financial information'))
+    }[lang]
+    intro,count_label,category_label,detail_label,category_names=labels
+    titles=[];seen=set()
+    for t in themes:
+        value=t['title_'+lang].strip()
+        key=value.casefold().rstrip('.!?')
+        if key and key not in seen:
+            seen.add(key);titles.append(value.rstrip('.'))
+    selected=_sample(titles,5)
+    while selected and len('; '.join(selected))>360:
+        if len(selected)==1:
+            selected=[];break
+        selected=_sample(titles,len(selected)-1)
+    paragraphs=[]
+    if titles:
+        if selected:paragraphs.append(intro+': '+'; '.join(selected)+'.')
+        paragraphs.append(count_label.format(shown=len(selected),total=len(titles)))
+    counts=[]
+    for category,label in zip(('decision','action','notice','pending','proposal','disagreement','topic'),category_names):
+        n=sum(i['category']==category and (category!='topic' or any(_AMOUNT.search(r['quote']) for r in i['sources'])) for i in items)
+        if n:counts.append(f'{label}: {n}')
+    if counts:paragraphs.append(category_label+': '+'; '.join(counts)+'. '+detail_label)
+    return paragraphs
+
+def build_overview(items, themes, lang, *, detail_included=True, compact_combined=False):
+    if compact_combined and detail_included:
+        return build_compact_combined_overview(items,themes,lang)
     loc=_LOCALES[lang]
     labels={
         'es':{'more':'Los demás temas se desarrollan a continuación.',

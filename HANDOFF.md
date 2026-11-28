@@ -1,3 +1,9 @@
+## 2026-11-28 — Portable 1.0.0 solicitado por el propietario
+
+El propietario pidió un nuevo ejecutable versión 1.0. Se adoptó la numeración técnica 1.0.0, en una rama aislada `qa/portable-100-owner`, sin tocar el motor 0.8.19 verificado, ni reabrir la reparación editorial. Fuente versionada `69a009e1ca0e96815efe8d3d1220901915dde8c3`, workflow `1ee5b208690fbe0e92d369b84f61fb8fdc8a55f9`. [Compilación Windows #46144015837](https://github.com/kl4ne/meetingsplit/actions/runs/46144015837) confirmada in_progress. Reutiliza el flujo portable-only y la CI original de 0.8.19; exige comprobar que el motor y runtime no cambiaron, release gate cerrado, regresiones de motor, inventario del paquete congelado y extraído, self-check offline del EXE 1.0.0 y checksum. No declarar listo ni descargar hasta éxito y evidencia. Artefacto esperado `MeetingSplit-1.0.0-Windows-portable-review-QA`, ZIP interior `MeetingSplit-v1.0.0-Windows-portable-candidate.zip` con EXE y dependencias. Ver `docs/PORTABLE_100_OWNER.md` en rama QA. Sin nueva inferencia, instalador, merge, tag, release o aceptación editorial. Conservar 0.8.19 como respaldo. Próximo paso exclusivamente verificar run y artefactos; no repetir investigación editorial.
+
+---
+
 # ESTADO VIGENTE — 2026-11-28 — PAUSADO
 
 **Leer primero [cierre técnico y reanudación futura](docs/MINUTES_FUTURE_HANDOFF.md).** El propietario decidió conservar Ollama y todo el código, pero detener las pruebas editoriales. No hay tarea activa, no eliminar funciones, no ejecutar más inferencias ni compilar/fusionar/publicar. El portable 0.8.19 de revisión permanece intacto y puede utilizarse con la casilla de minuta automática local con Ollama desmarcada. Editorial NO-GO; main 0.8.18; release_allowed=false. [Índice de evidencias](docs/MINUTES_EVIDENCE_INDEX.json) y respaldo de 25 ZIP originales entregado por separado. Todo lo siguiente es histórico; sus órdenes de continuar quedan suspendidas.

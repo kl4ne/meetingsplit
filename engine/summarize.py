@@ -58,7 +58,7 @@ def ollama_chat(messages: list[dict], model: str=MODEL, timeout: int=900, **kwar
 def summarize_local(transcript: str, mode: str, language: str, model: str,
                     progress=lambda msg:None, *, endpoint=DEFAULT_ENDPOINT, cancel=None,
                     evidence_sink=None, read_block=None, write_block=None, qa_trace=None,
-                    narrative_strategy='reviewed') -> str:
+                    narrative_strategy='reviewed', qa_frozen_extraction=None) -> str:
     """Extract evidence, draft and review prose, then render the minutes.
 
     qa_trace is an explicit in-memory callback for synthetic QA only. It is never
@@ -75,6 +75,8 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     localized=narrative_strategy in ('localized_editorial','contextual_qa','contextual_claim_qa')
     claim_mode=narrative_strategy=='contextual_claim_qa'
     contextual=narrative_strategy in ('contextual_qa','contextual_claim_qa')
+    if qa_frozen_extraction is not None and (not claim_mode or read_block is not None or write_block is not None):
+        raise ValueError('Frozen extraction is only available for isolated claim QA without extraction cache')
     guide_path = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[1])) / 'docs' / 'Guia_Owll_y_Minutas_para_Ollama.md'
     guide = guide_path.read_text(encoding='utf-8')
 
@@ -178,20 +180,25 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         midpoint=len(rows)//2
         return extract(rows[:midpoint],number)+extract(rows[midpoint:],number)
 
-    for number,rows in enumerate(blocks,1):
-        progress(f'Analizando evidencias / Checking evidence: {number}/{len(blocks)}')
-        extracted=extract(rows,number)
-        if not extracted: empty.append(number)
-        for item in extracted:
-            # Deduplicate identical evidence only; do not merge distinct obligations.
-            key=(item['category'],tuple((s['source_id'],s['quote']) for s in item['sources']),item['owner'],item['due'],
-                 item.get('text_es'),item.get('text_en'))
-            if key not in seen:
-                seen.add(key);items.append(item)
+    if qa_frozen_extraction is not None:
+        from .minutes_claim_frozen import frozen_extraction
+        items,empty=frozen_extraction(qa_frozen_extraction,blocks,language)
+        trace('extraction','reused',{'language':language},records=len(items),empty_blocks=len(empty))
+    else:
+        for number,rows in enumerate(blocks,1):
+            progress(f'Analizando evidencias / Checking evidence: {number}/{len(blocks)}')
+            extracted=extract(rows,number)
+            if not extracted: empty.append(number)
+            for item in extracted:
+                # Deduplicate identical evidence only; do not merge distinct obligations.
+                key=(item['category'],tuple((s['source_id'],s['quote']) for s in item['sources']),item['owner'],item['due'],
+                     item.get('text_es'),item.get('text_en'))
+                if key not in seen:
+                    seen.add(key);items.append(item)
     if cancel: cancel.check()
     rows=[row for block in blocks for row in block]
     explicit_items=explicit_source_items(rows,language)
-    items=reconcile_source_items(items,explicit_items)
+    if qa_frozen_extraction is None:items=reconcile_source_items(items,explicit_items)
     structured_period_repairs=[]
     if claim_mode:
         from .minutes_claim_structured_refs import restore_structured_periods
@@ -212,6 +219,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         editorial_gaps=outcome['gaps']
         context_diagnostics=outcome['diagnostics']
         if claim_mode:context_diagnostics['structured_period_repairs']=structured_period_repairs
+        if qa_frozen_extraction is not None:context_diagnostics['extraction_reused']=True
     sections=editorial_input(blocks,items,explicit_items=explicit_items) if len(rows)>=4 and not contextual else ()
     for section in sections:
         if cancel: cancel.check()

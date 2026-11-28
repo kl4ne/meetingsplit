@@ -82,3 +82,65 @@ def test_call_budget_counts_attempts_and_does_not_publish_incomplete_report(tmp_
     out,r=q.run_comparison(p,tmp_path,q.CONSENT)
     assert not r['completed'] and r['requests']==1 and r['error_type']=='BudgetExceeded'
     assert set(x.name for x in out.iterdir())=={'COMPARACION_TECNICA.json'}
+
+
+def claim_fixture(tmp_path,*,bad_metadata=False):
+    p=fixture(tmp_path)
+    with ZipFile(p) as z:
+        data={n:z.read(n) for n in z.namelist()}
+    e=json.loads(data[q.MEMBERS['evidence']])
+    e.update(source_blocks=1,empty_blocks=0,empty_block_ids=[])
+    e['items']=[{'category':'review','owner':None,'due':None,
+        'sources':[{'source_id':2,'timestamp':'00:00:04','quote':'Los materiales están en recepción.'}],
+        'text_es':'Consulta las palabras originales en la cita.'}]
+    if bad_metadata:e['items'][0]['due']='viernes'
+    data[q.MEMBERS['evidence']]=json.dumps(e).encode()
+    with ZipFile(p,'w') as z:
+        for n,v in data.items():z.writestr(n,v)
+    return p
+
+def test_claim_inspect_validates_frozen_records_without_network(tmp_path,monkeypatch):
+    p=claim_fixture(tmp_path)
+    monkeypatch.setattr(q,'verify_model',lambda:pytest.fail('network'))
+    r=q.inspect(p,claim_reuse=True)
+    assert r['model_requests']==0 and r['reused_extraction_records']==1
+    assert list(tmp_path.iterdir())==[p]
+
+def test_claim_bad_frozen_metadata_blocks_before_network(tmp_path,monkeypatch):
+    p=claim_fixture(tmp_path,bad_metadata=True)
+    monkeypatch.setattr(q,'verify_model',lambda:pytest.fail('network'))
+    with pytest.raises(ValueError):q.run_comparison(p,tmp_path,q.CONSENT,claim_reuse=True)
+    assert list(tmp_path.iterdir())==[p]
+
+def test_claim_live_reuses_extraction_and_retains_review(tmp_path,monkeypatch):
+    p=claim_fixture(tmp_path);before=q.hash_file(p)
+    monkeypatch.setattr(q,'verify_model',lambda:{'runtime':'0.40.18'})
+    calls=[]
+    def reply(messages,model,*,json_output,**kwargs):
+        calls.append(kwargs)
+        assert 'items' not in json_output['properties']
+        assert 'claims' in json_output['properties']['themes']['items']['properties']
+        return json.dumps({'themes':[{'title_es':'Proceso','claims':[{
+            'text_es':'Se explicó el proceso.','sources':[{'id':1,'quote':'Se explicó el proceso.'}]}]}],'review_ids':[2]})
+    monkeypatch.setattr(q.summarize,'ollama_chat',reply)
+    out,r=q.run_comparison(p,tmp_path,q.CONSENT,claim_reuse=True)
+    assert r['completed'] and r['thematic_output_present'] and r['requests']==1
+    assert r['calls'][0]['stage']=='contextual_claim_editorial' and r['calls'][0]['window']==1
+    assert r['candidate']['claims']==1 and r['candidate']['review_records']==1
+    e=json.loads((out/'CANDIDATO_EVIDENCIAS.json').read_text(encoding='utf-8'))
+    assert e['context_diagnostics']['extraction_reused'] and e['items'][0]['category']=='review'
+    assert e['editorial_gaps'][0]['source_id']==2
+    assert q.hash_file(p)==before and out.name.startswith('MeetingSplit-claim-QA-')
+    assert not r['semantic_acceptance']
+
+def test_claim_timeout_is_visible_not_semantic_success(tmp_path,monkeypatch):
+    p=claim_fixture(tmp_path)
+    monkeypatch.setattr(q,'verify_model',lambda:{'runtime':'0.40.18'})
+    def reply(*a,**kw):raise TimeoutError('test private string')
+    monkeypatch.setattr(q.summarize,'ollama_chat',reply)
+    out,r=q.run_comparison(p,tmp_path,q.CONSENT,claim_reuse=True)
+    assert r['completed'] and not r['thematic_output_present']
+    assert r['candidate']['windows_without_themes']==1
+    assert r['calls'][0]['error_type']=='TimeoutError'
+    assert 'test private string' not in (out/'COMPARACION_TECNICA.json').read_text()
+    assert 'No se completó la síntesis temática.' in (out/'CANDIDATO_CONTEXTUAL.md').read_text(encoding='utf-8')

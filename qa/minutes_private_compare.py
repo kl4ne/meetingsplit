@@ -108,8 +108,15 @@ def metrics(report,evidence):
             for cat in ('notice','decision','action','proposal','pending','disagreement')},
         'uncited_passages':len((evidence.get('source_accounting') or {}).get('uncited_passages',[]))}
 
-def inspect(path):
+def inspect(path,*,claim_reuse=False):
     p,data,transcript,baseline,old,mode,language,blocks,plan=read_input(path)
+    if claim_reuse:
+        from engine.minutes_claim_frozen import frozen_extraction
+        from engine.minutes_claim_structured_refs import restore_structured_periods
+        from engine.minutes_evidence import explicit_source_items
+        items,empty=frozen_extraction(old,blocks,language)
+        items,repairs=restore_structured_periods(items,explicit_source_items([r for b in blocks for r in b],language),blocks)
+        plan=plan_context(blocks,items)
     return {'scope':'read-only source planning; no Ollama connection or inference',
             'version':'0.8.19','mode':mode,'language':language,
             'rows':sum(map(len,blocks)),'source_words':sum(len(r['text'].split()) for b in blocks for r in b),
@@ -117,6 +124,7 @@ def inspect(path):
             'context_windows':len(plan['windows']),
             'overbudget_rows':len(plan['overbudget_sources']),
             'baseline':metrics(baseline,old),'model_requests':0,
+            **({'strategy':'contextual_claim_qa','reused_extraction_records':len(items),'original_empty_block_ids':empty,'planned_period_repairs':len(repairs)} if claim_reuse else {}),
             'semantic_acceptance':False}
 
 def verify_model():
@@ -129,29 +137,43 @@ def verify_model():
     return {'runtime':state['version'],'digest':model['digest'],'model':ollama.MODEL,
             'runtime_matches_linux_qa':state['version']=='0.40.18'}
 
-def run_comparison(path,parent,consent,*,cpu_only=False):
+def run_comparison(path,parent,consent,*,cpu_only=False,claim_reuse=False):
     if consent!=CONSENT:raise ValueError('Explicit local-processing consent required')
     p,data,transcript,baseline,old,mode,language,blocks,plan=read_input(path)
+    if claim_reuse:
+        from engine.minutes_claim_frozen import frozen_extraction
+        frozen_extraction(old,blocks,language)
     root=validate_local_folder(safe_path(parent))
     if not root.is_dir():raise ValueError('Select an existing internal output folder')
     server=verify_model()
     before=hash_file(p)
     # New unique folder only; never write to the existing project or extract input.
     from tempfile import mkdtemp
-    out=Path(mkdtemp(prefix='MeetingSplit-contextual-QA-',dir=root))
+    out=Path(mkdtemp(prefix='MeetingSplit-claim-QA-' if claim_reuse else 'MeetingSplit-contextual-QA-',dir=root))
     cancel=Cancellation()
     timer=threading.Timer(WALL_CAP,cancel.cancel);timer.daemon=True
     started=time.monotonic();calls=[];evidence={}
     original=summarize.ollama_chat
+    call_cap=16 if claim_reuse else CALL_CAP
+    last={}
+    def record_stage(event):
+        if event['event']=='request':
+            last.clear();last.update(stage=event['stage'])
+            if event['stage']=='contextual_claim_editorial':last['window']=event['scope']['window']
+    def progress(message):
+        if claim_reuse and ('contexto temático' in message or 'Traduciendo descripciones' in message):
+            print(message,flush=True,file=sys.stderr)
     def bounded(messages,model,**kwargs):
         cancel.check()
         remaining=WALL_CAP-(time.monotonic()-started)
-        if len(calls)>=CALL_CAP or remaining<1:raise BudgetExceeded('Local QA call/time budget exhausted')
+        if len(calls)>=call_cap or remaining<1:raise BudgetExceeded('Local QA call/time budget exhausted')
         if model!=ollama.MODEL or kwargs.get('endpoint')!=ollama.DEFAULT_ENDPOINT:
             raise ValueError('Unexpected model or endpoint')
         kwargs.update(timeout=min(PER_CALL,remaining),cancel=cancel,
                       cpu_only=bool(cpu_only or kwargs.get('cpu_only')))
-        entry={'cpu_only':kwargs['cpu_only']};calls.append(entry)
+        if claim_reuse and last.get('stage') not in ('contextual_claim_editorial','localization'):
+            raise BudgetExceeded('Unexpected extraction or other request in frozen QA')
+        entry={'cpu_only':kwargs['cpu_only'],**(last if claim_reuse else {})};calls.append(entry)
         t=time.monotonic()
         try:return original(messages,model,**kwargs)
         except Exception as exc:
@@ -159,16 +181,26 @@ def run_comparison(path,parent,consent,*,cpu_only=False):
         finally:entry['seconds']=round(time.monotonic()-t,3)
     result={'scope':'private local transcript-only contextual QA, not production release',
             'completed':False,'mode':mode,'language':language,'server':server,
-            'baseline':metrics(baseline,old),'call_cap':CALL_CAP,'wall_cap_seconds':WALL_CAP,
+            'baseline':metrics(baseline,old),'call_cap':call_cap,
+            **({'strategy':'contextual_claim_qa','extraction_reused':True,'reused_extraction_records':len(old['items'])} if claim_reuse else {}),'wall_cap_seconds':WALL_CAP,
             'per_call_cap_seconds':PER_CALL,'semantic_acceptance':False}
     try:
         timer.start()
         with patch.object(summarize,'ollama_chat',bounded):
             report=summarize.summarize_local(transcript,mode,language,ollama.MODEL,
-                endpoint=ollama.DEFAULT_ENDPOINT,cancel=cancel,narrative_strategy='contextual_qa',
-                evidence_sink=evidence.update,progress=lambda _:None)
+                endpoint=ollama.DEFAULT_ENDPOINT,cancel=cancel,narrative_strategy='contextual_claim_qa' if claim_reuse else 'contextual_qa',
+                evidence_sink=evidence.update,progress=progress,
+                **({'qa_frozen_extraction':old,'qa_trace':record_stage} if claim_reuse else {}))
         cancel.check()
         result['candidate']=metrics(report,evidence)
+        if claim_reuse:
+            diag=evidence['context_diagnostics']
+            result['candidate'].update(claims=sum(len(t['claims']) for t in evidence['editorial_themes']),
+                context_windows=diag['window_count'],windows_without_themes=sum(not w['accepted_themes'] for w in diag['windows']),
+                rejections=sum(len(w['rejections']) for w in diag['windows']),
+                quote_repairs=sum(len(w['quote_repairs']) for w in diag['windows']),
+                structured_period_repairs=len(diag['structured_period_repairs']))
+            result['thematic_output_present']=bool(evidence['editorial_themes'])
         (out/'CANDIDATO_CONTEXTUAL.md').write_text(report,encoding='utf-8')
         (out/'CANDIDATO_EVIDENCIAS.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf-8')
         result['completed']=True
@@ -192,14 +224,15 @@ def main(argv=None):
     parser.add_argument('--output-parent',type=Path)
     parser.add_argument('--consent')
     parser.add_argument('--cpu-only',action='store_true')
+    parser.add_argument('--claim-reuse',action='store_true',help='Compare claim-local synthesis using original extraction ledger')
     a=parser.parse_args(argv)
     try:
         if not a.run_local:
             if a.output_parent or a.consent or a.cpu_only:parser.error('Live options require --run-local')
-            print(json.dumps(inspect(a.results_zip),ensure_ascii=True,indent=2));return 0
+            print(json.dumps(inspect(a.results_zip,claim_reuse=a.claim_reuse),ensure_ascii=True,indent=2));return 0
         if not a.output_parent or a.consent!=CONSENT:
             parser.error('Live comparison requires --output-parent and --consent '+CONSENT)
-        out,result=run_comparison(a.results_zip,a.output_parent,a.consent,cpu_only=a.cpu_only)
+        out,result=run_comparison(a.results_zip,a.output_parent,a.consent,cpu_only=a.cpu_only,claim_reuse=a.claim_reuse)
         print(json.dumps({'output_folder':str(out),'completed':result['completed'],
                           'requests':result['requests'],'error_type':result.get('error_type')},ensure_ascii=True))
         return 0 if result['completed'] else 2

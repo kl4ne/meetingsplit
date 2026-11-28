@@ -139,3 +139,7 @@ Candidato aislado 81ae72fd1497ae5e8d2553218a8967eb1e2050d9, run #46087671575, in
 ## 20. Preflight contextual verde y A/B limitado
 
 #46087671575 verde: 14 pruebas, 36 filas exactas (32 en siete unidades, cuatro estructuradas); dos ventanas frente a una anterior, cero inferencia. Comparación real aislada d446f7184d305501d39a43b0364d8a05f26cd324, run #46087774311, in_progress; una solicitud baseline y dos contextual, misma entrada sintética, modelo fijado, sin reintentos. Evaluar diez criterios de fidelidad y prosa manualmente; no promover por CI ni confundir con end-to-end. Main/gate/0.8.19 intactos.
+
+## 21. A/B contextual y citas originales explícitas
+
+#46087774311: baseline timeout, contextual cinco temas/232.354 s, 3 gaps; lectura confirma prosa más coherente pero cita ficticia rechazada y 19/20 cubiertas solo por unidad. Nuevo QA 746ec3c739f37aea8803b94cd6737f186f7ad298, #46089422183, in_progress; una solicitud focal, citas originales y review_ids, sin relajar guardas. No aceptación editorial, no integración hasta resultado y evaluación independiente. Ver checkpoint.

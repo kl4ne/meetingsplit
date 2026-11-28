@@ -159,3 +159,7 @@ QA e012dacacd565e3647ad79c3455601a7bc20a15c (#46090234942, in_progress); conecta
 ## 25. Preflight integral aprobado y ejecución independiente
 
 #46090234942 verde, 92 tests, 22 filas, cuatro hechos, dos ventanas, cero inferencia. Prueba real aislada 09378690b2b356c6c2dad0c7b8531bb1080d9672 (#46090327742, in_progress), ES ambos, cap 6 llamadas y 900 s agregado. Evaluación manual independiente pendiente. No promoción por CI, no cambio del portable/default/gate. Ver checkpoint.
+
+## 26. Capacidad de planificación sobre prueba real privada
+
+Durante #46090327742 en ejecución, reproducción local de funciones exactas de planificación QA: 273 filas originales, 38 unidades, ocho ventanas, 270 filas contextuales y tres estructuradas; cero pérdidas/overbudget y cero solicitudes. Sin exclusiones: mismas 38 unidades y ocho ventanas. Solo agregados técnicos, ningún texto privado publicado. No prueba semántica ni rendimiento. Siguiente: esperar resultado real independiente y revisarlo, no otra inferencia. 0.8.19/main/gate intactos.

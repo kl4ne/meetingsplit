@@ -100,3 +100,5 @@ Replay #46089994282 verde, 34 pruebas, ZIP 15240797595 verificado: cuarentena de
 Adaptador integral contextual_qa aislado e012dacacd565e3647ad79c3455601a7bc20a15c (#46090234942, in_progress); validación estructural sin modelo y nuevo fixture independiente. Pendiente ejecución real y evaluación editorial; no cambio de portable/default/gate.
 
 Adaptador contextual_qa preflight #46090234942 verde (92 pruebas, contratos mock); ejecución real independiente 09378690b2b356c6c2dad0c7b8531bb1080d9672 (#46090327742, in_progress) bajo presupuesto. Pendiente lectura de la salida. No certifica calidad ni cambia 0.8.19.
+
+Comprobación privada de capacidad: funciones de planificación reproducidas localmente sobre la transcripción real 0.8.19, 273 filas exactas contabilizadas (38 unidades, ocho ventanas, sin pérdidas ni overbudget), cero llamadas. No es una nueva minuta ni aceptación editorial. #46090327742 sigue en ejecución al checkpoint. No contenido privado publicado.

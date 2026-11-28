@@ -167,3 +167,7 @@ Durante #46090327742 en ejecución, reproducción local de funciones exactas de 
 ## 27. Prueba integral independiente aprobada estructuralmente
 
 #46090327742 verde, ZIP 15240789431 inspeccionado, 14/14 checks, cuatro resultados, cinco temas, cinco solicitudes/388.45 s CPU, gaps 12/13/14. Lectura manual positiva pero modalidad y repetición pendientes; 505 vs 156 palabras. QA 7bad8132c29f33d2c66d892fb7d707a763444f4c (#46093000998, completed / success), compactación visual exacta con evidencia íntegra, replay sin inferencia. Tras validar, evaluar camino de comparación real privada sin retranscribir ni publicar contenido. No promover default/portable/gate por CI. Ver checkpoint.
+
+## 28. Replay completo de presentación validado
+
+#46093000998 verde, 98 tests, ZIP 15242335814 inspeccionado. Cinco respuestas exactas sin inferencia, evidencia anterior íntegra y compactación visible de IDs 12/13. 505→513 palabras; no reducción de extensión ni aceptación editorial. No repetir el fixture. Próximo: preparar comparación privada local basada en transcripción ya existente, consentimiento antes de inferencia, herramientas verificadas y sin modificación/retranscripción/upload. Main/gate/0.8.19 intactos.

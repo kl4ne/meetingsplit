@@ -1,3 +1,5 @@
+> **Cierre vigente (2026-11-28):** reparación editorial pausada, no resuelta. Conservar código y Ollama; no nuevas pruebas. Punto único de reanudación: [MINUTES_FUTURE_HANDOFF.md](MINUTES_FUTURE_HANDOFF.md). Todo lo siguiente es historial y no orden activa.
+
 # Minutes repair — checkpoint 1 (2026-11-27)
 
 Base: de0f22a43a5a1f857ec5d47ded802037b2f34984 (0.8.18). No package, model, UI, transcription, storage, native dependency or release-gate change.

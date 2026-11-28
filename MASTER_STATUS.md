@@ -1,3 +1,9 @@
+# ESTADO VIGENTE — 2026-11-28 — PAUSA EDITORIAL
+
+Decisión del propietario: conservar Ollama opcional y el trabajo realizado, no continuar experimentos hasta nueva autorización. Portable de revisión 0.8.19 intacto; audio/Whisper/NVIDIA/exportación disponibles con la minuta automática desmarcada. Main 0.8.18, PR #7 abierto en borrador, release_allowed=false. Ver [cierre técnico](docs/MINUTES_FUTURE_HANDOFF.md), [HANDOFF](HANDOFF.md) e [índice de evidencias](docs/MINUTES_EVIDENCE_INDEX.json). Las entradas inferiores son históricas, no tareas activas.
+
+---
+
 ## Estado vigente — comparación real contextual en ASUS (2026-11-28 UTC)
 
 El propietario completó QA contextual local sobre transcripción existente 0.8.19; 21 llamadas/275.44 s, ninguna CPU forzada, 642/642 referencias verificadas, 4197→2376 palabras, 100→16 temas, 87→72 gaps, 26 review intactos, dos avisos idénticos, cero uncited. Tres rechazos operativos y errores semánticos/omisiones impiden aceptación profesional. Ver HANDOFF.md y último checkpoint. Próximo diagnóstico y recuperación acotada, no repetir audio ni promover default. Main 0.8.18, 0.8.19 portable de revisión intacto, release_allowed=false. Todo lo siguiente es histórico.

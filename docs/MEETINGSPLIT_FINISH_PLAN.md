@@ -183,3 +183,7 @@ QA a6e2d50ca6c6bd38a835b13d867f3ac2e43b55c8, #46093403762 en curso, inspección 
 ## 31. Comparación contextual real completada en ASUS
 
 QA a6e2d50ca6c6bd38a835b13d867f3ac2e43b55c8 ejecutado localmente; 21 solicitudes/275.44 s, 642/642 citas, 4197→2376 palabras, 100→16 temas, 87→72 gaps (57 nuevos), 26 review, dos avisos idénticos, cero uncited. Mejora de organización, NO-GO semántico: atribución, omisiones y tres rechazos operativos sin texto bruto, resumen repetitivo. Siguiente diagnóstico local específico y atribución/recuperación de cláusulas acotada, con caso inventado offline. No otra prueba del usuario hasta mejora demostrada; no cambiar hardware/audio/modelo/versión/default/main/gate. Ver checkpoint.
+
+## 32. Citas individuales por afirmación y diagnóstico específico
+
+QA caab2eed8ff1338aff5518d2b0bef591ee07cfc3, #46095408082 (140825486321 in_progress), esquema de afirmaciones con citas propias, rechazo aislado, motivos operativos específicos, gaps conservados y plan de recuperación acotado. Fixture independiente de 11 filas/rúbrica fija, pruebas offline. No certifica semántica; no integrado ni nueva inferencia. Ver checkpoint. Overview pendiente; no tocar portable/default/main/gate.

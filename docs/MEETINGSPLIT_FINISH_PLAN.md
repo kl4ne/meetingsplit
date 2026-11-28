@@ -187,3 +187,5 @@ QA a6e2d50ca6c6bd38a835b13d867f3ac2e43b55c8 ejecutado localmente; 21 solicitudes
 ## 32. Citas individuales por afirmación y diagnóstico específico
 
 QA caab2eed8ff1338aff5518d2b0bef591ee07cfc3, #46095408082 (140825486321 in_progress), esquema de afirmaciones con citas propias, rechazo aislado, motivos operativos específicos, gaps conservados y plan de recuperación acotado. Fixture independiente de 11 filas/rúbrica fija, pruebas offline. No certifica semántica; no integrado ni nueva inferencia. Ver checkpoint. Overview pendiente; no tocar portable/default/main/gate.
+
+Claim-attribution preflight #46095408082 job 140825486321 completed success. Actual logs: 66 regressions passed (0.25 s), independent fictional fixture passed with zero inference. Artifact 15243031850, Actions-reported SHA-256 a3992d115dabfbfee47c10e0723ad454acd73dcb209ed43fcc3c8c9efcf25754. Verified workflow/logs, not downloaded archive. Structural-only acceptance. Before any new inference, inspect fixture/result and set bounded independent claim-fidelity comparison and recovery plan; no new user trial, no semantic claim.

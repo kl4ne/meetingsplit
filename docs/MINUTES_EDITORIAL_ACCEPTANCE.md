@@ -1,3 +1,5 @@
+> **Decisión vigente (2026-11-28): NO-GO editorial; PAUSADO por el propietario.** El portable de revisión 0.8.19 queda intacto, Ollama opcional se conserva. No continuar pruebas ni eliminar funciones. Leer [cierre técnico](MINUTES_FUTURE_HANDOFF.md). Las entradas inferiores son historial, no autorización operativa.
+
 # Evaluación de aceptación editorial — 2026-11-27
 
 Estado: **NO-GO para numeración/empaquetado de 0.8.19 según los criterios vigentes**. No modificar el gate ni declarar terminada la versión. Esta evaluación de artefactos sintéticos anteriores no equivale a una ejecución fresca del código integrado final.

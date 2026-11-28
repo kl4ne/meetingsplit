@@ -1,3 +1,5 @@
+> **ESTADO VIGENTE (2026-11-28): PAUSADO.** El propietario conserva Ollama y el trabajo existente, sin nuevas pruebas editoriales. Este plan histórico no autoriza ejecutar tareas pendientes. Leer [cierre técnico y reanudación futura](MINUTES_FUTURE_HANDOFF.md) y el [índice de evidencias](MINUTES_EVIDENCE_INDEX.json). Mantener portable, main y gate sin cambios hasta autorización.
+
 # Plan de terminación — MeetingSplit 0.8.19
 
 Este plan es la referencia operativa del PR #7. Fecha inicial: 2026-11-27. Mantener `HANDOFF.md` actualizado. La terminación de la reparación de minutas, la compilación privada de QA y una publicación pública son tres hitos distintos.

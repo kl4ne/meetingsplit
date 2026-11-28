@@ -192,6 +192,10 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     rows=[row for block in blocks for row in block]
     explicit_items=explicit_source_items(rows,language)
     items=reconcile_source_items(items,explicit_items)
+    structured_period_repairs=[]
+    if claim_mode:
+        from .minutes_claim_structured_refs import restore_structured_periods
+        items,structured_period_repairs=restore_structured_periods(items,explicit_items,blocks)
     coverage_gaps=find_coverage_gaps(rows,items)
     from .control import JobCancelled
     from .minutes_brief import (editorial_input, editorial_request, validate_editorial,
@@ -207,6 +211,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         editorial=outcome['themes']
         editorial_gaps=outcome['gaps']
         context_diagnostics=outcome['diagnostics']
+        if claim_mode:context_diagnostics['structured_period_repairs']=structured_period_repairs
     sections=editorial_input(blocks,items,explicit_items=explicit_items) if len(rows)>=4 and not contextual else ()
     for section in sections:
         if cancel: cancel.check()
@@ -363,7 +368,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                           respect_mode=localized,
                           uncited_passages=(source_accounting or {}).get('uncited_passages',()),
                           compound_review=(source_accounting or {}).get('compound_review'),
-                          compacted_review_count=len(gap_compaction))
+                          compacted_review_count=len(gap_compaction),claim_qa=claim_mode)
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,

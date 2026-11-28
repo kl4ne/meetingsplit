@@ -13,6 +13,7 @@ def contextual_editorial(blocks,items,language,request,*,cancel=None,
                          progress=lambda msg:None,trace=lambda *a,**k:None,claim_mode=False):
     from .minutes_context_claims import claim_request,validate_claims,recovery_targets
     from .minutes_context_interruptions import interrupted_tails
+    interrupted_ids={i for t in interrupted_tails(blocks) for i in t['source_ids']} if claim_mode else set()
     plan=plan_context(blocks,items)
     stage='contextual_claim_editorial' if claim_mode else 'contextual_editorial'
     themes=[];gaps={r['source_id']:r for r in plan['overbudget_sources']}
@@ -32,14 +33,15 @@ def contextual_editorial(blocks,items,language,request,*,cancel=None,
             if cancel:cancel.check()
             if claim_mode:
                 out=validate_claims(raw,units,language,blocks=blocks,repair_quote_pairs=True,neutralize_partial_titles=True)
-                out.update(interruption_review_ids=sorted({i for t in interrupted_tails(blocks) for i in t['source_ids']} & set(scope['source_ids'])),quarantined_themes=[],recovery_target_ids=recovery_targets(units,out))
+                out.update(interruption_review_ids=sorted(interrupted_ids & set(scope['source_ids'])),quarantined_themes=[],recovery_target_ids=recovery_targets(units,out))
             else:
                 out=quarantine_interrupted(validate_rows(raw,units,language),units,blocks)
             trace(stage,'accepted',scope,themes=out['themes'],gaps=out['gaps'],
                 quarantined_themes=out['quarantined_themes'],rejections=out['rejections'])
         except JobCancelled:raise
         except (OSError,RuntimeError,ValueError) as exc:
-            out={'themes':[],'gaps':refs,'review_ids':[],'interruption_review_ids':[],
+            interrupted=sorted(interrupted_ids & set(scope['source_ids']))
+            out={'themes':[],'gaps':refs,'review_ids':interrupted,'interruption_review_ids':interrupted,
                  'quarantined_themes':[],'rejections':[{'reason':str(exc)}]}
             trace(stage,'section_rejected',scope,error_type=type(exc).__name__,reason=str(exc))
         themes.extend(out['themes'])

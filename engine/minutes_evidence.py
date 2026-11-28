@@ -813,7 +813,7 @@ def _presentation_text(item, lang):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=(), respect_mode=False, uncited_passages=(), compound_review=None, compacted_review_count=0) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=(), respect_mode=False, uncited_passages=(), compound_review=None, compacted_review_count=0, claim_qa=False) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -845,6 +845,9 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 lines += [_markdown(paragraph),'']
         detail_heading=('Temas tratados' if lang=='es' else 'Topics discussed') if (brief or respect_mode) else loc['summary']
         prose=(narratives or {}).get(lang)
+        if claim_qa and not prose and not editorial and editorial_gaps:
+            lines += [('No se completó la síntesis temática. Los fragmentos originales se conservan para revisión.'
+                       if lang=='es' else 'The thematic synthesis was not completed. Original fragments are retained for review.'),'']
         if not show_detail and brief:
             # The overview already describes the themes. Do not repeat the
             # complete thematic minute in summary mode. Structured outcomes
@@ -865,6 +868,9 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
             lines += ['## '+detail_heading,'']
             for theme in editorial:
                 lines += [f"**{_markdown(theme['title_'+lang])}.** {_markdown(theme['summary_'+lang])} {times(theme['sources'])}",'']
+        elif claim_qa and (brief or editorial_gaps):
+            # Do not repeat outcomes as a second summary when thematic generation failed.
+            pass
         elif not items:
             lines += [loc['empty'],'']
         else:

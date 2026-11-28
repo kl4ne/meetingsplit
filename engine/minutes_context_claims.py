@@ -68,7 +68,33 @@ def _check_text(value,quotes):
     if set(_NUMBER.findall(value))-set(_NUMBER.findall(quotes)) or _amount_keys(value)-_amount_keys(quotes):
         raise ClaimRejected('unsupported_quantity')
 
-def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=False):
+def restore_full_row_quote_pair(proposed,source):
+    """Only restore a single paired typographic double-quote substitution.
+
+    Original row is immutable; do not normalize words, whitespace, accents,
+    numbers, apostrophes, other punctuation, partial spans or unmatched marks.
+    Return the exact source row, never the normalized model spelling.
+    """
+    if proposed in source:
+        return proposed
+    if len(proposed)!=len(source):
+        return None
+    changed=[i for i,(a,b) in enumerate(zip(proposed,source)) if a!=b]
+    if len(changed)!=2:
+        return None
+    a,b=changed
+    if proposed[a]!= '"' or proposed[b]!= '"':
+        return None
+    if (source[a],source[b]) not in (('«','»'),('“','”')):
+        return None
+    # Restrict to one unambiguous pair: no nested/multiple double quotes.
+    if sum(c in '"«»“”' for c in source)!=2 or proposed.count('"')!=2:
+        return None
+    if b<=a+1 or not source[a+1:b].strip():
+        return None
+    return source
+
+def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=False,repair_quote_pairs=False):
     """Return valid claim groups and explicit original-source gaps.
 
     Quotes must be verbatim within the specific row. Even a correct quote
@@ -90,7 +116,7 @@ def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=Fals
     title_fields={'title_'+l for l in langs};text_fields={'text_'+l for l in langs}
     flagged={i for t in interrupted_tails(blocks or []) for i in t['source_ids']} & set(byid)
     review=set(doc['review_ids'])|flagged;failed=set();covered=set()
-    themes=[];rejections=[];seen=set()
+    themes=[];rejections=[];seen=set();repairs=[]
     def candidate_ids(claim):
         refs=claim.get('sources') if isinstance(claim,dict) else None
         if not isinstance(refs,list) or not refs:return list(byid)
@@ -108,7 +134,7 @@ def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=Fals
         if (not isinstance(theme,dict) or set(theme)!=title_fields|{'claims'} or
             not isinstance(theme['claims'],list) or not 1<=len(theme['claims'])<=5):
             reject('invalid_theme',list(byid),theme,ti);continue
-        valid=[]
+        valid=[];theme_repairs=[]
         for ci,claim in enumerate(theme['claims']):
             ids=candidate_ids(claim)
             try:
@@ -117,15 +143,19 @@ def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=Fals
                 refs=claim['sources']
                 if not isinstance(refs,list) or not 1<=len(refs)<=8:
                     raise ClaimRejected('invalid_claim_refs')
-                exact=[];keys=set()
-                for ref in refs:
+                exact=[];keys=set();claim_repairs=[]
+                for ri,ref in enumerate(refs):
                     if (not isinstance(ref,dict) or set(ref)!={'id','quote'} or
                         type(ref['id']) is not int or ref['id'] not in byid):
                         raise ClaimRejected('invalid_source_id')
                     source=byid[ref['id']]
                     quote=_field(ref['quote'],1800)
                     if quote not in source['quote']:
-                        raise ClaimRejected('nonliteral_quote')
+                        restored=restore_full_row_quote_pair(quote,source['quote']) if repair_quote_pairs else None
+                        if restored is None:raise ClaimRejected('nonliteral_quote')
+                        quote=restored
+                        claim_repairs.append({'code':'restored_original_double_quote_pair','source_id':ref['id'],
+                            'theme_index':ti,'claim_index':ci,'ref_index':ri})
                     key=(ref['id'],quote)
                     if key in keys:raise ClaimRejected('duplicate_quote')
                     keys.add(key);exact.append({**source,'quote':quote})
@@ -137,7 +167,7 @@ def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=Fals
                     value=texts['text_'+l]
                     if not _language_matches(value,l):raise ClaimRejected('wrong_language')
                     _check_text(value,' '.join(r['quote'] for r in exact))
-                valid.append({'sources':exact,**texts})
+                valid.append({'sources':exact,**texts});theme_repairs.extend(claim_repairs)
             except ValueError as exc:
                 reject(getattr(exc,'code','invalid_claim_value'),ids,claim,ti,ci)
         if not valid:continue
@@ -152,6 +182,7 @@ def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=Fals
             seen.add(key)
         except ValueError as exc:
             reject(getattr(exc,'code','invalid_title'),[r['source_id'] for r in refs],theme,ti);continue
+        repairs.extend(theme_repairs)
         covered.update(r['source_id'] for r in refs if r['quote']==byid[r['source_id']]['quote'])
         themes.append({'sources':refs,'claims':valid,**titles,
             **{'summary_'+l:' '.join(c['text_'+l] for c in valid) for l in langs}})
@@ -159,7 +190,8 @@ def validate_claims(raw,units,language,*,blocks=None,retain_rejected_drafts=Fals
     return {'themes':sorted(themes,key=lambda t:t['sources'][0]['source_id']),
         'gaps':[byid[i] for i in sorted(missing)],'review_ids':sorted(review),
         'rejections':rejections,'review_required':True,
-        'verification':'claim_local_literal_citations_not_semantic'}
+        'verification':'claim_local_literal_citations_not_semantic',
+        **({'quote_repairs':repairs} if repair_quote_pairs else {})}
 
 def recovery_targets(units,result,*,maximum=8):
     """Choose one bounded cluster from actual claim rejections; no inference.

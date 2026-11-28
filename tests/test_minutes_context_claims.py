@@ -106,3 +106,47 @@ def test_bilingual_claim_schema_and_shared_evidence():
         'text_en':'The conservator explained that the manufacturer repaired the box.'}]}
     r=validate_claims(json.dumps({'themes':[t],'review_ids':[]}),UNITS,'both',blocks=BLOCKS)
     assert r['themes'][0]['summary_en'].startswith('The conservator')
+
+
+@pytest.mark.parametrize('proposed,source,expected',[
+    ('"Trasladen el catálogo".','«Trasladen el catálogo».','«Trasladen el catálogo».'),
+    ('"Trasladen el catálogo".','“Trasladen el catálogo”.','“Trasladen el catálogo”.'),
+    ('«Trasladen el catálogo».','«Trasladen el catálogo».','«Trasladen el catálogo».'),
+    ('"Trasladen el catalogo".','«Trasladen el catálogo».',None),
+    ('"Trasladen el catálogo"!','«Trasladen el catálogo».',None),
+    ('"Trasladen el catálogo".','«Trasladen el catálogo». Ahora.',None),
+    ('"Trasladen el catálogo".','«Trasladen el catálogo".',None),
+    ('"Trasladen 2 catálogos".','«Trasladen 3 catálogos».',None),
+    ('"Trasladen el catálogo".','«Trasladen  el catálogo».',None),
+    ('"A" y «B».','«A» y «B».',None),
+    ("'Trasladen el catálogo'.",'«Trasladen el catálogo».',None),
+    ('" ".','« ».',None),
+])
+def test_exact_original_quote_pair_only(proposed,source,expected):
+    from engine.minutes_context_claims import restore_full_row_quote_pair
+    assert restore_full_row_quote_pair(proposed,source)==expected
+
+def test_repair_explicitly_enabled_and_retains_original():
+    c=claim([2,3,4],'El guía leyó una instrucción antigua de traslado como ejemplo, no como orden actual.',
+            quotes=[ROWS[1]['text'],'"Trasladen el catálogo".',ROWS[3]['text']])
+    old=validate([c]);assert old['rejections'][0]['code']=='nonliteral_quote'
+    new=validate([c],repair_quote_pairs=True)
+    assert len(new['themes'])==1 and not new['rejections']
+    assert new['themes'][0]['sources'][1]['quote']==ROWS[2]['text']
+    assert new['quote_repairs']==[{'code':'restored_original_double_quote_pair','source_id':3,
+                                   'theme_index':0,'claim_index':0,'ref_index':1}]
+    assert 3 not in [x['source_id'] for x in new['gaps']]
+    assert new['review_required']
+
+def test_quote_pair_does_not_bypass_operational_guard():
+    c=claim([3],'Se implementará el traslado.',quotes=['"Trasladen el catálogo".'])
+    new=validate([c],repair_quote_pairs=True)
+    assert not new['themes'] and new['rejections']
+    assert new['quote_repairs']==[]
+    assert 3 in [x['source_id'] for x in new['gaps']]
+
+def test_quote_pair_does_not_remove_explicit_review():
+    c=claim([2,3,4],'El guía leyó una instrucción antigua de traslado como ejemplo, no como orden actual.',
+            quotes=[ROWS[1]['text'],'"Trasladen el catálogo".',ROWS[3]['text']])
+    new=validate_claims(response([c],[3]),UNITS,'es',blocks=BLOCKS,repair_quote_pairs=True)
+    assert 3 in new['review_ids'] and 3 in [x['source_id'] for x in new['gaps']]

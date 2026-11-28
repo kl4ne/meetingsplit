@@ -19,6 +19,11 @@ def stub(lang,behavior='ok'):
         props=json_output['properties']
         if 'items' in props:
             calls.append('extraction');return '{"items":[]}'
+        if 'translations' in props:
+            calls.append('localization')
+            ids=props['translations']['items']['properties']['id']['enum']
+            assert ids==[0]
+            return json.dumps({'translations':[{'id':0,'text':'Announcement: The material is available at reception.'}]})
         calls.append('claims')
         assert 'claims' in props['themes']['items']['properties']
         if behavior=='cancel':raise JobCancelled()
@@ -43,7 +48,7 @@ def test_integrated_claims_preserve_sources(monkeypatch,mode,lang):
     monkeypatch.setattr(summarize,'ollama_chat',answer)
     report=summarize.summarize_local(TEXT,mode,lang,'qwen3.5:9b',narrative_strategy='contextual_claim_qa',
         evidence_sink=e.update,qa_trace=events.append)
-    assert calls==['extraction','claims']
+    assert calls==['extraction','claims']+(['localization'] if lang!='es' else [])
     assert e['narrative_strategy']=='contextual_claim_qa' and e['review_required']
     t=e['editorial_themes'][0]
     assert len(t['claims'])==2 and t['claims'][0]['sources'][1]['quote']==ROWS[1]['text']
@@ -56,7 +61,7 @@ def test_integrated_claims_preserve_sources(monkeypatch,mode,lang):
     assert any(i['category']=='notice' for i in e['items'])
     assert ROWS[3]['text'] in report and ROWS[4]['text'] in report
     assert 'Implementación y conservación' not in report and 'Implementation and preservation' not in report
-    assert [x['stage'] for x in events if x['event']=='request']==['extraction','contextual_claim_editorial']
+    assert [x['stage'] for x in events if x['event']=='request']==['extraction','contextual_claim_editorial']+(['localization'] if lang!='es' else [])
     for l in ('es','en') if lang=='both' else (lang,):
         assert t['summary_'+l] in report
         if mode=='both':

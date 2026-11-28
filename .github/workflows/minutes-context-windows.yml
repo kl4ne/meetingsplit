@@ -1,4 +1,4 @@
-name: Integrated claim QA and compact combined report offline
+name: Integrated claim QA with explicit bilingual localization stub
 on:
   push:
     branches: [qa/minutes-context-windows-0819]

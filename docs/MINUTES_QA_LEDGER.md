@@ -1,3 +1,5 @@
+> **Cierre vigente (2026-11-28):** registro histórico preservado. Editorial NO-GO; experimentos pausados. [Cierre técnico](MINUTES_FUTURE_HANDOFF.md) e [índice de ejecuciones/artefactos](MINUTES_EVIDENCE_INDEX.json). Los artefactos de Actions pueden caducar; 25 ZIP seleccionados se respaldaron por separado. No repetir ejecuciones automáticamente.
+
 # Evidencias de reparación de minutas — registro verificable
 
 Actualizado el 2026-11-27. Repositorio: `kl4ne/meetingsplit`. Los IDs de runs/artefactos corresponden a GitHub Actions. Enlaces de ejecución: `https://github.com/kl4ne/meetingsplit/actions/runs/<ID>`. Los artefactos pueden caducar; no asumir que siguen descargables. No contienen grabaciones personales por diseño. Leer los resultados completos, no solamente la conclusión del workflow.

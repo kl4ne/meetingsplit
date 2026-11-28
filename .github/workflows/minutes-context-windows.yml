@@ -1,15 +1,14 @@
-name: Contextual review presentation exact replay
+name: Private transcript comparison runner offline QA
 on:
   push:
     branches: [qa/minutes-context-windows-0819]
     paths: ['.github/workflows/minutes-context-windows.yml']
 permissions:
   contents: read
-  actions: read
 jobs:
-  replay:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 8
+  offline:
+    runs-on: windows-2022
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,22 +16,36 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.14.10'
-      - name: Context and rendering regressions
+      - name: Test local-only comparison with fabricated ZIPs and mocked transport
+        shell: pwsh
         run: |
           python -m pip install pytest
-          python -m pytest -q tests/test_minutes_context_gap_presentation.py tests/test_minutes_context_adapter.py tests/test_minutes_context_windows.py tests/test_minutes_context_row_citations.py tests/test_minutes_context_interruptions.py tests/test_minutes_source_accounting.py tests/test_minutes_localized_pipeline.py tests/test_minutes_report_modes.py
-      - uses: actions/download-artifact@v4
-        with:
-          run-id: 46090327742
-          name: context-adapter-live
-          github-token: ${{ github.token }}
-          path: ${{ runner.temp }}/prior
-      - name: Strict complete replay with original evidence unchanged
-        run: python qa/minutes_context_gap_replay.py "$RUNNER_TEMP/prior" "$RUNNER_TEMP/replayed"
+          python -m pytest -q tests/test_minutes_private_compare.py tests/test_minutes_context_adapter.py tests/test_minutes_context_gap_presentation.py tests/test_minutes_context_windows.py tests/test_minutes_context_row_citations.py tests/test_minutes_context_interruptions.py tests/test_minutes_source_accounting.py tests/test_minutes_localized_pipeline.py tests/test_minutes_report_modes.py
+      - name: Assemble minimal standard-library QA source bundle
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bundle = Join-Path $env:RUNNER_TEMP 'private-context-qa'
+          New-Item -ItemType Directory -Force "$bundle/engine","$bundle/desktop","$bundle/qa","$bundle/docs" | Out-Null
+          Copy-Item engine/__init__.py,engine/control.py,engine/ollama.py,engine/summarize.py,engine/minutes_*.py "$bundle/engine/"
+          Copy-Item desktop/__init__.py,desktop/storage.py "$bundle/desktop/"
+          Copy-Item qa/minutes_private_compare.py "$bundle/qa/"
+          Copy-Item docs/Guia_Owll_y_Minutas_para_Ollama.md "$bundle/docs/"
+          Copy-Item docs/PRIVATE_CONTEXT_QA.md "$bundle/LEEME.md"
+          Copy-Item LICENSE "$bundle/"
+          Set-Content "$bundle/SOURCE_COMMIT.txt" $env:GITHUB_SHA -Encoding ascii
+          python "$bundle/qa/minutes_private_compare.py" --help
+          if ($LASTEXITCODE -ne 0) { throw 'Standalone source bundle import failed' }
+          $zip = Join-Path $env:RUNNER_TEMP 'MeetingSplit-contextual-QA-local-source.zip'
+          Compress-Archive -Path "$bundle/*" -DestinationPath $zip
+          $sha=(Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content "$zip.sha256" "$sha  MeetingSplit-contextual-QA-local-source.zip" -Encoding ascii
+          Write-Output "Source bundle SHA256: $sha"
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: context-gap-replay
-          path: ${{ runner.temp }}/replayed
-          if-no-files-found: warn
-          retention-days: 7
+          name: MeetingSplit-contextual-QA-local-source
+          path: |
+            ${{ runner.temp }}/MeetingSplit-contextual-QA-local-source.zip
+            ${{ runner.temp }}/MeetingSplit-contextual-QA-local-source.zip.sha256
+          if-no-files-found: error
+          retention-days: 14

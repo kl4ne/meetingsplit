@@ -2,7 +2,7 @@
 import json
 import re
 
-from .minutes_evidence import _NUMBER, _PERSONAL_TENTATIVE, _SENTENCE_BREAK, _amount_keys, _field, _unique_keys, changes_operational_meaning
+from .minutes_evidence import _NUMBER, _PERSONAL_TENTATIVE, _SENTENCE_BREAK, _amount_keys, _field, _unique_keys, changes_operational_meaning, editorial_decision_error
 
 
 _COMMON_WORDS = {
@@ -77,7 +77,39 @@ def editorial_request(sources, language):
     return messages, schema
 
 
-def validate_editorial(raw, sources, language, *, rejected=None):
+# An affirmative assertion that somebody proposed an action is stronger
+# than describing a discussion. Distinguish it from merely mentioning
+# proposals as a topic, or teaching what a recommendation means.
+_PROPOSAL_ASSERTION=re.compile(
+    r'\b(?:se\s+(?:propuso|propusieron|recomendó|recomendaron|sugirió|sugirieron)|'
+    r'(?:propuso|propusieron|recomendó|recomendaron|sugirió|sugirieron)\s+(?:que\b|[^\W\d_]+(?:ar|er|ir)\b)|'
+    r'(?:proposed|recommended|suggested)\s+(?:that\b|to\b|[^\W\d_]+ing\b)|'
+    r'(?:was|were)\s+(?:proposed|recommended|suggested))\b',re.IGNORECASE)
+_EXPLICIT_PROPOSAL_SOURCE=re.compile(
+    r'\b(?:propus[oa]|propusieron|propongo|proponemos|proponen|propuesta\s*:|'
+    r'sugiri[oó]|sugirieron|sugiero|sugerimos|recomend[oó]|recomendaron|recomiendo|recomendamos|'
+    r'propos(?:e|es|ed|al\s*:|al\s+only)|suggest(?:s|ed)?|recommend(?:s|ed)?)\b',
+    re.IGNORECASE)
+_DISCUSSION_OPENING=re.compile(
+    r'^(?:(?:al final|al inicio|durante la reunión|durante la sesión)\s*,?\s+)?'
+    r'(?:se habló de|se discutió|se conversó sobre)\b|'
+    r'^(?:the (?:group|team|participants)|participants)\s+(?:discussed|talked about)\b',
+    re.IGNORECASE)
+
+def editorial_modality_error(value,refs):
+    """Narrow guard, not semantic entailment; reject rather than rewrite."""
+    if not _PROPOSAL_ASSERTION.search(value):
+        return None
+    # Deliberately limited to a single explicit discussion statement.
+    # Mixed sources need a separate semantic review and are not certified.
+    if len(refs)==1:
+        quote=refs[0]['quote']
+        if _DISCUSSION_OPENING.search(quote) and not _EXPLICIT_PROPOSAL_SOURCE.search(quote):
+            return 'Editorial theme turned discussion into an unsupported proposal'
+    return None
+
+
+def validate_editorial(raw, sources, language, *, rejected=None, on_rejection=None):
     document = json.loads(raw, object_pairs_hook=_unique_keys)
     if not isinstance(document,dict) or set(document)!={'themes'}:
         raise ValueError('Invalid editorial document')
@@ -102,6 +134,10 @@ def validate_editorial(raw, sources, language, *, rejected=None):
             if any(not _language_matches(texts[f'summary_{lang}'],lang) for lang in languages):
                 raise ValueError('Editorial theme is in the wrong language')
             for value in texts.values():
+                if reason := editorial_decision_error(value,quotes):
+                    raise ValueError(reason)
+                if reason := editorial_modality_error(value,refs):
+                    raise ValueError(reason)
                 if changes_operational_meaning(value,quotes):
                     raise ValueError('Editorial theme changed a deadline or implementation claim')
                 if set(_NUMBER.findall(value))-set(_NUMBER.findall(quotes)) or _amount_keys(value)-_amount_keys(quotes):
@@ -111,7 +147,9 @@ def validate_editorial(raw, sources, language, *, rejected=None):
                 raise ValueError('Duplicate editorial theme')
             seen.add(key)
             result.append({'sources':refs,**texts})
-        except ValueError:
+        except ValueError as exc:
+            if on_rejection is not None:
+                on_rejection(theme, exc)
             if rejected is None:
                 raise
             ids = theme.get('source_ids') if isinstance(theme, dict) else None
@@ -119,3 +157,99 @@ def validate_editorial(raw, sources, language, *, rejected=None):
             rejected.extend(refs or sources)
     return sorted(result,key=lambda theme:theme['sources'][0]['source_id'])
 
+
+def editorial_retry_sources(rejected, *, maximum=5):
+    """One bounded repair: preserve original order and unique source passages."""
+    unique={}
+    for ref in rejected:
+        unique.setdefault((ref['source_id'],ref['quote']),ref)
+    # Do not retry two different excerpts sharing an ID in one request.
+    chosen={}
+    for ref in unique.values():
+        chosen.setdefault(ref['source_id'],ref)
+        if len(chosen)>=maximum:
+            break
+    return list(chosen.values())
+
+
+def merge_editorial_retry(accepted, rejected, repaired, retry_rejected, language):
+    """Retain accepted themes; clear only explicitly recovered source passages.
+
+    A cited ID is not semantic proof of complete topic coverage. Never clear
+    a gap merely because another theme in the first response cited that ID.
+    """
+    languages=('es','en') if language=='both' else (language,)
+    key=lambda theme:tuple(theme[f'title_{lang}'].casefold() for lang in languages)
+    seen={key(theme) for theme in accepted}
+    result=list(accepted)
+    unresolved={(ref['source_id'],ref['quote']) for ref in retry_rejected}
+    covered=set()
+    for theme in repaired:
+        if key(theme) in seen:
+            continue
+        seen.add(key(theme))
+        result.append(theme)
+        covered.update((ref['source_id'],ref['quote']) for ref in theme['sources'])
+    remaining={}
+    for ref in rejected:
+        ref_key=(ref['source_id'],ref['quote'])
+        if ref_key not in covered or ref_key in unresolved:
+            remaining.setdefault(ref_key,ref)
+    return sorted(result,key=lambda theme:theme['sources'][0]['source_id']),list(remaining.values())
+
+
+def omitted_editorial_sources(sources, accepted, rejected=()):
+    """Literal omission accounting, NOT a semantic coverage certificate.
+
+    Only examine the excerpts actually supplied to editorial_request (already
+    filtered for separate events and duplicate text). Do not mark known
+    rejections as a second independent omission.
+    """
+    def key(ref):
+        return ref['source_id'],ref['quote']
+    known={key(ref) for theme in accepted for ref in theme['sources']}
+    known.update(key(ref) for ref in rejected)
+    return [ref for ref in sources if key(ref) not in known]
+
+
+def repair_editorial_omissions(sources,accepted,rejected,language,request,*,cancel=None,trace=None):
+    """At most two extra calls of five excerpts per original section.
+
+    Permit the model to return no themes when excerpts are not substantive.
+    Neither an empty reply nor a transport failure clears a literal omission.
+    Every unprocessed/uncited excerpt remains visible for review.
+    """
+    from .control import JobCancelled
+    omitted=omitted_editorial_sources(sources,accepted,rejected)
+    if not omitted:
+        return accepted,rejected,[]
+    original=list(omitted)
+    for start in range(0,min(len(original),10),5):
+        if cancel:
+            cancel.check()
+        subset=original[start:start+5]
+        messages,schema=editorial_request(subset,language)
+        schema['properties']['themes']['minItems']=0
+        messages[0]['content']+=(
+            ' These excerpts were not cited in the prior synthesis. Recover distinct substantive topics, '
+            'including material near the end. Do not invent a proposal or agreement from an explanation or example. '
+            'If no excerpt contains a substantive topic, return an empty themes array. '
+            'Use only the supplied excerpts, do not repeat prior topics from memory.')
+        scope={'source_ids':[r['source_id'] for r in subset],'language':language}
+        try:
+            raw=request(messages,schema,stage='editorial_omission_retry',scope=scope)
+            # Empty means no synthesis, not evidence that the omission is safe.
+            if json.loads(raw,object_pairs_hook=_unique_keys)=={'themes':[]}:
+                repaired=[];retry_rejected=[]
+            else:
+                retry_rejected=[]
+                repaired=validate_editorial(raw,subset,language,rejected=retry_rejected)
+            accepted,omitted=merge_editorial_retry(accepted,omitted,repaired,retry_rejected,language)
+            if trace:
+                trace('editorial_omission_retry','accepted',scope,themes=repaired,remaining_gaps=omitted)
+        except JobCancelled:
+            raise
+        except (OSError,RuntimeError,ValueError) as exc:
+            if trace:
+                trace('editorial_omission_retry','section_rejected',scope,error_type=type(exc).__name__,reason=str(exc))
+    return accepted,rejected+omitted,original

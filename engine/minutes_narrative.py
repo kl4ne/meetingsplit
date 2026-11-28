@@ -5,7 +5,7 @@ import json
 import re
 
 from .minutes_brief import _language_matches
-from .minutes_evidence import _AGREEMENT, _NUMBER, _amount_keys, changes_operational_meaning
+from .minutes_evidence import _NUMBER, _amount_keys, changes_operational_meaning, editorial_decision_error
 
 
 _INPUT_BYTES = 5500
@@ -71,15 +71,42 @@ def review_request(messages, draft):
              'and return only the complete revised prose, without explaining your edits.'}]
 
 
-def validate_narrative(raw, section, language):
+# A citation ID alone does not establish coverage of the referenced theme.
+# This conservative lexical check catches obvious reference swaps. It is not
+# a semantic entailment test and can reject a valid paraphrase.
+_ANCHOR_STOP = {
+    'about','during','discussed','meeting','reviewed','explained','topic','session',
+    'participants','group','team','could','would','should','according','regarding',
+    'durante','reunión','sesión','equipo','grupo','revisó','habló','explicó','trató',
+    'abordó','discutió','presentó','tema','temas','también','sobre','mediante',
+    'participantes','indicó','mencionó','propuso','respecto','parte','forma',
+}
+
+
+def _anchor_words(text):
+    return {word for word in re.findall(r'\b[^\W\d_]+\b', text.casefold())
+            if len(word)>=5 and word not in _ANCHOR_STOP}
+
+
+def _distinctive_anchors(section):
+    words={key:_anchor_words(record['title']+' '+record['summary'])
+           for key,(_,record) in section.items()}
+    return {key:own-set().union(*(other for k,other in words.items() if k!=key))
+            for key,own in words.items()}
+
+
+def _validate_narrative(raw, section, language, *, require_complete=True):
     if not raw.strip() or len(raw.encode('utf-8')) > _DRAFT_BYTES:
         raise ValueError('Invalid revised narrative length')
     paragraphs = []
+    paragraph_ids = []
     covered = set()
     seen = set()
+    anchors = _distinctive_anchors(section) if len(section)>1 else {}
     for paragraph in re.split(r'\r?\n[ \t]*\r?\n', raw.strip()):
         passages = []
         refs = {}
+        used_ids = set()
         # A paragraph may cite consecutive sentences or clauses individually.
         cited = _CITED_SENTENCE_BREAK.sub(r'\g<end>\n\n', paragraph.strip())
         for passage in cited.split('\n\n'):
@@ -95,21 +122,73 @@ def validate_narrative(raw, section, language):
                 body += ending['punct']
             if not _language_matches(body, language):
                 raise ValueError('Narrative is in the wrong language')
-            if _AGREEMENT.search(body):
-                raise ValueError('Formal decisions belong in the separate evidence section')
             quotes = ' '.join(quote for key in keys for quote in section[key][1]['quotes'])
+            if reason := editorial_decision_error(body,quotes):
+                raise ValueError(reason)
             if changes_operational_meaning(body,quotes):
                 raise ValueError('Narrative changed a deadline or implementation claim')
             if set(_NUMBER.findall(body))-set(_NUMBER.findall(quotes)) or _amount_keys(body)-_amount_keys(quotes):
                 raise ValueError('Unsupported number or amount in narrative')
+            # A multi-theme citation must have at least some distinctive
+            # lexical support for each cited theme, when such anchors exist.
+            # Otherwise preserve the validated theme instead of claiming it
+            # was covered by an unrelated paragraph.
+            body_words=_anchor_words(body)
+            if any(anchors.get(key) and not anchors[key]&body_words for key in keys):
+                raise ValueError('Narrative citation lacks a distinctive theme anchor')
             normalized = body.casefold().rstrip('.!?,;')
             if normalized in seen:
                 raise ValueError('Repeated narrative paragraph')
             seen.add(normalized)
             covered.update(keys)
+            used_ids.update(keys)
             refs.update((ref['source_id'],ref) for key in sorted(keys) for ref in section[key][0]['sources'])
             passages.append(body)
         paragraphs.append({'text':' '.join(passages), 'sources':[refs[key] for key in sorted(refs)]})
-    if covered != section.keys():
+        paragraph_ids.append(used_ids)
+    if require_complete and covered != section.keys():
         raise ValueError('The revised narrative omitted evidence IDs')
-    return paragraphs
+    return paragraphs, paragraph_ids
+
+
+def validate_narrative(raw, section, language):
+    """Strict full-section validation remains the acceptance gate."""
+    return _validate_narrative(raw, section, language)[0]
+
+
+def recover_narrative(section, language, *, draft=None, revised=None):
+    """Recover independently valid complete paragraphs; never edit their claims.
+
+    A failed strict validation remains a review warning. An invalid paragraph
+    contributes nothing, even when it includes some valid clauses. Prefer the
+    revision, then the draft, and only then the original validated theme.
+    Do not combine paragraphs whose evidence IDs overlap.
+    """
+    covered = set()
+    seen = set()
+    recovered = []
+    selected = {'review': [], 'draft': [], 'themes': []}
+    for label, raw in (('review', revised), ('draft', draft)):
+        if not isinstance(raw, str) or not raw.strip() or len(raw.encode('utf-8')) > _DRAFT_BYTES:
+            continue
+        for paragraph in re.split(r'\r?\n[ \t]*\r?\n', raw.strip()):
+            try:
+                values, ids = _validate_narrative(paragraph, section, language,
+                                                   require_complete=False)
+            except ValueError:
+                continue
+            value, keys = values[0], ids[0]
+            normalized = value['text'].casefold().rstrip('.!?,;')
+            if keys & covered or normalized in seen:
+                continue
+            covered.update(keys)
+            seen.add(normalized)
+            recovered.append((min(keys), value))
+            selected[label].extend(sorted(keys))
+    for key, (theme, _) in section.items():
+        if key not in covered:
+            recovered.append((key, {'text':theme[f'summary_{language}'],
+                                    'title':theme[f'title_{language}'],
+                                    'sources':theme['sources']}))
+            selected['themes'].append(key)
+    return [value for _, value in sorted(recovered, key=lambda entry:entry[0])], selected

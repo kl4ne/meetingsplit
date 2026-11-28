@@ -252,14 +252,24 @@ def _generate_minutes(folder, base, manifest, settings, transcript, progress, ta
                                    MODEL,
                                    progress=lambda msg:progress(msg,92),endpoint=service.endpoint,
                                    cancel=task,evidence_sink=evidence.update,read_block=read_block,
-                                   write_block=lambda key,raw:_write_text(folder/f'.minutes-{key}.json',raw))
+                                   write_block=lambda key,raw:_write_text(folder/f'.minutes-{key}.json',raw),
+                                   narrative_strategy='localized_editorial')
         task.check()
         _write_json(folder/'MINUTA_EVIDENCIAS.json',evidence)
         _write_text(folder/'RESUMEN_Y_MINUTA_LOCAL.md',report)
         diagnostic.unlink(missing_ok=True)
         gaps=len(evidence.get('coverage_gaps',[]))
         items=evidence.get('items',[])
-        needs_review=bool(gaps or not items or evidence.get('editorial_gaps') or evidence.get('narrative_fallbacks')
+        repetition=evidence.get('repetition_coverage')
+        unresolved_empty=(repetition['unresolved_empty_block_ids'] if repetition is not None
+                          else evidence.get('empty_block_ids',[]))
+        # Preserve review classification until editorial acceptance. Exact
+        # repetitions are accounted for, not a semantic approval.
+        needs_review=bool(gaps or not items or unresolved_empty or evidence.get('editorial_gaps')
+                          or evidence.get('narrative_fallbacks')
+                          or (evidence.get('source_accounting') or {}).get('uncited_passages')
+                          or any((evidence.get('source_accounting') or {}).get('compound_review',{}).values())
+                          or any(entry.get('rejected') for entry in evidence.get('localization',[]))
                           or any(item.get('category')=='review' for item in items))
         manifest.update(summary_status='needs_review' if needs_review else 'complete',
                         summary_review_required=True,summary_evidence='MINUTA_EVIDENCIAS.json',

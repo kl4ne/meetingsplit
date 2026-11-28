@@ -1,3 +1,59 @@
+## 2026-11-28 — Portable 1.0.0 solicitado por el propietario
+
+El propietario pidió un nuevo ejecutable versión 1.0. Se adoptó la numeración técnica 1.0.0, en una rama aislada `qa/portable-100-owner`, sin tocar el motor 0.8.19 verificado, ni reabrir la reparación editorial. Fuente versionada `69a009e1ca0e96815efe8d3d1220901915dde8c3`, workflow `1ee5b208690fbe0e92d369b84f61fb8fdc8a55f9`. [Compilación Windows #46144015837](https://github.com/kl4ne/meetingsplit/actions/runs/46144015837) confirmada in_progress. Reutiliza el flujo portable-only y la CI original de 0.8.19; exige comprobar que el motor y runtime no cambiaron, release gate cerrado, regresiones de motor, inventario del paquete congelado y extraído, self-check offline del EXE 1.0.0 y checksum. No declarar listo ni descargar hasta éxito y evidencia. Artefacto esperado `MeetingSplit-1.0.0-Windows-portable-review-QA`, ZIP interior `MeetingSplit-v1.0.0-Windows-portable-candidate.zip` con EXE y dependencias. Ver `docs/PORTABLE_100_OWNER.md` en rama QA. Sin nueva inferencia, instalador, merge, tag, release o aceptación editorial. Conservar 0.8.19 como respaldo. Próximo paso exclusivamente verificar run y artefactos; no repetir investigación editorial.
+
+---
+
+# ESTADO VIGENTE — 2026-11-28 — PAUSA EDITORIAL
+
+Decisión del propietario: conservar Ollama opcional y el trabajo realizado, no continuar experimentos hasta nueva autorización. Portable de revisión 0.8.19 intacto; audio/Whisper/NVIDIA/exportación disponibles con la minuta automática desmarcada. Main 0.8.18, PR #7 abierto en borrador, release_allowed=false. Ver [cierre técnico](docs/MINUTES_FUTURE_HANDOFF.md), [HANDOFF](HANDOFF.md) e [índice de evidencias](docs/MINUTES_EVIDENCE_INDEX.json). Las entradas inferiores son históricas, no tareas activas.
+
+---
+
+## Estado vigente — comparación real contextual en ASUS (2026-11-28 UTC)
+
+El propietario completó QA contextual local sobre transcripción existente 0.8.19; 21 llamadas/275.44 s, ninguna CPU forzada, 642/642 referencias verificadas, 4197→2376 palabras, 100→16 temas, 87→72 gaps, 26 review intactos, dos avisos idénticos, cero uncited. Tres rechazos operativos y errores semánticos/omisiones impiden aceptación profesional. Ver HANDOFF.md y último checkpoint. Próximo diagnóstico y recuperación acotada, no repetir audio ni promover default. Main 0.8.18, 0.8.19 portable de revisión intacto, release_allowed=false. Todo lo siguiente es histórico.
+
+## Estado vigente — 2026-11-27 — primera prueba real 0.8.19
+
+El propietario confirma excelente funcionamiento NVIDIA en su ASUS; manifest 0.8.19 registra NVIDIA GPU / Whisper medium, trabajo completo, 273 segmentos y ZIP íntegro; 5 MP3 y 5 checkpoints verificados. La grabación exportada termina con silencio digital, no se detecta fallo de GPU en las partes vacías. Calidad editorial aún NO-GO (100 temas, 87 pasajes sin síntesis, 26 review, 2 sin cita y 8 avisos compuestos), evidencia técnica anonimizada en checkpoint. Siguiente reparación: contextualizar fragmentos ASR manteniendo citas originales, sin tocar GPU/audio ni repetir reunión. Main 0.8.18, release_allowed=false, sin nueva versión/build. Leer [HANDOFF.md](HANDOFF.md). Todo lo siguiente es histórico.
+
+## Estado vigente — 2026-11-27 — portable 0.8.19 verificado para revisión
+
+El portable autorizado está disponible: [artefacto QA 15236425376](https://github.com/kl4ne/meetingsplit/actions/runs/46078575131/artifacts/15236425376). Fuente 448a8502521192034e939145d43cc6b18b90898e, CI #46078498354 verde (359 motor, 2 omitidas, 11 navegador, auditoría). Build #46078575131 verde, SHA-256 del ZIP interior d93c2334a1a2a81d26ef02a89d92952f268cb7695c3dd587fc1d80ba08ba05e5; 696 archivos y self-check Windows verificados. Pendientes ASUS y aceptación editorial. Leer [HANDOFF.md](HANDOFF.md) y [guía de prueba](docs/PORTABLE_0819_QA.md). Main 0.8.18, release_allowed=false, sin Setup/tag/release. Todo lo que sigue es histórico.
+
+## Estado vigente — 2026-11-27 — candidato 0.8.19 de revisión
+
+El propietario autorizó explícitamente preparar el portable privado 0.8.19 para pruebas, aceptando las limitaciones editoriales documentadas, sin publicación pública. Numeración QA, no aceptación editorial. Código funcional previo validado en `a85cd3e502e55f48b7bf8e7815e44fe2e9733c47`, #46077071845 (358 motor, 2 omitidas, 11 navegador y auditoría). Fuente versionada `448a8502521192034e939145d43cc6b18b90898e`, CI #46078498354 en progreso. Rama QA aislada `qa/portable-0819-review-448a850`, SHA `d50567c222c91fab13faacef44431eda83a526f3`, [run #46078575131](https://github.com/kl4ne/meetingsplit/actions/runs/46078575131) en progreso, exige CI correcto antes de compilar portable-only. ZIP y self-check pendientes. Main permanece 0.8.18; no merge/tag/release/Setup; release_allowed=false. Leer [HANDOFF.md](HANDOFF.md) y [evaluación editorial](docs/MINUTES_EDITORIAL_ACCEPTANCE.md). Todo lo que sigue es histórico.
+
+## Estado vigente — 2026-11-27 — reparación 0.8.19 en PR #7
+
+**Leer [HANDOFF.md](HANDOFF.md) primero.** Es el punto de continuidad canónico para el próximo chat, junto con el [plan de terminación](docs/MEETINGSPLIT_FINISH_PLAN.md) y [registro de evidencias](docs/MINUTES_QA_LEDGER.md). Último código validado: `6b92c8f25ee9314065e3085cc6341d6005bfc30f`; 291 pruebas motor +11 interfaz, 2 omitidas, replay completo 9/9. Prueba temática variada #46025742614 finalizada: fallo de aceptación (16/17 hechos, 8/9 temas, dos traducciones rechazadas); artefacto 15214500646 inspeccionado. Ver último checkpoint. Main sigue en 0.8.18; objetivo 0.8.19 no numerado ni empaquetado. Release gate cerrado. Los checkpoints históricos siguientes no representan el estado vigente de esta rama.
+
+Reparación variada aislada: 107 regresiones aprobadas (#46030916887). Recuperación #46031770427 aprobada (17/17 hechos, 9/9 temas, 54/54 filas citadas). Cambios integrados, CI pendiente. Lectura manual detectó dos falsas propuestas y detalles de accesibilidad omitidos; calidad editorial aún no aprobada. Consultar HANDOFF.md.
+
+CI de recuperación variada #46033392154: 316 pruebas aprobadas, 2 omitidas. Replay de modalidad #46033519061: 55 pruebas, exactamente dos falsos temas detectados. Guarda integrada; CI combinada pendiente. Próximo: recuperación focalizada y revisión editorial de omisiones dentro de citas.
+
+CI #46034100640: 324 pruebas aprobadas, 2 omitidas. Prueba puntual #46034184111 falló por omitir una fuente. Nuevo experimento de arquitectura source-first #46036960062 en curso, aislado. Consultar HANDOFF.md y último registro técnico.
+
+Source-first #46036960062: 55 unidades, 26 traducciones aceptadas; falló agrupación por siete conflictos. Reparación aislada en curso; leer HANDOFF.md y último checkpoint. Sin integración ni paquete.
+
+Agrupación source-first #46038580739 aprobada: 55 unidades, nueve grupos, 26 traducciones reutilizadas. Calidad de prosa/resumen aún no aprobada. Nuevo experimento ejecutivo aislado; leer HANDOFF.md.
+
+Resumen ejecutivo libre #46046370941 falló por omitir grupo; nueva comparación de frases por grupo #46047669072 en QA. No integrado; leer HANDOFF.md.
+
+Serie de resumen ejecutivo cerrada: #46047669072 pasó formalmente pero no justifica costo/redacción. Opción source_first acotada en rama QA, prueba bilingüe fresca #46049354590 en cola. Leer HANDOFF.md. Desktop y main intactos.
+
+Prueba bilingüe #46049354590: timeout de primera extracción (900 s), 34 pruebas aprobadas; nueva extracción metadata-only acotada en QA #46055337219. Consultar HANDOFF.md. No integración ni paquete.
+
+Extracción bilingüe metadata-only #46055337219 completó 8/8 hechos, preservó 18 filas descriptivas en ambos idiomas; falló aceptación por traducciones. Reparación aislada focalizada #46057746118 en curso, leer HANDOFF.md. No integración ni paquete.
+
+Replay bilingüe #46057746118 aprobado: 7/7 traducciones, 8/8 hechos; continúa evaluación de calidad. Nuevo caso de capacidad y densidad #46059887920, fuente acotada y modos distintos, aislado. Leer HANDOFF.md. No integración ni paquete.
+
+Caso denso #46059887920: 50 preflight, 111 frases contabilizadas, diez hechos presentes, dos falsas propuestas y un review. Corrección por frase aislada y replay sin inferencia. Advertencia de escalabilidad: 24 llamadas/1899 palabras. Leer HANDOFF.md; no integración ni paquete.
+
+---
+
 ## Continuity checkpoint — timeout recovery / main integration 2026-10-21
 
 - **Main HEAD:** `c3af16d` before this documentation-only checkpoint.

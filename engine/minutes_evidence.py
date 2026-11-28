@@ -20,6 +20,43 @@ _NEGATED_AGREEMENT = re.compile(
     r'(?:agreed|approved|acordó|aprob(?:ó|ad[oa]s?))\b',
     re.IGNORECASE,
 )
+# Narrow explicit negations, not a general semantic classifier. Do not mask
+# a positive approval later in the same sentence or a 'not only' construction.
+_EDITORIAL_NON_APPROVAL = re.compile(
+    r'\b(?:no se convirtió en (?:una )?decisión oficial(?: o (?:un )?acuerdo aprobado)?|'
+    r'no (?:se |fue |ha sido )?aprob(?:ó|ad[oa]s?)|'
+    r'sin aprobación|not (?:yet )?approved|not agreed)\b', re.IGNORECASE,
+)
+_EDITORIAL_REJECTION = re.compile(
+    r'\b(?:rechaz(?:ó|aron|ad[oa]s?)|rejected)\b', re.IGNORECASE,
+)
+_STANDALONE_NON_APPROVAL = re.compile(
+    r'(?:not approved|no (?:se |fue )?aprob(?:ó|ad[oa]))[.!]?', re.IGNORECASE,
+)
+
+
+def affirmative_agreement_matches(text):
+    """Yield positive lexical agreement candidates outside explicit negation spans."""
+    negated=[m.span() for m in _EDITORIAL_NON_APPROVAL.finditer(text)]
+    return [m for m in _AGREEMENT.finditer(text)
+            if not any(start<=m.start() and m.end()<=end for start,end in negated)]
+
+
+def editorial_decision_error(value, quotes):
+    """Keep decisions out of prose; do not conflate non-approval with rejection.
+
+    These checks target observed lexical errors. They do not prove meaning,
+    attachment of a claim to the correct subject, or all possible negations.
+    """
+    if affirmative_agreement_matches(value):
+        return 'Formal decisions belong in the separate evidence section'
+    if _EDITORIAL_NON_APPROVAL.search(value) and not _EDITORIAL_NON_APPROVAL.search(quotes):
+        return 'Non-approval is not supported by cited evidence'
+    if _EDITORIAL_REJECTION.search(value) and not _EDITORIAL_REJECTION.search(quotes):
+        return 'Rejection is not supported by cited evidence'
+    return None
+
+
 _CONFIRMED_HEADING = re.compile(r'^(?:confirmed agreement|acuerdo confirmado)\s*:', re.IGNORECASE)
 _DEADLINE_QUALIFIERS = (
     re.compile(r'\b(?:antes de(?:l)?|before)\b', re.IGNORECASE),
@@ -64,7 +101,7 @@ _PERSONAL_TENTATIVE = re.compile(
 )
 _NOTICE = re.compile(
     r'^(?:reminder\s*:|(?:we remind you|please remember) that\b|'
-    r'(?:les (?:recuerdo|recordamos|informo|informamos) que|recuerden que|se anuncia que)\b|aviso\s*:)',
+    r'(?:les (?:recuerdo|recordamos|informo|informamos) que|recuerden que|se anuncia que|se anunció que)\b|aviso\s*:)',
     re.IGNORECASE,
 )
 _RESERVED_SCHEDULE = re.compile(
@@ -201,6 +238,89 @@ def _is_notice(quote):
     return bool(_NOTICE.match(quote) or _RESERVED_SCHEDULE.search(quote) or _ANNOUNCED_START.search(quote))
 
 
+# Narrow patterns for the observed guidance and unassigned question.
+_GUIDANCE_CONTEXT = re.compile(
+    r'^(?:the )?(?:reference )?(?:guide|manual|handbook) (?:distinguishes|explains|describes)\b[^.!?]+\.\s+'
+    r'[^.!?]{1,160}\bshould\b[^.!?]{1,240}[.!]?$',
+    re.IGNORECASE,
+)
+_UNASSIGNED_QUESTION = re.compile(
+    r'(?:Who will [^.!?]+\?|¿Quién (?:se encargará de|va a|hará|pedirá) [^.!?]+\?)\s+'
+    r'(?:No responsible person or deadline was assigned\.?|No se asignó (?:responsable ni plazo|responsable ni fecha límite)\.?)',
+    re.IGNORECASE,
+)
+_EXPLICIT_DEADLINE = re.compile(r'\b(?:deadline|due date|fecha límite|a más tardar|plazo máximo)\b',re.IGNORECASE)
+
+
+def _is_guidance(text):
+    return bool(_GUIDANCE_CONTEXT.fullmatch(text.strip()) and
+                not affirmative_agreement_matches(text) and
+                not re.search(r'\b(?:proposal|proposed|recommendation|propuesta|propuso)\b',text,re.IGNORECASE))
+
+
+def _is_unassigned_question(text):
+    return bool(_UNASSIGNED_QUESTION.fullmatch(text.strip()) and
+                not affirmative_agreement_matches(text))
+
+
+# Explicit discussion of an activity is not an assigned activity or a
+# proposal awaiting approval. Restrict recovery to complete, single-clause
+# descriptive statements; operational and ambiguous markers take precedence.
+_DISCUSSION_ONLY = re.compile(
+    r'^(?:(?:al final|al inicio|durante la reunión|durante la sesión)\s*,?\s+)?'
+    r'se habló de\s+(?:preparar|revisar|organizar|elaborar|explicar|mejorar|mantener|distribuir)\b'
+    r'[^.!?\n;:]{1,1000}\.$', re.IGNORECASE)
+_DISCUSSION_OPERATIONAL = re.compile(
+    r'\b(?:decid(?:ió|ieron|imos)|resolv(?:ió|ieron|imos)|asign(?:ó|aron|amos)|'
+    r'encarg(?:ó|aron|amos)|compromet(?:ió|ieron|imos)|promet(?:ió|ieron|imos)|'
+    r'deberá|deberán|tendrá que|tendrán que|responsable|fecha límite|plazo|'
+    r'confirm(?:ó|aron|ado|ada)|se hará|se realizará|se enviará)\b',re.IGNORECASE)
+
+
+def _is_descriptive_discussion(text):
+    return bool(_DISCUSSION_ONLY.fullmatch(text.strip()) and not any(
+        pattern.search(text) for pattern in (_AGREEMENT,_PROPOSAL,_UNCERTAIN,_PENDING,
+        _NOTICE,_RESERVED_SCHEDULE,_ANNOUNCED_START,_DISAGREEMENT,_IMPLEMENTATION,
+        _COMMITMENT,_AMOUNT,_DISCUSSION_OPERATIONAL)))
+
+
+# Explicit metalinguistic distinction and a reviewed fictional example
+# describe teaching material; they are not a motion or a real pending item.
+_TEACHING_DISTINCTION = re.compile(
+    r'^se explicó que (?:una|la) instrucción [^.!?;:]{1,80} y (?:una|la) recomendación '
+    r'[^.!?;:]{1,80} tienen funciones (?:distintas|diferentes)\.$',re.IGNORECASE)
+_FICTIONAL_REVIEW = re.compile(
+    r'^(?:the )?participants reviewed a fictional example of [^.!?;:]{1,350}\.$',re.IGNORECASE)
+
+# Mentioning a proposal as a type of communication is not making one.
+# Keep the scope to explicit comparisons and disallow operational verbs.
+_METALINGUISTIC_COMPARISON = re.compile(
+    r'^(?:the (?:discussion|group|team)|participants) distinguished [^.!?;:]{1,180}'
+    r'\bfrom a proposal to [^.!?;:]{1,200}\.$',re.IGNORECASE)
+
+def _is_teaching_example(text):
+    return bool((_TEACHING_DISTINCTION.fullmatch(text.strip()) or _FICTIONAL_REVIEW.fullmatch(text.strip()) or
+                 _METALINGUISTIC_COMPARISON.fullmatch(text.strip()))
+                and not any(p.search(text) for p in (_AGREEMENT,_COMMITMENT,_NOTICE,_AMOUNT,_IMPLEMENTATION,_DISCUSSION_OPERATIONAL))
+                and not re.search(r'\b(?:agreed|proposed|assigned|decided|approved|promised|will|shall|must|should|'
+                                  r'propuso|propusieron|debe|deben|deberá|acordó|aprobó)\b',text,re.IGNORECASE))
+
+def _descriptive_sentence_for_quote(quote,row):
+    """Resolve a verbatim quote to its unique complete descriptive sentence.
+
+    Only a complete sentence, or that sentence without its final period,
+    can qualify. Do not reinterpret a truncated clause, a cross-sentence
+    quotation, a repeated ambiguous match, or an operational statement.
+    """
+    matches=[part.strip() for part in _SENTENCE_BREAK.split(row) if quote in part]
+    if len(matches)!=1:
+        return False
+    sentence=matches[0]
+    if quote not in (sentence,sentence.removesuffix('.')):
+        return False
+    return _is_teaching_example(sentence) or _is_descriptive_discussion(sentence)
+
+
 def _evidence_category(requested, evidence, by_id, owner):
     categories=set()
     owners=set()
@@ -208,6 +328,15 @@ def _evidence_category(requested, evidence, by_id, owner):
     for ref in evidence:
         quote=ref['quote']
         row=by_id[ref['source_id']]['text']
+        if not owner and _descriptive_sentence_for_quote(quote,row):
+            categories.add('topic')
+            continue
+        if requested=='topic' and _is_guidance(row) and not owner:
+            categories.add('topic')
+            continue
+        if requested=='pending' and not owner and _is_unassigned_question(quote):
+            categories.add('pending')
+            continue
         context=[sentence for sentence in _SENTENCE_BREAK.split(row) if quote in sentence] or [row]
         if any(_UNCERTAIN.search(sentence) or _PERSONAL_TENTATIVE.search(sentence) for sentence in context):
             uncertain=True
@@ -245,7 +374,7 @@ def changes_operational_meaning(value, quotes):
     if any(pattern.search(value) and not pattern.search(quotes) for pattern in _DEADLINE_QUALIFIERS):
         return True
     return bool(_IMPLEMENTATION.search(value) and not (
-        _IMPLEMENTATION.search(quotes) or _AGREEMENT.search(quotes)))
+        _IMPLEMENTATION.search(quotes) or affirmative_agreement_matches(quotes)))
 
 
 def validate_items(raw: str, rows: list[dict], language: str, *, source_only_on_mismatch=False) -> list[dict]:
@@ -302,6 +431,18 @@ def validate_items(raw: str, rows: list[dict], language: str, *, source_only_on_
         owner=_literal(item['owner'],quotes)
         due=_literal(item['due'],quotes)
         category, actor=_evidence_category(item['category'],evidence,by_id,owner)
+        # Metadata accompanying a descriptive quote must still be reviewed.
+        if category=='topic' and (owner or due) and any(
+                _descriptive_sentence_for_quote(ref['quote'],by_id[ref['source_id']]['text']) for ref in evidence):
+            category='review'
+        # Only recover a model's review classification when the entire
+        # cited row explicitly describes discussion, with no task metadata.
+        # Use source wording for the recovered record, not the model's
+        # unsupported proposal/confirmation interpretation.
+        if (category=='review' and item['category'] in ('review','proposal') and owner is None and due is None
+                and len(evidence)==1 and evidence[0]['quote']==by_id[evidence[0]['source_id']]['text']
+                and _is_descriptive_discussion(evidence[0]['quote'])):
+            category='topic'
         if actor and owner and owner!=actor and not actor.endswith(' '+owner) and not actor.startswith(owner+' '):
             category='review'
         if category=='action' and actor:
@@ -340,6 +481,59 @@ def recover_evidence_items(raw, rows, language):
                          'sources':[{'source_id':key,'timestamp':row['timestamp'],'quote':row['text']}],
                          **{'text_'+lang:_LOCALES[lang]['source_only'] for lang in languages}})
     return verified
+
+
+def plan_quote_retry(raw, rows, language):
+    """Keep disjoint validated records and retry only damaged/uncited/linked rows."""
+    try:
+        document=json.loads(raw,object_pairs_hook=_unique_keys)
+    except (TypeError,ValueError):
+        return None
+    if (not isinstance(document,dict) or set(document)!={'items'}
+            or not isinstance(document['items'],list) or len(document['items'])>100):
+        return None
+    known={row['id'] for row in rows}
+    validated=[]
+    affected=set()
+    for item in document['items']:
+        try:
+            validated.extend(validate_items(json.dumps({'items':[item]}),rows,language))
+        except ValueError as exc:
+            if str(exc)!='Quotation is not verbatim from the specified source':
+                return None
+            refs=item.get('sources') if isinstance(item,dict) else None
+            if not isinstance(refs,list) or not refs or any(
+                    not isinstance(ref,dict) or type(ref.get('id')) is not int
+                    or ref['id'] not in known for ref in refs):
+                return None
+            affected.update(ref['id'] for ref in refs)
+    if not affected or not validated:
+        return None
+    def ids(item):
+        return {ref['source_id'] for ref in item['sources']}
+    represented=set().union(*(ids(item) for item in validated))
+    affected.update(known-represented)
+    while True:
+        expanded=affected.union(*(ids(item) for item in validated if ids(item)&affected))
+        if expanded==affected:
+            break
+        affected=expanded
+    if len(affected)>5 or len(affected)*2>len(rows):
+        return None
+    kept=[item for item in validated if not ids(item)&affected]
+    if not kept:
+        return None
+    return kept,[row for row in rows if row['id'] in affected]
+
+
+def unresolved_retry_items(rows, items, language):
+    """Never silently erase a source row absent from a targeted retry."""
+    represented={ref['source_id'] for item in items for ref in item['sources']}
+    languages=('es','en') if language=='both' else (language,)
+    return [{'category':'review','owner':None,'due':None,
+             'sources':[{'source_id':row['id'],'timestamp':row['timestamp'],'quote':row['text']}],
+             **{'text_'+lang:_LOCALES[lang]['source_only'] for lang in languages}}
+            for row in rows if row['id'] not in represented]
 
 
 # Recognize only direct statements. Indirect speech and ambiguous references still
@@ -387,6 +581,14 @@ def explicit_source_items(rows, language):
         return hour*3600+minute*60+second
 
     for row in rows:
+        if _is_guidance(row['text']) or _is_teaching_example(row['text']):
+            previous=None
+            continue
+        if _is_unassigned_question(row['text']):
+            items.append(create('pending',[{'source_id':row['id'],'timestamp':row['timestamp'],
+                                            'quote':row['text']}]))
+            previous=None
+            continue
         for sentence in _SENTENCE_BREAK.split(row['text']):
             quote=sentence.strip()
             if not quote:
@@ -395,6 +597,16 @@ def explicit_source_items(rows, language):
             close=previous and 0<=seconds(source['timestamp'])-seconds(previous['sources'][-1]['timestamp'])<=45
             prior=previous if close else None
             previous=None
+            # A standalone non-approval immediately following a proposal in the
+            # same source row belongs to that proposal, never to an agreement.
+            if (prior and prior['category']=='proposal'
+                    and prior['sources'][-1]['source_id']==row['id']
+                    and _STANDALONE_NON_APPROVAL.fullmatch(quote)):
+                items[-1]=create('proposal',[*prior['sources'],source])
+                continue
+            # Explanations and comparisons can mention proposals as concepts.
+            if _is_teaching_example(quote) or _is_descriptive_discussion(quote):
+                continue
             # Quoted or hypothetical speech cannot create confirmed evidence.
             if _UNCERTAIN.search(quote) or _UNSAFE_STATEMENT.search(quote) or _PERSONAL_TENTATIVE.search(quote):
                 continue
@@ -459,7 +671,15 @@ def reconcile_source_items(items, explicit):
         if item['category'] != source_item['category'] or len(source_item['sources'])>1:
             continue
         # Preserve the wording of an explicit budget instead of inferring its allocation.
-        if source_item['category'] == 'topic':
+        if source_item['category'] in ('topic','notice'):
+            continue
+        if source_item['category']=='action':
+            source_text=' '.join(ref['quote'] for ref in source_item['sources'])
+            if not _EXPLICIT_DEADLINE.search(source_text) and any(
+                    _EXPLICIT_DEADLINE.search(value) for key,value in item.items()
+                    if key.startswith('text_')):
+                continue
+        if source_item['category']=='pending' and (item['owner'] or item['due']):
             continue
         if source_item['owner'] and item['owner']!=source_item['owner']:
             continue
@@ -486,11 +706,65 @@ def find_coverage_gaps(rows, items):
         for amount in dict.fromkeys(match.group() for match in _AMOUNT.finditer(row['text'])):
             if not any(amount in (match.group() for match in _AMOUNT.finditer(quote)) for _,quote in cited):
                 gaps.append({**source,'kind':'amount','text':amount})
-        for phrase in dict.fromkeys(match.group() for match in _AGREEMENT.finditer(row['text'])):
+        for phrase in dict.fromkeys(match.group() for match in affirmative_agreement_matches(row['text'])):
             if not any(category in ('decision','action','proposal','disagreement','pending','review')
                        and phrase in quote for category,quote in cited):
                 gaps.append({**source,'kind':'agreement','text':phrase})
     return gaps
+
+
+def repeated_topic_coverage(blocks, items, editorial, empty_blocks):
+    """Account for exact earlier descriptive repetitions, never decisions.
+
+    Retain raw extraction diagnostics. This lexical accounting neither
+    establishes semantic correctness nor clears new text, uncertain speech,
+    partial citations, or operational statements.
+    """
+    rows={row['id']:row for block in blocks for row in block}
+    safe={}
+    guards=(_AMOUNT,_AGREEMENT,_UNCERTAIN,_PROPOSAL,_NOTICE,_RESERVED_SCHEDULE,
+            _ANNOUNCED_START,_PENDING,_DISAGREEMENT,_IMPLEMENTATION,_COMMITMENT,
+            *_DEADLINE_QUALIFIERS)
+    def eligible(text):
+        return bool(text.strip() and not any(p.search(text) for p in guards))
+    references=[ref for theme in editorial for ref in theme['sources']]
+    references.extend(ref for item in items if item['category']=='topic'
+                      and not item.get('owner') and not item.get('due') for ref in item['sources'])
+    for ref in references:
+        row=rows.get(ref['source_id'])
+        if row and ref['quote']==row['text'] and eligible(row['text']):
+            safe[row['text']]=min(row['id'],safe.get(row['text'],row['id']))
+    def prior(row):
+        first=safe.get(row['text'])
+        return first if first is not None and first<row['id'] else None
+    covered_blocks=[];unresolved_blocks=[]
+    for number in empty_blocks:
+        block=blocks[number-1]
+        matches=[prior(row) for row in block]
+        if block and all(match is not None for match in matches):
+            covered_blocks.append({'block':number,'matches':[
+                {'source_id':row['id'],'earlier_source_id':match} for row,match in zip(block,matches)]})
+        else:
+            unresolved_blocks.append(number)
+    repeated_reviews=[];unresolved_reviews=[]
+    for index,item in enumerate(items):
+        if item['category']!='review':
+            continue
+        matches=[]
+        if not item.get('owner') and not item.get('due'):
+            for ref in item['sources']:
+                row=rows.get(ref['source_id'])
+                first=prior(row) if row and row['text']==ref['quote'] else None
+                if first is None:
+                    matches=[]
+                    break
+                matches.append({'source_id':row['id'],'earlier_source_id':first})
+        if matches:
+            repeated_reviews.append({'item_index':index,'matches':matches})
+        else:
+            unresolved_reviews.append(index)
+    return {'covered_empty_blocks':covered_blocks,'unresolved_empty_block_ids':unresolved_blocks,
+            'repeated_review_items':repeated_reviews,'unresolved_review_indices':unresolved_reviews}
 
 
 def _markdown(value):
@@ -499,13 +773,53 @@ def _markdown(value):
     return re.sub(r'([\\\x60*_{}\[\]()<>#+!|&~-])',r'\\\1',value)
 
 
+def _presentation_text(item, lang):
+    """Keep literal evidence separate from prose in the selected language.
+
+    Only translate narrow, exact standalone budget statements deterministically.
+    Other clearly foreign verbatim strings remain visibly attributed quotations,
+    not a purported translation. The original item and evidence are unchanged.
+    """
+    value=item['text_'+lang]
+    quotes=list(dict.fromkeys(ref['quote'] for ref in item['sources']))
+    if value!=' '.join(quotes):
+        return value
+    if item['category']=='topic' and len(quotes)==1:
+        patterns={
+            'es':r'The budget is (?P<amount>.+?)\.?',
+            'en':r'El presupuesto es(?: de)? (?P<amount>.+?)\.?',
+        }
+        match=re.fullmatch(patterns[lang],value,re.IGNORECASE)
+        if match and _AMOUNT.fullmatch(match['amount']):
+            prefix='El presupuesto es de ' if lang=='es' else 'The budget is '
+            return prefix+match['amount']+'.'
+    # Use several unambiguous markers; short names or amounts alone do not
+    # identify a language. Never rewrite an arbitrary source into a new fact.
+    other={
+        'es':{'the','and','is','was','were','should','would','when','who','will','only','not','approved','for'},
+        'en':{'el','la','los','las','se','que','para','por','de','del','y','fue','debería','cuando','sin','aprobación'},
+    }[lang]
+    own={
+        'es':{'el','la','los','las','se','que','para','por','de','del','y','fue','debería','cuando','sin','aprobación'},
+        'en':{'the','and','is','was','were','should','would','when','who','will','only','not','approved','for'},
+    }[lang]
+    words=set(re.findall(r'\b[^\W\d_]+\b',value.casefold()))
+    if len(words&other)>=2 and len(words&other)>len(words&own):
+        if item['category']=='proposal' and _EDITORIAL_NON_APPROVAL.search(value):
+            return ('Propuesta sin aprobación confirmada; consulta la cita original.' if lang=='es'
+                    else 'Proposal without confirmed approval; see the source quotation.')
+        return _LOCALES[lang]['source_only']
+    return value
+
+
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=(), respect_mode=False, uncited_passages=(), compound_review=None) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
     facts=[item for item in topics if any(_AMOUNT.search(ref['quote']) for ref in item['sources'])]
-    review_count=sum(item['category']=='review' for item in items)
+    covered_review_indices={entry['item_index'] for entry in (repetition_coverage or {}).get('repeated_review_items',[])}
+    review_count=sum(item['category']=='review' and i not in covered_review_indices for i,item in enumerate(items))
 
     def times(sources):
         if not show_timestamps:
@@ -514,18 +828,41 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
 
     for lang in ('es','en') if language=='both' else (language,):
         loc=_LOCALES[lang]
+        localized=any(entry['language']==lang for entry in localization)
+        if localized:
+            from .minutes_localization import presentation_due
         title=loc['summary'] if mode=='summary' else loc['minutes']
         field='text_'+lang
         lines=['# '+title,'','**'+loc['review_warning']+'**','']
+        brief=(executive_overview or {}).get(lang)
+        if respect_mode and mode=='minutes':
+            brief=None
+        show_detail=not respect_mode or mode!='summary'
+        if brief:
+            if not respect_mode or mode!='summary':
+                lines += ['## '+loc['summary'],'']
+            for paragraph in brief:
+                lines += [_markdown(paragraph),'']
+        detail_heading=('Temas tratados' if lang=='es' else 'Topics discussed') if (brief or respect_mode) else loc['summary']
         prose=(narratives or {}).get(lang)
-        if prose:
-            lines += ['## '+loc['summary'],'']
+        if not show_detail and brief:
+            # The overview already describes the themes. Do not repeat the
+            # complete thematic minute in summary mode. Structured outcomes
+            # and all review material below remain available.
+            pass
+        elif not show_detail and editorial:
+            # Defensive path if an overview is unavailable. Preserve content
+            # rather than silently dropping the themes.
+            for theme in editorial:
+                lines += [_markdown(theme['summary_'+lang]),'']
+        elif prose:
+            lines += ['## '+detail_heading,'']
             for paragraph in prose:
                 title=paragraph.get('title')
                 heading=f"**{_markdown(title)}.** " if title else ''
                 lines += [f"{heading}{_markdown(paragraph['text'])} {times(paragraph['sources'])}",'']
         elif editorial:
-            lines += ['## '+loc['summary'],'']
+            lines += ['## '+detail_heading,'']
             for theme in editorial:
                 lines += [f"**{_markdown(theme['title_'+lang])}.** {_markdown(theme['summary_'+lang])} {times(theme['sources'])}",'']
         elif not items:
@@ -564,21 +901,28 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                     repeated[key]=item
                 grouped.append(item)
             for item in grouped:
-                lines.append('- '+_markdown(item[field]))
+                display=_presentation_text(item,lang)
+                lines.append('- '+_markdown(display))
                 if category=='action':
                     lines.append('  - '+loc['owner']+': '+_markdown(item['owner'] or loc['unknown']))
-                    lines.append('  - '+loc['due']+': '+_markdown(item['due'] or loc['unknown']))
+                    due=presentation_due(item,lang) if localized else item['due']
+                    lines.append('  - '+loc['due']+': '+_markdown(due or loc['unknown']))
                 quotations={}
                 for ref in item['sources']:
                     quotations.setdefault(ref['quote'],[]).append(ref)
                 # An explicit budget or notice is already readable as a verbatim statement.
-                if show_timestamps or category not in ('notice', 'topic') or item[field] != ' '.join(quotations):
+                if show_timestamps or category not in ('notice', 'topic') or display != ' '.join(quotations):
                     for quote,refs in quotations.items():
                         lines.append('  - '+loc['evidence']+': '+times(refs)+' "'+_markdown(quote)+'"')
                 lines.append('')
         incomplete_prose=any(entry['language']==lang for entry in narrative_fallbacks)
-        if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose:
+        localization_failed=sum(len(entry['rejected']) for entry in localization if entry['language']==lang)
+        compound_findings=(compound_review or {}).get(lang,())
+        if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose or localization_failed or uncited_passages or compound_findings:
             lines += ['## '+loc['review'],'']
+        if localization_failed:
+            lines += [('No se pudo traducir fielmente toda la información. Se conservan las citas originales para revisión.'
+                       if lang=='es' else 'Some information could not be faithfully translated. Original quotations remain for review.'),'']
         if incomplete_prose:
             lines += [('Parte de la revisión editorial no se completó. Se conservan los temas con sus citas.'
                        if lang=='es' else
@@ -590,17 +934,40 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
                 note=('Un elemento quedó marcado' if review_count==1 else f'{review_count} elementos quedaron marcados')+' para revisión en el JSON de evidencias.'
             lines += [note,'']
             reviewed_quotes={}
-            for item in items:
-                if item['category']=='review':
+            for index,item in enumerate(items):
+                if item['category']=='review' and index not in covered_review_indices:
                     for ref in item['sources']:
                         reviewed_quotes.setdefault(ref['quote'],[]).append(ref)
             for quote,refs in reviewed_quotes.items():
                 lines.append('- '+times(refs)+' "'+_markdown(quote)+'"')
             lines.append('')
+        if repetition_coverage and (repetition_coverage['covered_empty_blocks'] or covered_review_indices):
+            lines += [('Se conservaron en el JSON las advertencias de extracción sobre pasajes repetidos literalmente y ya citados. La equivalencia semántica no está certificada.'
+                       if lang=='es' else 'Extraction warnings for exact previously cited repetitions remain in the evidence JSON. Semantic equivalence is not certified.'),'']
+        if repeated_themes:
+            lines += [('Los temas de líneas repetidas literalmente se presentan una sola vez; las síntesis y referencias originales se conservan en el JSON.'
+                       if lang=='es' else 'Topics from literally repeated lines are presented once; original summaries and references remain in the evidence JSON.'),'']
         if editorial_gaps:
             lines += [('Pasajes sin síntesis' if lang=='es' else 'Passages without a synthesis'),'']
             for ref in editorial_gaps:
                 lines.append('- '+times([ref])+' "'+_markdown(ref['quote'])+'"')
+            lines.append('')
+        if uncited_passages:
+            lines += [('Pasajes sin cita en la síntesis ni en los resultados estructurados' if lang=='es' else
+                       'Passages not cited in the synthesis or structured outcomes'),'']
+            lines += [('Estas citas se conservan para revisión; no se ha determinado si son sustantivas.' if lang=='es' else
+                       'These quotations are retained for review; their substantive relevance has not been determined.'),'']
+            for ref in uncited_passages:
+                lines.append('- '+times([ref])+' "'+_markdown(ref['quote'])+'"')
+            lines.append('')
+        if compound_findings:
+            lines += [('Citas compuestas para revisión de contenido' if lang=='es' else
+                       'Compound quotations for content review'),'']
+            lines += [('La coincidencia de palabras no permite comprobar todas las cláusulas; estas citas no implican un error confirmado.' if lang=='es' else
+                       'Word overlap cannot verify every clause; these quotations do not establish a confirmed error.'),'']
+            for finding in compound_findings:
+                ref=finding['source']
+                lines.append('- '+loc['evidence']+': '+times([ref])+' "'+_markdown(ref['quote'])+'"')
             lines.append('')
         if empty_blocks:
             lines+=['**'+loc['coverage']+':** '+', '.join(map(str,empty_blocks)),'']

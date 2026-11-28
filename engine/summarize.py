@@ -68,10 +68,12 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                                    extraction_prompt, extraction_schema, find_coverage_gaps,
                                    explicit_source_items, reconcile_source_items, recover_evidence_items,
                                    plan_quote_retry, unresolved_retry_items)
-    if narrative_strategy not in ('reviewed','validated_editorial','localized_editorial'):
+    if narrative_strategy not in ('reviewed','validated_editorial','localized_editorial','contextual_qa'):
         raise ValueError('Invalid narrative strategy')
     if mode not in ('summary','minutes','both') or language not in ('es','en','both'):
         raise ValueError('Invalid report mode or language')
+    localized=narrative_strategy in ('localized_editorial','contextual_qa')
+    contextual=narrative_strategy=='contextual_qa'
     guide_path = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[1])) / 'docs' / 'Guia_Owll_y_Minutas_para_Ollama.md'
     guide = guide_path.read_text(encoding='utf-8')
 
@@ -196,7 +198,15 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
     editorial=[]
     editorial_gaps=[]
     editorial_omissions=[]
-    sections=editorial_input(blocks,items,explicit_items=explicit_items) if len(rows)>=4 else ()
+    context_diagnostics=None
+    if contextual:
+        from .minutes_context_adapter import contextual_editorial
+        outcome=contextual_editorial(blocks,items,language,request,cancel=cancel,
+                                     progress=progress,trace=trace)
+        editorial=outcome['themes']
+        editorial_gaps=outcome['gaps']
+        context_diagnostics=outcome['diagnostics']
+    sections=editorial_input(blocks,items,explicit_items=explicit_items) if len(rows)>=4 and not contextual else ()
     for section in sections:
         if cancel: cancel.check()
         progress('Preparando la síntesis temática / Preparing the thematic overview')
@@ -293,13 +303,13 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             narratives[lang]=paragraphs
     displayed_themes=editorial
     repeated_themes=[]
-    if narrative_strategy=='localized_editorial':
+    if localized:
         from .minutes_theme_presentation import compact_repeated_theme_sources
         displayed_themes,repeated_themes=compact_repeated_theme_sources(blocks,editorial)
     overview=None
     presentation=items
     localization=[]
-    if narrative_strategy=='localized_editorial':
+    if localized:
         from .minutes_localization import localize_items
         presentation=[dict(item) for item in items]
         for lang in (('es','en') if language=='both' else (language,)):
@@ -308,7 +318,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
             localization.append(diagnostic)
             trace('localization','accepted',{'language':lang},diagnostic=diagnostic)
     structured_theme_moves=[]
-    if narrative_strategy=='localized_editorial':
+    if localized:
         from .minutes_theme_presentation import separate_structured_themes
         languages=('es','en') if language=='both' else (language,)
         prior_themes=displayed_themes
@@ -320,17 +330,17 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         original_indices=[i for i in range(len(editorial)) if i not in removed]
         for entry in structured_theme_moves:
             entry['theme_index']=original_indices[entry['theme_index']]
-    if narrative_strategy in ('validated_editorial','localized_editorial') and (editorial or items):
+    if (localized or narrative_strategy=='validated_editorial') and (editorial or items):
         from .minutes_overview import build_overview
         overview={lang:build_overview(presentation,displayed_themes,lang,
-                      detail_included=not (narrative_strategy=='localized_editorial' and mode=='summary'))
+                      detail_included=not (localized and mode=='summary'))
                   for lang in (('es','en') if language=='both' else (language,))}
         trace('narrative','strategy',{'language':language},
               strategy=narrative_strategy,retained_themes=len(editorial))
     from .minutes_evidence import repeated_topic_coverage
     repetition=repeated_topic_coverage(blocks,items,editorial,empty)
     source_accounting=None
-    if narrative_strategy=='localized_editorial':
+    if localized:
         from .minutes_source_accounting import audit_source_passages,audit_compound_citations
         source_accounting=audit_source_passages(blocks,items,editorial,editorial_gaps)
         source_accounting['compound_review']=audit_compound_citations(
@@ -341,7 +351,7 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                           narratives=narratives,narrative_fallbacks=narrative_fallbacks,
                           executive_overview=overview,show_timestamps=False,repetition_coverage=repetition,
                           localization=localization,repeated_themes=repeated_themes,
-                          respect_mode=narrative_strategy=='localized_editorial',
+                          respect_mode=localized,
                           uncited_passages=(source_accounting or {}).get('uncited_passages',()),
                           compound_review=(source_accounting or {}).get('compound_review'))
     if evidence_sink is not None:
@@ -352,5 +362,6 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
                        'narrative_strategy':narrative_strategy,'repetition_coverage':repetition,
                        'localization':localization,'presentation':presentation if localization else [],
                        'repeated_theme_presentation':repeated_themes,'structured_theme_presentation':structured_theme_moves,
-                       'source_accounting':source_accounting,'items':items})
+                       'source_accounting':source_accounting,'items':items,
+                       **({'context_diagnostics':context_diagnostics} if contextual else {})})
     return report

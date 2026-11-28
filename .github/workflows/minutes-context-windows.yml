@@ -1,13 +1,12 @@
-name: Contextual interruption review exact offline replay
+name: Contextual end-to-end adapter offline preflight
 on:
   push:
     branches: [qa/minutes-context-windows-0819]
     paths: ['.github/workflows/minutes-context-windows.yml']
 permissions:
   contents: read
-  actions: read
 jobs:
-  replay:
+  preflight:
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
@@ -17,22 +16,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.14.10'
-      - name: Context and interruption regressions
+      - name: Context and complete pipeline regressions
         run: |
           python -m pip install pytest
-          python -m pytest -q tests/test_minutes_context_windows.py tests/test_minutes_context_row_citations.py tests/test_minutes_context_interruptions.py
-      - uses: actions/download-artifact@v4
-        with:
-          run-id: 46089422183
-          name: context-row-citations-focal
-          github-token: ${{ github.token }}
-          path: ${{ runner.temp }}/prior
-      - name: Replay archived response without Ollama
-        run: python qa/minutes_context_interruption_replay.py "$RUNNER_TEMP/prior" "$RUNNER_TEMP/interruption-replay"
+          python -m pytest -q tests/test_minutes_context_windows.py tests/test_minutes_context_row_citations.py tests/test_minutes_context_interruptions.py tests/test_minutes_context_adapter.py tests/test_minutes_source_accounting.py tests/test_minutes_localized_pipeline.py tests/test_minutes_report_modes.py
+      - name: Preflight independent fragmented fixture and fixed rubric
+        run: python qa/minutes_context_adapter_preflight.py "$RUNNER_TEMP/context-adapter"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: contextual-interruption-replay
-          path: ${{ runner.temp }}/interruption-replay
+          name: context-adapter-preflight
+          path: ${{ runner.temp }}/context-adapter
           if-no-files-found: warn
           retention-days: 7

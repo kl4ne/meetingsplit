@@ -813,7 +813,7 @@ def _presentation_text(item, lang):
 
 
 def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(), coverage_gaps=(), *, editorial=(), editorial_gaps=(),
-                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=(), respect_mode=False, uncited_passages=(), compound_review=None) -> str:
+                   narratives=None, narrative_fallbacks=(), show_timestamps=True, executive_overview=None, repetition_coverage=None, localization=(), repeated_themes=(), respect_mode=False, uncited_passages=(), compound_review=None, compacted_review_count=0) -> str:
     documents=[]
     topics=[item for item in items if item['category']=='topic']
     substantive=[item for item in items if item['category'] in ('decision','action','pending')]
@@ -918,7 +918,7 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         incomplete_prose=any(entry['language']==lang for entry in narrative_fallbacks)
         localization_failed=sum(len(entry['rejected']) for entry in localization if entry['language']==lang)
         compound_findings=(compound_review or {}).get(lang,())
-        if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose or localization_failed or uncited_passages or compound_findings:
+        if review_count or coverage_gaps or empty_blocks or editorial_gaps or incomplete_prose or localization_failed or uncited_passages or compound_findings or compacted_review_count:
             lines += ['## '+loc['review'],'']
         if localization_failed:
             lines += [('No se pudo traducir fielmente toda la información. Se conservan las citas originales para revisión.'
@@ -947,6 +947,9 @@ def render_minutes(items: list[dict], mode: str, language: str, empty_blocks=(),
         if repeated_themes:
             lines += [('Los temas de líneas repetidas literalmente se presentan una sola vez; las síntesis y referencias originales se conservan en el JSON.'
                        if lang=='es' else 'Topics from literally repeated lines are presented once; original summaries and references remain in the evidence JSON.'),'']
+        if compacted_review_count:
+            lines += [('Las citas de revisión duplicadas o repetidas literalmente se conservan en el JSON de evidencias sin volver a mostrarlas aquí.' if lang=='es' else
+                       'Duplicate or literally repeated review quotations remain in the evidence JSON without being printed again here.'),'']
         if editorial_gaps:
             lines += [('Pasajes sin síntesis' if lang=='es' else 'Passages without a synthesis'),'']
             for ref in editorial_gaps:

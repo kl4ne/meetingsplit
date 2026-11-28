@@ -346,14 +346,22 @@ def summarize_local(transcript: str, mode: str, language: str, model: str,
         source_accounting['compound_review']=audit_compound_citations(
             displayed_themes,items,language,already_visible=[*editorial_gaps,*source_accounting['uncited_passages']])
         trace('source_accounting','accepted',{'language':language},diagnostics=source_accounting)
+    visible_editorial_gaps=editorial_gaps
+    gap_compaction=[]
+    if contextual:
+        from .minutes_context_gap_presentation import compact_context_gaps
+        visible_editorial_gaps,gap_compaction=compact_context_gaps(
+            blocks,items,editorial,editorial_gaps,context_diagnostics,repetition)
+        context_diagnostics['gap_presentation_compaction']=gap_compaction
     report=render_minutes(presentation,mode,language,repetition['unresolved_empty_block_ids'],coverage_gaps,
-                          editorial=displayed_themes,editorial_gaps=editorial_gaps,
+                          editorial=displayed_themes,editorial_gaps=visible_editorial_gaps,
                           narratives=narratives,narrative_fallbacks=narrative_fallbacks,
                           executive_overview=overview,show_timestamps=False,repetition_coverage=repetition,
                           localization=localization,repeated_themes=repeated_themes,
                           respect_mode=localized,
                           uncited_passages=(source_accounting or {}).get('uncited_passages',()),
-                          compound_review=(source_accounting or {}).get('compound_review'))
+                          compound_review=(source_accounting or {}).get('compound_review'),
+                          compacted_review_count=len(gap_compaction))
     if evidence_sink is not None:
         evidence_sink({'schema':1,'review_required':True,'verification':'literal_source_match_only',
                        'source_blocks':len(blocks),'empty_blocks':len(empty),'empty_block_ids':empty,

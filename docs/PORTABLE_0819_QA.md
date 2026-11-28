@@ -34,3 +34,6 @@ El diagnóstico no procesa audio ni valida fidelidad editorial. El runner Window
 - Fuente: 448a8502521192034e939145d43cc6b18b90898e. ZIP interior 463728021 bytes, 696 archivos verificados.
 - CI: 359 pruebas motor, 2 omitidas, 11 navegador y auditoría.
 - No Setup, no release/tag/merge, release_allowed=false. El repositorio es público; los artefactos de Actions no tienen privacidad de acceso garantizada.
+## Primera prueba del propietario — resultado
+
+El propietario ejecutó 0.8.19 y confirmó funcionamiento NVIDIA excelente. El resultado privado fue revisado localmente: manifest NVIDIA GPU, Whisper medium, 273 segmentos, cinco MP3/checkpoints íntegros y ZIP sin errores. Partes 3–5 silenciosas; señal termina ~24m07s de 58m49s. No repetir la grabación para diagnosticar GPU. La minuta necesita revisión editorial (100 temas, 87 pasajes sin síntesis, 26 review, 2 uncited, 8 avisos compuestos). La próxima reparación se centrará en fragmentos ASR y contexto, sin alterar audio/transcripción GPU. Otros modos, carga larga, recuperación y demás requisitos pendientes. No publicar grabaciones ni texto.

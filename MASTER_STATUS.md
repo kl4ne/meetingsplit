@@ -1,3 +1,7 @@
+## Estado vigente — 2026-11-27 — primera prueba real 0.8.19
+
+El propietario confirma excelente funcionamiento NVIDIA en su ASUS; manifest 0.8.19 registra NVIDIA GPU / Whisper medium, trabajo completo, 273 segmentos y ZIP íntegro; 5 MP3 y 5 checkpoints verificados. La grabación exportada termina con silencio digital, no se detecta fallo de GPU en las partes vacías. Calidad editorial aún NO-GO (100 temas, 87 pasajes sin síntesis, 26 review, 2 sin cita y 8 avisos compuestos), evidencia técnica anonimizada en checkpoint. Siguiente reparación: contextualizar fragmentos ASR manteniendo citas originales, sin tocar GPU/audio ni repetir reunión. Main 0.8.18, release_allowed=false, sin nueva versión/build. Leer [HANDOFF.md](HANDOFF.md). Todo lo siguiente es histórico.
+
 ## Estado vigente — 2026-11-27 — portable 0.8.19 verificado para revisión
 
 El portable autorizado está disponible: [artefacto QA 15236425376](https://github.com/kl4ne/meetingsplit/actions/runs/46078575131/artifacts/15236425376). Fuente 448a8502521192034e939145d43cc6b18b90898e, CI #46078498354 verde (359 motor, 2 omitidas, 11 navegador, auditoría). Build #46078575131 verde, SHA-256 del ZIP interior d93c2334a1a2a81d26ef02a89d92952f268cb7695c3dd587fc1d80ba08ba05e5; 696 archivos y self-check Windows verificados. Pendientes ASUS y aceptación editorial. Leer [HANDOFF.md](HANDOFF.md) y [guía de prueba](docs/PORTABLE_0819_QA.md). Main 0.8.18, release_allowed=false, sin Setup/tag/release. Todo lo que sigue es histórico.

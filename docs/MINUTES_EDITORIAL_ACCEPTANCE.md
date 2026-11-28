@@ -110,3 +110,7 @@ Replay completo #46093000998 verde, 98 pruebas, ZIP 15242335814 verificado. Cinc
 Herramienta QA local a6e2d50ca6c6bd38a835b13d867f3ac2e43b55c8 (#46093403762 en progreso) preparada para comparación con ZIP real existente bajo consentimiento explícito, sin audio ni descargas. CI mock no equivale a aceptación editorial; Python y Ollama local activo son requisitos por verificar. NO-GO editorial/público intacto.
 
 #46093403762 verde, 110 pruebas mock; paquete fuente verificado 15242266995. CLI exacto inspeccionó ZIP real privado (273 filas/38 unidades/8 ventanas) sin inferencia ni modificarlo. Comparación real pendiente en ASUS con consentimiento y entorno local existente. No se certifica mejora editorial ni se cambia 0.8.19; gate público cerrado.
+
+## Comparación real contextual en ASUS: mejora parcial, no aceptación
+
+Propietario completó comparación autorizada local; 21 solicitudes/275.44 s, 642 referencias verificadas, 16 temas vs 100, 2376 palabras vs 4197, 72 vs 87 gaps, 57 nuevos IDs, 26 review, dos avisos conservados, cero uncited, 12 avisos compuestos. Tres rechazos operativos; texto bruto no disponible. La revisión independiente de fuente confirma errores de atribución de sujeto, asociación de citas a ejemplos, detalles y omisiones importantes. No equivalencia entre cobertura literal y significado. Mantener NO-GO editorial/público, no promover default ni nueva versión. Próxima reparación de atribución y recuperación acotada sin relajar guardas, resumen no duplicativo. Sin contenido privado publicado.

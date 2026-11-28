@@ -1,3 +1,7 @@
+## Estado vigente — comparación real contextual en ASUS (2026-11-28 UTC)
+
+El propietario completó QA contextual local sobre transcripción existente 0.8.19; 21 llamadas/275.44 s, ninguna CPU forzada, 642/642 referencias verificadas, 4197→2376 palabras, 100→16 temas, 87→72 gaps, 26 review intactos, dos avisos idénticos, cero uncited. Tres rechazos operativos y errores semánticos/omisiones impiden aceptación profesional. Ver HANDOFF.md y último checkpoint. Próximo diagnóstico y recuperación acotada, no repetir audio ni promover default. Main 0.8.18, 0.8.19 portable de revisión intacto, release_allowed=false. Todo lo siguiente es histórico.
+
 ## Estado vigente — 2026-11-27 — primera prueba real 0.8.19
 
 El propietario confirma excelente funcionamiento NVIDIA en su ASUS; manifest 0.8.19 registra NVIDIA GPU / Whisper medium, trabajo completo, 273 segmentos y ZIP íntegro; 5 MP3 y 5 checkpoints verificados. La grabación exportada termina con silencio digital, no se detecta fallo de GPU en las partes vacías. Calidad editorial aún NO-GO (100 temas, 87 pasajes sin síntesis, 26 review, 2 sin cita y 8 avisos compuestos), evidencia técnica anonimizada en checkpoint. Siguiente reparación: contextualizar fragmentos ASR manteniendo citas originales, sin tocar GPU/audio ni repetir reunión. Main 0.8.18, release_allowed=false, sin nueva versión/build. Leer [HANDOFF.md](HANDOFF.md). Todo lo siguiente es histórico.

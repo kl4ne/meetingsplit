@@ -179,3 +179,7 @@ QA a6e2d50ca6c6bd38a835b13d867f3ac2e43b55c8, #46093403762 en curso, inspección 
 ## 30. Paquete local de comparación verificado
 
 #46093403762 verde, 110 pruebas Windows mock. ZIP fuente 15242266995 verificado; SHA-256 interior a96c5db4bbb941b520d12d195915d6641c2a8ca6aef04ecdfcce666120f13003. CLI real del paquete inspeccionó ZIP privado existente localmente, exit 0, 273 filas/38 unidades/8 ventanas, hash original sin cambios y cero inferencia. Siguiente: comparación en ASUS con Python y Ollama ya disponibles y consentimiento explícito. Si bloqueado, herramienta congelada separada solo con autorización. No publicar contenido privado ni cambiar versión/default/gate.
+
+## 31. Comparación contextual real completada en ASUS
+
+QA a6e2d50ca6c6bd38a835b13d867f3ac2e43b55c8 ejecutado localmente; 21 solicitudes/275.44 s, 642/642 citas, 4197→2376 palabras, 100→16 temas, 87→72 gaps (57 nuevos), 26 review, dos avisos idénticos, cero uncited. Mejora de organización, NO-GO semántico: atribución, omisiones y tres rechazos operativos sin texto bruto, resumen repetitivo. Siguiente diagnóstico local específico y atribución/recuperación de cláusulas acotada, con caso inventado offline. No otra prueba del usuario hasta mejora demostrada; no cambiar hardware/audio/modelo/versión/default/main/gate. Ver checkpoint.
